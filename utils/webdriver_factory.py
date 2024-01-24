@@ -7,6 +7,8 @@ def get_driver(browser='chrome'):
     if browser.lower() == 'chrome':
         chrome_driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
         chrome_driver.maximize_window()
+        chrome_driver.implicitly_wait(10)
+        chrome_driver.get('https://www.google.com/')
         return chrome_driver
     elif browser.lower() == 'firefox':
         return webdriver.Firefox()
