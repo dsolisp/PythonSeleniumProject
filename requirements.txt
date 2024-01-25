@@ -4,3 +4,4 @@ pixelmatch~=0.3.0
 pillow~=10.2.0
 PyHamcrest
 webdriver-manager~=4.0.1
+requests~=2.31.0
