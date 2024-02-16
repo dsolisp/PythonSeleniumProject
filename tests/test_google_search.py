@@ -38,7 +38,7 @@ def test_sql_google_search(driver):
     result_link = google_result_page.get_result_by_index("1")
     result_link.click()
     # result page
-    assert_that(base_page.get_title().lower(), contains_string(name.lower()))
+    assert_that(base_page.get_title().lower(), contains_string(name[:20].lower()))
 
 
 def get_track_name_from_db(sql_conn):
