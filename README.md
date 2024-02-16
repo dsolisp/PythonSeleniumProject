@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Welcome to the Python Selenium 4 Visual Diff Project! This project aims to provide a robust framework for web automation, visual regression testing, and database management using Python.
+Welcome to the Python Selenium 4  Project! This project aims to provide a robust framework for web automation, visual regression testing, and database management using Python.
 
 ### Technologies Used
 
@@ -26,14 +26,72 @@ Welcome to the Python Selenium 4 Visual Diff Project! This project aims to provi
 
 3. **Database Management:** Utilize SQLite to store and retrieve test data, including test results, screenshots, and metadata. The database enables efficient storage, retrieval, and analysis of test information, facilitating effective test reporting, debugging, and querying for specific test scenarios.
 
+## Project Structure
+
+```
+PythonSeleniumProject/
+|-- drivers/
+|-- locators/
+|   |-- google_result_locators.py
+|   |-- google_search_locators.py
+|-- pages/
+|   |-- base_page.py
+|   |-- google_result_page.py
+|   |-- google_search_page.py
+|-- tests/
+|   |-- test_api.py
+|   |-- test_google_search.py
+|   |-- test_image_diff.py
+|-- utils/
+|   |-- diff_handler.py
+|   |-- sql_connection.py
+|   |-- webdriver_factory.py
+|-- .gitignore
+|-- conftest.py
+|-- README.md
+|-- requirements.txt
+```
+
+
+
+
 
 ## Getting Started
 
-To get started with the Python Selenium 4 Visual Diff Project, follow these steps:
+To get started with the Python Selenium 4 Project, follow these steps:
 
 1. **Clone the Repository:** Clone the project repository from [GitHub](https://github.com/dsolisp/PythonSeleniumProject) to your local machine.
 
-2. **Install Dependencies:** Install the necessary Python dependencies by running `pip install -r requirements.txt`. Make sure to use the specified package versions:
+2. **Install Python:** If you don't have Python installed, download and install the latest version of Python from the [official website](https://www.python.org/downloads/).
+
+3. **Set Up a Virtual Environment:** Create a new virtual environment for the project using the following commands:
+ 
+  For macOS and Linux:   
+
+   ```bash
+   # Create a new virtual environment
+   python -m venv venv
+
+   # Activate the virtual environment
+   source venv/bin/activate
+   ```
+
+   For Windows:
+
+   ```bash
+   # Create a new virtual environment
+   python -m venv venv
+
+   # Activate the virtual environment
+   venv\Scripts\activate
+   ```
+
+4. **Install Dependencies:** Install the necessary Python dependencies by running `pip install -r requirements.txt`. Make sure to use the specified package versions:
 
    ```bash
    pip install selenium==4.16.0 pytest~=7.4.4 pixelmatch~=0.3.0 pillow~=10.2.0 PyHamcrest webdriver-manager~=4.0.1 requests~=2.31.0
+
+
+5. **Download Web Drivers:** WebDriver Manager will automatically download the latest web driver binaries for Selenium. You can also manually download the web drivers and place them in the `drivers` directory.
+
+6. **Run the Tests:** Execute the test suite by running `pytest` in the project root directory. The tests will run, and the results will be displayed in the terminal.
