@@ -1,0 +1,56 @@
+{
+  "chrome": {
+    "browserName": "chrome",
+    "version": "latest",
+    "platform": "ANY",
+    "chromeOptions": {
+      "args": [
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-extensions",
+        "--disable-plugins",
+        "--disable-images",
+        "--disable-web-security",
+        "--allow-running-insecure-content",
+        "--ignore-certificate-errors"
+      ],
+      "prefs": {
+        "profile.default_content_setting_values.notifications": 2,
+        "profile.default_content_settings.popups": 0,
+        "profile.managed_default_content_settings.images": 2
+      }
+    }
+  },
+  "firefox": {
+    "browserName": "firefox",
+    "version": "latest",
+    "platform": "ANY",
+    "firefoxOptions": {
+      "args": [],
+      "prefs": {
+        "dom.webnotifications.enabled": false,
+        "media.volume_scale": "0.0",
+        "browser.download.folderList": 2,
+        "browser.helperApps.neverAsk.saveToDisk": "application/octet-stream,application/pdf"
+      }
+    }
+  },
+  "edge": {
+    "browserName": "MicrosoftEdge",
+    "version": "latest",
+    "platform": "ANY",
+    "edgeOptions": {
+      "args": [
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu"
+      ]
+    }
+  },
+  "safari": {
+    "browserName": "safari",
+    "version": "latest",
+    "platform": "MAC"
+  }
+}

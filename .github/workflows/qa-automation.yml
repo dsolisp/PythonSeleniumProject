@@ -62,7 +62,7 @@ jobs:
     - name: Generate cache key
       id: cache-key
       run: |
-        echo "key=pip-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/requirements-enhanced.txt') }}" >> $GITHUB_OUTPUT
+        echo "key=pip-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/requirements.txt') }}" >> $GITHUB_OUTPUT
 
   security-scan:
     runs-on: ubuntu-latest
@@ -161,12 +161,12 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.cache/pip
-        key: pip-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements-enhanced.txt') }}
+        key: pip-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
     
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install -r requirements-enhanced.txt
+        pip install -r requirements.txt
     
     - name: Create test directories
       run: |
@@ -232,7 +232,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install -r requirements-enhanced.txt
+        pip install -r requirements.txt
     
     - name: Create test directories
       run: |
@@ -287,7 +287,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install -r requirements-enhanced.txt
+        pip install -r requirements.txt
     
     - name: Create test directories
       run: |
@@ -344,7 +344,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install -r requirements-enhanced.txt
+        pip install -r requirements.txt
     
     - name: Run performance tests
       run: |

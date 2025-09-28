@@ -1,0 +1,35 @@
+# CI/CD Environment Configuration
+database:
+  driver: "sqlite"
+  name: "chinook.db"
+  connection_timeout: 60
+
+browser:
+  default_browser: "chrome"
+  headless: true
+  window_width: 1920
+  window_height: 1080
+  implicit_wait: 15
+  explicit_wait: 45
+  page_load_timeout: 90
+
+test:
+  environment: "ci"
+  base_url: "https://www.google.com"
+  api_base_url: "https://jsonplaceholder.typicode.com"
+  parallel_workers: 4
+  retry_count: 3
+  test_timeout: 600
+  screenshot_on_failure: true
+  video_recording: true
+
+reporting:
+  report_format: "html,allure,json"
+  log_level: "DEBUG"
+  enable_allure: true
+  enable_dashboard: true
+  report_directory: "reports"
+  log_directory: "logs"
+
+security:
+  enable_ssl_verification: true

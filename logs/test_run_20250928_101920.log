@@ -1,0 +1,11 @@
+2025-09-28 10:19:20 | INFO     | TestAutomation | This is an info message
+2025-09-28 10:19:20 | DEBUG    | TestAutomation | This is a debug message
+2025-09-28 10:19:20 | WARNING  | TestAutomation | This is a warning message
+2025-09-28 10:19:20 | ERROR    | TestAutomation | This is an error message
+2025-09-28 10:19:20 | INFO     | TestAutomation | Starting test: sample_test
+2025-09-28 10:19:20 | INFO     | TestAutomation | Step: Navigate to homepage
+2025-09-28 10:19:20 | INFO     | TestAutomation | Step: Click login button
+2025-09-28 10:19:20 | INFO     | TestAutomation | Screenshot saved: /fake/path/screenshot.png
+2025-09-28 10:19:20 | INFO     | TestAutomation | Test sample_test PASSED in 2.34s
+2025-09-28 10:19:20 | INFO     | TestAutomation | API GET https://api.example.com/users -> 200
+2025-09-28 10:19:20 | INFO     | TestAutomation | Database SELECT on users

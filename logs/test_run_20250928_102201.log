@@ -1,0 +1,31 @@
+2025-09-28 10:22:06 | INFO     | TestAutomation | Navigating to: data:text/html,
+    <html>
+    <head><title>Framework Test Page</title></head>
+    <body>
+        <h1 id="title">Test Framework</h1>
+        <input id="input1" name="testinput" placeholder="Enter text">
+        <button id="btn1" onclick="document.getElementById('result').innerHTML='Clicked!'">Click Me</button>
+        <div id="result"></div>
+        <a href="#" id="link1">Test Link</a>
+    </body>
+    </html>
+    
+2025-09-28 10:22:06 | DEBUG    | TestAutomation | Successfully navigated to: data:text/html,
+    <html>
+    <head><title>Framework Test Page</title></head>
+    <body>
+        <h1 id="title">Test Framework</h1>
+        <input id="input1" name="testinput" placeholder="Enter text">
+        <button id="btn1" onclick="document.getElementById('result').innerHTML='Clicked!'">Click Me</button>
+        <div id="result"></div>
+        <a href="#" id="link1">Test Link</a>
+    </body>
+    </html>
+    
+2025-09-28 10:22:07 | DEBUG    | TestAutomation | Clicking element: btn1 
+2025-09-28 10:22:07 | DEBUG    | TestAutomation | Successfully clicked: btn1
+2025-09-28 10:22:07 | INFO     | TestAutomation | Screenshot saved: /Users/danielsolis/Documents/GitHub/Personal/PythonSeleniumProject/screenshots/framework_test.png
+2025-09-28 10:22:09 | DEBUG    | TestAutomation | Clicking element: clickme 
+2025-09-28 10:22:09 | DEBUG    | TestAutomation | Successfully clicked: clickme
+2025-09-28 10:22:11 | INFO     | TestAutomation | Navigating to: data:text/html,<html><body><h1>Integration Test</h1><p>Framework working!</p></body></html>
+2025-09-28 10:22:11 | DEBUG    | TestAutomation | Successfully navigated to: data:text/html,<html><body><h1>Integration Test</h1><p>Framework working!</p></body></html>

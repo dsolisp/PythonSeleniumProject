@@ -1,12 +1,12 @@
 """
-Enhanced SQL connection utilities with comprehensive database operations and error handling.
+SQL connection utilities with comprehensive database operations and error handling.
 """
 
-import sqlite3
 import logging
 import os
+import sqlite3
 from contextlib import contextmanager
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,14 +15,14 @@ logger = logging.getLogger(__name__)
 
 def get_connection(db_file: str) -> sqlite3.Connection:
     """
-    Establish a connection to the SQLite database file with enhanced configuration.
-    
+    Establish a connection to the SQLite database file with configuration.
+
     Args:
         db_file (str): Path to the database file
-        
+
     Returns:
         sqlite3.Connection: Database connection object
-        
+
     Raises:
         FileNotFoundError: If database file doesn't exist
         sqlite3.Error: If connection fails
@@ -30,17 +30,17 @@ def get_connection(db_file: str) -> sqlite3.Connection:
     try:
         if not os.path.exists(db_file):
             raise FileNotFoundError(f"Database file not found: {db_file}")
-        
-        # Enhanced connection with row factory for better data access
+
+        # Connection with row factory for better data access
         conn = sqlite3.connect(db_file)
         conn.row_factory = sqlite3.Row  # Enables column access by name
-        
+
         # Enable foreign key constraints
         conn.execute("PRAGMA foreign_keys = ON")
-        
+
         logger.info(f"Database connection established: {db_file}")
         return conn
-        
+
     except sqlite3.Error as e:
         logger.error(f"Failed to connect to database {db_file}: {str(e)}")
         raise
@@ -53,10 +53,10 @@ def get_connection(db_file: str) -> sqlite3.Connection:
 def get_connection_context(db_file: str):
     """
     Context manager for database connections with automatic cleanup.
-    
+
     Args:
         db_file (str): Path to the database file
-        
+
     Yields:
         sqlite3.Connection: Database connection object
     """
@@ -75,33 +75,37 @@ def get_connection_context(db_file: str):
             logger.info("Database connection closed")
 
 
-def execute_query(conn: sqlite3.Connection, query: str, params: tuple = None) -> sqlite3.Cursor:
+def execute_query(
+    conn: sqlite3.Connection, query: str, params: tuple = None
+) -> sqlite3.Cursor:
     """
-    Execute a query on the given connection with enhanced error handling.
-    
+    Execute a query on the given connection with error handling.
+
     Args:
         conn (sqlite3.Connection): Database connection
         query (str): SQL query to execute
         params (tuple, optional): Query parameters for prepared statements
-        
+
     Returns:
         sqlite3.Cursor: Query cursor
-        
+
     Raises:
         sqlite3.Error: If query execution fails
     """
     try:
         cursor = conn.cursor()
-        
+
         if params:
             cursor.execute(query, params)
-            logger.info(f"Executed parameterized query: {query[:50]}... with params: {params}")
+            logger.info(
+                f"Executed parameterized query: {query[:50]}... with params: {params}"
+            )
         else:
             cursor.execute(query)
             logger.info(f"Executed query: {query[:50]}...")
-        
+
         return cursor
-        
+
     except sqlite3.Error as e:
         logger.error(f"Query execution failed: {str(e)}")
         logger.error(f"Query: {query}")
@@ -113,15 +117,17 @@ def execute_query(conn: sqlite3.Connection, query: str, params: tuple = None) ->
         raise
 
 
-def execute_query_safe(conn: sqlite3.Connection, query: str, params: tuple = None) -> Optional[sqlite3.Cursor]:
+def execute_query_safe(
+    conn: sqlite3.Connection, query: str, params: tuple = None
+) -> Optional[sqlite3.Cursor]:
     """
     Safely execute a query with exception handling that returns None on failure.
-    
+
     Args:
         conn (sqlite3.Connection): Database connection
         query (str): SQL query to execute
         params (tuple, optional): Query parameters
-        
+
     Returns:
         sqlite3.Cursor or None: Query cursor or None if failed
     """
@@ -134,11 +140,11 @@ def execute_query_safe(conn: sqlite3.Connection, query: str, params: tuple = Non
 
 def fetch_one(cursor: sqlite3.Cursor) -> Optional[sqlite3.Row]:
     """
-    Fetch a single result from the cursor with enhanced error handling.
-    
+    Fetch a single result from the cursor with error handling.
+
     Args:
         cursor (sqlite3.Cursor): Database cursor
-        
+
     Returns:
         sqlite3.Row or None: Single row result or None if no results
     """
@@ -156,11 +162,11 @@ def fetch_one(cursor: sqlite3.Cursor) -> Optional[sqlite3.Row]:
 
 def fetch_all(cursor: sqlite3.Cursor) -> List[sqlite3.Row]:
     """
-    Fetch all results from the cursor with enhanced error handling.
-    
+    Fetch all results from the cursor with error handling.
+
     Args:
         cursor (sqlite3.Cursor): Database cursor
-        
+
     Returns:
         List[sqlite3.Row]: List of all rows
     """
@@ -176,11 +182,11 @@ def fetch_all(cursor: sqlite3.Cursor) -> List[sqlite3.Row]:
 def fetch_many(cursor: sqlite3.Cursor, size: int) -> List[sqlite3.Row]:
     """
     Fetch a specified number of results from the cursor.
-    
+
     Args:
         cursor (sqlite3.Cursor): Database cursor
         size (int): Number of rows to fetch
-        
+
     Returns:
         List[sqlite3.Row]: List of rows up to specified size
     """
@@ -193,15 +199,17 @@ def fetch_many(cursor: sqlite3.Cursor, size: int) -> List[sqlite3.Row]:
         return []
 
 
-def execute_and_fetch_one(conn: sqlite3.Connection, query: str, params: tuple = None) -> Optional[sqlite3.Row]:
+def execute_and_fetch_one(
+    conn: sqlite3.Connection, query: str, params: tuple = None
+) -> Optional[sqlite3.Row]:
     """
     Execute query and fetch single result in one operation.
-    
+
     Args:
         conn (sqlite3.Connection): Database connection
         query (str): SQL query to execute
         params (tuple, optional): Query parameters
-        
+
     Returns:
         sqlite3.Row or None: Single row result
     """
@@ -213,15 +221,17 @@ def execute_and_fetch_one(conn: sqlite3.Connection, query: str, params: tuple = 
         return None
 
 
-def execute_and_fetch_all(conn: sqlite3.Connection, query: str, params: tuple = None) -> List[sqlite3.Row]:
+def execute_and_fetch_all(
+    conn: sqlite3.Connection, query: str, params: tuple = None
+) -> List[sqlite3.Row]:
     """
     Execute query and fetch all results in one operation.
-    
+
     Args:
         conn (sqlite3.Connection): Database connection
         query (str): SQL query to execute
         params (tuple, optional): Query parameters
-        
+
     Returns:
         List[sqlite3.Row]: List of all rows
     """
@@ -233,83 +243,91 @@ def execute_and_fetch_all(conn: sqlite3.Connection, query: str, params: tuple = 
         return []
 
 
-def insert_data(conn: sqlite3.Connection, table: str, data: Dict[str, Any]) -> Optional[int]:
+def insert_data(
+    conn: sqlite3.Connection, table: str, data: Dict[str, Any]
+) -> Optional[int]:
     """
     Insert data into a table with dynamic column mapping.
-    
+
     Args:
         conn (sqlite3.Connection): Database connection
         table (str): Table name
         data (Dict[str, Any]): Column-value pairs to insert
-        
+
     Returns:
         int or None: Row ID of inserted record
     """
     try:
-        columns = ', '.join(data.keys())
-        placeholders = ', '.join(['?' for _ in data])
+        columns = ", ".join(data.keys())
+        placeholders = ", ".join(["?" for _ in data])
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
-        
+
         cursor = execute_query(conn, query, tuple(data.values()))
         conn.commit()
-        
+
         row_id = cursor.lastrowid
         logger.info(f"Inserted data into {table}, row ID: {row_id}")
         return row_id
-        
+
     except Exception as e:
         logger.error(f"Failed to insert data into {table}: {str(e)}")
         conn.rollback()
         return None
 
 
-def update_data(conn: sqlite3.Connection, table: str, data: Dict[str, Any], 
-                where_clause: str, where_params: tuple = None) -> int:
+def update_data(
+    conn: sqlite3.Connection,
+    table: str,
+    data: Dict[str, Any],
+    where_clause: str,
+    where_params: tuple = None,
+) -> int:
     """
     Update data in a table with dynamic column mapping.
-    
+
     Args:
         conn (sqlite3.Connection): Database connection
         table (str): Table name
         data (Dict[str, Any]): Column-value pairs to update
         where_clause (str): WHERE clause condition
         where_params (tuple, optional): Parameters for WHERE clause
-        
+
     Returns:
         int: Number of affected rows
     """
     try:
-        set_clause = ', '.join([f"{col} = ?" for col in data.keys()])
+        set_clause = ", ".join([f"{col} = ?" for col in data.keys()])
         query = f"UPDATE {table} SET {set_clause} WHERE {where_clause}"
-        
+
         params = list(data.values())
         if where_params:
             params.extend(where_params)
-        
+
         cursor = execute_query(conn, query, tuple(params))
         conn.commit()
-        
+
         affected_rows = cursor.rowcount
         logger.info(f"Updated {affected_rows} rows in {table}")
         return affected_rows
-        
+
     except Exception as e:
         logger.error(f"Failed to update data in {table}: {str(e)}")
         conn.rollback()
         return 0
 
 
-def delete_data(conn: sqlite3.Connection, table: str, where_clause: str, 
-                where_params: tuple = None) -> int:
+def delete_data(
+    conn: sqlite3.Connection, table: str, where_clause: str, where_params: tuple = None
+) -> int:
     """
     Delete data from a table.
-    
+
     Args:
         conn (sqlite3.Connection): Database connection
         table (str): Table name
         where_clause (str): WHERE clause condition
         where_params (tuple, optional): Parameters for WHERE clause
-        
+
     Returns:
         int: Number of deleted rows
     """
@@ -317,11 +335,11 @@ def delete_data(conn: sqlite3.Connection, table: str, where_clause: str,
         query = f"DELETE FROM {table} WHERE {where_clause}"
         cursor = execute_query(conn, query, where_params)
         conn.commit()
-        
+
         deleted_rows = cursor.rowcount
         logger.info(f"Deleted {deleted_rows} rows from {table}")
         return deleted_rows
-        
+
     except Exception as e:
         logger.error(f"Failed to delete data from {table}: {str(e)}")
         conn.rollback()
@@ -331,11 +349,11 @@ def delete_data(conn: sqlite3.Connection, table: str, where_clause: str,
 def get_table_info(conn: sqlite3.Connection, table: str) -> List[sqlite3.Row]:
     """
     Get table schema information.
-    
+
     Args:
         conn (sqlite3.Connection): Database connection
         table (str): Table name
-        
+
     Returns:
         List[sqlite3.Row]: Table schema information
     """
@@ -350,17 +368,17 @@ def get_table_info(conn: sqlite3.Connection, table: str) -> List[sqlite3.Row]:
 def get_table_names(conn: sqlite3.Connection) -> List[str]:
     """
     Get all table names in the database.
-    
+
     Args:
         conn (sqlite3.Connection): Database connection
-        
+
     Returns:
         List[str]: List of table names
     """
     try:
         query = "SELECT name FROM sqlite_master WHERE type='table'"
         rows = execute_and_fetch_all(conn, query)
-        return [row['name'] for row in rows]
+        return [row["name"] for row in rows]
     except Exception as e:
         logger.error(f"Failed to get table names: {str(e)}")
         return []
@@ -368,8 +386,8 @@ def get_table_names(conn: sqlite3.Connection) -> List[str]:
 
 def close_connection(conn: sqlite3.Connection) -> None:
     """
-    Close the connection to the database with enhanced error handling.
-    
+    Close the connection to the database with error handling.
+
     Args:
         conn (sqlite3.Connection): Database connection to close
     """
@@ -384,10 +402,10 @@ def close_connection(conn: sqlite3.Connection) -> None:
 def test_connection(db_file: str) -> bool:
     """
     Test database connection and basic functionality.
-    
+
     Args:
         db_file (str): Path to the database file
-        
+
     Returns:
         bool: True if connection test passes
     """
@@ -396,14 +414,16 @@ def test_connection(db_file: str) -> bool:
             # Test basic query
             cursor = execute_query(conn, "SELECT sqlite_version()")
             version = fetch_one(cursor)
-            
+
             if version:
-                logger.info(f"Database connection test passed. SQLite version: {version[0]}")
+                logger.info(
+                    f"Database connection test passed. SQLite version: {version[0]}"
+                )
                 return True
             else:
                 logger.error("Database connection test failed - no version returned")
                 return False
-                
+
     except Exception as e:
         logger.error(f"Database connection test failed: {str(e)}")
         return False

@@ -1,209 +1,112 @@
 """
-Enhanced Base Page with comprehensive functionality and error handling.
+Base page class for web automation with specialized action handlers.
 """
 
 import time
-from typing import Optional, List
+from typing import Any, List, Optional, Tuple
+
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import (
-    TimeoutException, 
-    NoSuchElementException, 
     ElementNotInteractableException,
-    StaleElementReferenceException
+    StaleElementReferenceException,
+    TimeoutException,
 )
-from pathlib import Path
-from config.simple_settings import settings
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from config.settings import settings
+from utils.logger import logger
 
 
-class BasePage:
-    """Enhanced base page with comprehensive functionality and error handling."""
-    
-    def __init__(self, driver):
-        self.driver = driver[0]
-        self.sql = driver[1]
-        self.wait = WebDriverWait(self.driver, settings.TIMEOUT)
-        self.actions = ActionChains(self.driver)
-    
-    # Enhanced element finding methods
-    def find_element(self, locator, timeout=None, retry_count=3):
-        """Find a single element with retry logic."""
-        timeout = timeout or settings.TIMEOUT
-        
-        for attempt in range(retry_count):
+class ElementActions:
+    """
+    Handles all element interactions and operations.
+    """
+
+    def __init__(self, driver: webdriver.Chrome, timeout: int = None):
+        self.driver = driver
+        self.timeout = timeout or settings.TIMEOUT
+        self.wait = WebDriverWait(driver, self.timeout)
+        self.actions = ActionChains(driver)
+
+    def find_element_safely(
+        self, locator: Tuple[str, str], timeout: int = None
+    ) -> Optional[Any]:
+        """Find element with retry logic - DRY principle applied."""
+        timeout = timeout or self.timeout
+
+        for attempt in range(3):  # Retry logic
             try:
-                element = WebDriverWait(self.driver, timeout).until(
-                    EC.presence_of_element_located(locator)
-                )
-                return element
-                
+                return self.wait.until(EC.presence_of_element_located(locator))
             except StaleElementReferenceException:
-                if attempt < retry_count - 1:
-                    print(f"Stale element, retrying... (attempt {attempt + 1})")
+                if attempt < 2:
                     time.sleep(0.5)
                     continue
-                else:
-                    raise
+                raise
             except TimeoutException:
-                print(f"Element not found: {locator}")
                 return None
-    
-    def find_elements(self, locator, timeout=None):
-        """Find multiple elements."""
-        timeout = timeout or settings.TIMEOUT
-        
-        try:
-            WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located(locator)
-            )
-            return self.driver.find_elements(*locator)
-        except TimeoutException:
-            print(f"Elements not found: {locator}")
-            return []
-    
-    # Original methods with enhancements
-    def wait_for_element(self, locator, timeout=None):
-        """Wait for element to be visible (enhanced original method)."""
-        timeout = timeout or settings.TIMEOUT
-        try:
-            return WebDriverWait(self.driver, timeout).until(
-                EC.visibility_of_element_located(locator)
-            )
-        except TimeoutException:
-            print(f"Element not visible: {locator}")
-            return None
 
-    def refresh_page(self):
-        """Refresh the current page (enhanced original method)."""
-        try:
-            self.driver.refresh()
-            print("Page refreshed successfully")
-            return True
-        except Exception as e:
-            print(f"Error refreshing page: {e}")
-            return False
-
-    def get_title(self, timeout=None):
-        """Get the page title with timeout (enhanced original method)."""
-        timeout = timeout or settings.TIMEOUT
-        try:
-            WebDriverWait(self.driver, timeout).until(lambda driver: driver.title != "")
-            title = self.driver.title
-            print(f"Page title: {title}")
-            return title
-        except TimeoutException:
-            print("Page title not available within timeout")
-            return False
-    
-    # New enhanced methods
-    def click(self, locator, timeout=None, use_js=False):
-        """Click an element with enhanced error handling."""
-        element = self.wait_for_element_clickable(locator, timeout)
+    def click_element(
+        self, locator: Tuple[str, str], use_javascript: bool = False
+    ) -> bool:
+        """Click element with fallback strategy."""
+        logger.debug(
+            f"Clicking element: {locator[1]} {'(JS)' if use_javascript else ''}"
+        )
+        element = self.wait_for_clickable(locator)
         if not element:
+            logger.warning(f"Element not clickable: {locator[1]}")
             return False
-        
+
         try:
-            if use_js:
+            if use_javascript:
                 self.driver.execute_script("arguments[0].click();", element)
             else:
                 element.click()
-            print(f"Clicked element: {locator}")
+            logger.debug(f"Successfully clicked: {locator[1]}")
             return True
-            
         except ElementNotInteractableException:
-            if not use_js:
-                return self.click(locator, timeout, use_js=True)
-            else:
-                print(f"Element not interactable: {locator}")
-                return False
-    
-    def send_keys(self, locator, text, clear_first=True, timeout=None):
-        """Send keys to an element."""
-        element = self.wait_for_element(locator, timeout)
+            if not use_javascript:
+                logger.debug(f"Fallback to JS click for: {locator[1]}")
+                return self.click_element(locator, use_javascript=True)
+            logger.error(f"Failed to click element: {locator[1]}")
+            return False
+
+    def type_in_element(
+        self, locator: Tuple[str, str], text: str, clear_first: bool = True
+    ) -> bool:
+        """Type text in element with error handling."""
+        element = self.find_element_safely(locator)
         if not element:
             return False
-        
+
         try:
             if clear_first:
                 element.clear()
             element.send_keys(text)
-            print(f"Sent keys to element: {locator}")
             return True
-        except Exception as e:
-            print(f"Error sending keys: {e}")
+        except Exception:
             return False
-    
-    def get_text(self, locator, timeout=None):
-        """Get text from an element."""
-        element = self.wait_for_element(locator, timeout)
-        if not element:
-            return None
-        
-        try:
-            text = element.text.strip()
-            print(f"Got text from element: {text}")
-            return text
-        except Exception as e:
-            print(f"Error getting text: {e}")
-            return None
-    
-    def wait_for_element_clickable(self, locator, timeout=None):
+
+    def get_element_text(self, locator: Tuple[str, str]) -> str:
+        """Get text from element safely."""
+        element = self.find_element_safely(locator)
+        return element.text.strip() if element else ""
+
+    def wait_for_clickable(
+        self, locator: Tuple[str, str], timeout: int = None
+    ) -> Optional[Any]:
         """Wait for element to be clickable."""
-        timeout = timeout or settings.TIMEOUT
+        timeout = timeout or self.timeout
         try:
             return WebDriverWait(self.driver, timeout).until(
                 EC.element_to_be_clickable(locator)
             )
         except TimeoutException:
-            print(f"Element not clickable: {locator}")
             return None
-    
-    def take_screenshot(self, filename=None):
-        """Take a screenshot of the current page."""
-        try:
-            if not filename:
-                timestamp = int(time.time())
-                filename = f"screenshot_{timestamp}.png"
-            
-            screenshot_path = settings.SCREENSHOTS_DIR / filename
-            screenshot_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            self.driver.save_screenshot(str(screenshot_path))
-            print(f"Screenshot saved: {screenshot_path}")
-            return str(screenshot_path)
-            
-        except Exception as e:
-            print(f"Error taking screenshot: {e}")
-            return None
-    
-    def scroll_to_element(self, locator, timeout=None):
-        """Scroll to an element."""
-        element = self.find_element(locator, timeout)
-        if not element:
-            return False
-        
-        try:
-            self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
-            print(f"Scrolled to element: {locator}")
-            return True
-        except Exception as e:
-            print(f"Error scrolling to element: {e}")
-            return False
-    
-    def is_element_present(self, locator, timeout=1):
-        """Check if element is present in DOM."""
-        try:
-            WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located(locator)
-            )
-            return True
-        except TimeoutException:
-            return False
-    
-    def is_element_visible(self, locator, timeout=1):
+
+    def is_element_visible(self, locator: Tuple[str, str], timeout: int = 1) -> bool:
         """Check if element is visible."""
         try:
             WebDriverWait(self.driver, timeout).until(
@@ -212,34 +115,197 @@ class BasePage:
             return True
         except TimeoutException:
             return False
-    
-    def wait_for_page_load(self, timeout=None):
-        """
-        Wait for page to fully load by checking document ready state.
-        
-        Args:
-            timeout (int, optional): Maximum time to wait. Defaults to settings.TIMEOUT.
-            
-        Returns:
-            bool: True if page loaded successfully, False otherwise
-        """
-        timeout = timeout or settings.TIMEOUT
-        
+
+
+class NavigationActions:
+    """
+    Handles page navigation operations.
+    """
+
+    def __init__(self, driver: webdriver.Chrome):
+        self.driver = driver
+
+    def navigate_to_url(self, url: str) -> bool:
+        """Navigate to URL safely."""
+        logger.info(f"Navigating to: {url}")
         try:
-            # Wait for document ready state to be complete
-            WebDriverWait(self.driver, timeout).until(
-                lambda driver: driver.execute_script("return document.readyState") == "complete"
-            )
-            
-            # Additional wait for any dynamic content
-            time.sleep(0.5)
-            
-            print("✅ Page loaded successfully")
+            self.driver.get(url)
+            logger.debug(f"Successfully navigated to: {url}")
             return True
-            
+        except Exception as e:
+            logger.error(f"Failed to navigate to {url}: {str(e)}")
+            return False
+
+    def refresh_current_page(self) -> bool:
+        """Refresh page safely."""
+        try:
+            self.driver.refresh()
+            return True
+        except Exception:
+            return False
+
+    def get_current_page_title(self) -> str:
+        """Get page title safely."""
+        try:
+            return self.driver.title
+        except Exception:
+            return ""
+
+    def get_current_url(self) -> str:
+        """Get current URL safely."""
+        try:
+            return self.driver.current_url
+        except Exception:
+            return ""
+
+    def wait_for_page_load(self, timeout: int = None) -> bool:
+        """Wait for page to fully load."""
+        timeout = timeout or settings.TIMEOUT
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                lambda driver: driver.execute_script("return document.readyState")
+                == "complete"
+            )
+            return True
         except TimeoutException:
-            print(f"⚠️ Page load timeout after {timeout} seconds")
+            logger.warning(f"Page load timeout after {timeout}s")
             return False
         except Exception as e:
-            print(f"❌ Error waiting for page load: {str(e)}")
+            logger.error(f"Error waiting for page load: {str(e)}")
             return False
+
+
+class ScreenshotActions:
+    """
+    Handles screenshot capture operations.
+    """
+
+    def __init__(self, driver: webdriver.Chrome):
+        self.driver = driver
+
+    def take_page_screenshot(self, filename: str = None) -> str:
+        """Take screenshot with automatic naming."""
+        try:
+            if not filename:
+                timestamp = int(time.time())
+                filename = f"screenshot_{timestamp}.png"
+
+            screenshot_path = settings.SCREENSHOTS_DIR / filename
+            screenshot_path.parent.mkdir(parents=True, exist_ok=True)
+
+            self.driver.save_screenshot(str(screenshot_path))
+            logger.screenshot(str(screenshot_path))
+            return str(screenshot_path)
+        except Exception as e:
+            logger.error(f"Failed to take screenshot: {str(e)}")
+            return ""
+
+
+class DatabaseActions:
+    """
+    Handles database query operations.
+    """
+
+    def __init__(self, database_connection: Optional[object]):
+        self.db_connection = database_connection
+
+    def execute_database_query(
+        self, query: str, parameters: Optional[tuple] = None
+    ) -> List[dict]:
+        """Execute database query safely."""
+        if not self.db_connection:
+            return []
+
+        try:
+            # This would need to be implemented based on your specific SQL utility
+            # For now, returning empty list as placeholder
+            return []
+        except Exception:
+            return []
+
+
+class BasePage:
+    """
+    Base page class that coordinates specialized action handlers.
+    Provides a clean interface for web automation operations.
+    """
+
+    def __init__(self, driver_and_db: Tuple[webdriver.Chrome, Optional[object]]):
+        driver, database = driver_and_db
+
+        # Initialize specialized action handlers
+        self.element_actions = ElementActions(driver)
+        self.navigation_actions = NavigationActions(driver)
+        self.screenshot_actions = ScreenshotActions(driver)
+        self.database_actions = DatabaseActions(database)
+
+        # Keep direct access for backward compatibility
+        self.driver = driver
+        self.sql = database
+
+    # Public API - delegates to specialized action classes
+    def find_element(
+        self, locator: Tuple[str, str], timeout: int = None
+    ) -> Optional[Any]:
+        """Find element - delegates to ElementActions."""
+        return self.element_actions.find_element_safely(locator, timeout)
+
+    def click(self, locator: Tuple[str, str], use_js: bool = False) -> bool:
+        """Click element - delegates to ElementActions."""
+        return self.element_actions.click_element(locator, use_js)
+
+    def send_keys(
+        self, locator: Tuple[str, str], text: str, clear_first: bool = True
+    ) -> bool:
+        """Type text into element."""
+        return self.element_actions.type_in_element(locator, text, clear_first)
+
+    def get_text(self, locator: Tuple[str, str]) -> str:
+        """Get text - delegates to ElementActions."""
+        return self.element_actions.get_element_text(locator)
+
+    def is_element_visible(self, locator: Tuple[str, str], timeout: int = 1) -> bool:
+        """Check visibility - delegates to ElementActions."""
+        return self.element_actions.is_element_visible(locator, timeout)
+
+    def navigate_to(self, url: str) -> bool:
+        """Navigate to URL - delegates to NavigationActions."""
+        return self.navigation_actions.navigate_to_url(url)
+
+    def refresh_page(self) -> bool:
+        """Refresh page - delegates to NavigationActions."""
+        return self.navigation_actions.refresh_current_page()
+
+    def get_title(self) -> str:
+        """Get title - delegates to NavigationActions."""
+        return self.navigation_actions.get_current_page_title()
+
+    def get_current_url(self) -> str:
+        """Get URL - delegates to NavigationActions."""
+        return self.navigation_actions.get_current_url()
+
+    def wait_for_page_load(self, timeout: int = None) -> bool:
+        """Wait for page load - delegates to NavigationActions."""
+        return self.navigation_actions.wait_for_page_load(timeout)
+
+    def take_screenshot(self, filename: str = None) -> str:
+        """Take screenshot - delegates to ScreenshotActions."""
+        return self.screenshot_actions.take_page_screenshot(filename)
+
+    def execute_query(
+        self, query: str, parameters: Optional[tuple] = None
+    ) -> List[dict]:
+        """Execute DB query - delegates to DatabaseActions."""
+        return self.database_actions.execute_database_query(query, parameters)
+
+    # Convenience methods for common patterns
+    def wait_for_element_clickable(
+        self, locator: Tuple[str, str], timeout: int = None
+    ) -> Optional[Any]:
+        """Wait for clickable element."""
+        return self.element_actions.wait_for_clickable(locator, timeout)
+
+    def is_element_present(self, locator: Tuple[str, str], timeout: int = 1) -> bool:
+        """Check if element exists in DOM."""
+        element = self.element_actions.find_element_safely(locator, timeout)
+        return element is not None

@@ -1,22 +1,30 @@
-# Enhanced QA Automation Framework Requirements
-# Core automation dependencies
+# QA Automation Framework Requirements
+# Includes core dependencies and local development tools
+
+# Core Automation Framework
 selenium==4.16.0
-pytest>=7.4.4
-PyHamcrest>=2.0.4
 webdriver-manager>=4.0.1
 requests>=2.31.0
 
-# Visual regression testing
+# Test Framework & Reporting
+pytest>=8.4.2
+pytest-html>=4.1.1                # HTML test reports
+pytest-cov>=4.0.0                 # Code coverage reports
+
+# Assertion Libraries
+PyHamcrest>=2.0.4
+
+# Visual Testing & Image Comparison
 pixelmatch>=0.3.0
-pillow>=10.1.0
+Pillow>=10.0.0
 
-# Enhanced testing capabilities
-pytest-html>=3.2.0       # HTML test reporting
-pytest-xdist>=3.3.0      # Parallel test execution
-python-dotenv>=1.0.0     # Environment configuration management
+# Configuration & Environment
+python-dotenv>=1.0.1
 
-# Additional utility packages for enhanced functionality
-pytest-mock>=3.11.0     # Mocking capabilities
-pytest-timeout>=2.1.0   # Test timeout handling
-pytest-rerunfailures>=12.0  # Retry failed tests
-pytest-cov>=4.0.0       # Code coverage reporting
+# Local Development Tools (can be run locally)
+black>=23.0.0                     # Code formatting
+isort>=5.12.0                     # Import sorting
+flake8>=6.0.0                     # Code linting
+mypy>=1.5.0                       # Type checking
+bandit>=1.7.5                     # Security vulnerability scanning
+safety>=2.3.0                     # Security dependency checking
