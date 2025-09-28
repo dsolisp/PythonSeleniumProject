@@ -1,0 +1,11 @@
+# Minimal working requirements for Python 3.13
+selenium==4.25.0
+pytest==8.3.3
+pixelmatch==0.3.0
+pillow>=10.4.0
+PyHamcrest
+webdriver-manager==4.0.2
+requests==2.32.3
+
+# Basic configuration
+python-dotenv==1.0.1
