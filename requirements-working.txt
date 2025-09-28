@@ -1,0 +1,33 @@
+# Working Enhanced Requirements - Tested versions
+selenium==4.16.0
+pytest==7.4.4
+pytest-xdist==3.3.1
+pytest-html==3.2.0
+pytest-json-report==1.5.0
+pytest-rerunfailures==12.0
+pixelmatch==0.3.0
+pillow==10.2.0
+PyHamcrest==2.0.4
+webdriver-manager==4.0.1
+requests==2.31.0
+
+# Configuration & Environment Management
+pydantic==2.5.0
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# Enhanced Logging
+loguru==0.7.2
+structlog==23.2.0
+
+# Security
+cryptography==41.0.8
+
+# Test Data Management
+faker==20.1.0
+factory-boy==3.3.0
+
+# Code Quality (optional)
+black==23.12.1
+isort==5.13.2
+flake8==6.1.0
