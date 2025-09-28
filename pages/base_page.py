@@ -212,3 +212,34 @@ class BasePage:
             return True
         except TimeoutException:
             return False
+    
+    def wait_for_page_load(self, timeout=None):
+        """
+        Wait for page to fully load by checking document ready state.
+        
+        Args:
+            timeout (int, optional): Maximum time to wait. Defaults to settings.TIMEOUT.
+            
+        Returns:
+            bool: True if page loaded successfully, False otherwise
+        """
+        timeout = timeout or settings.TIMEOUT
+        
+        try:
+            # Wait for document ready state to be complete
+            WebDriverWait(self.driver, timeout).until(
+                lambda driver: driver.execute_script("return document.readyState") == "complete"
+            )
+            
+            # Additional wait for any dynamic content
+            time.sleep(0.5)
+            
+            print("✅ Page loaded successfully")
+            return True
+            
+        except TimeoutException:
+            print(f"⚠️ Page load timeout after {timeout} seconds")
+            return False
+        except Exception as e:
+            print(f"❌ Error waiting for page load: {str(e)}")
+            return False
