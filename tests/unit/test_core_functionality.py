@@ -41,7 +41,7 @@ class TestBasePage:
         
         page = BasePage(mock_driver, mock_sql)
         assert page.driver == mock_driver
-        assert page.sql == mock_sql
+        assert page.database == mock_sql
 
     def test_action_handlers_exist(self):
         """Test that action handlers exist."""
@@ -50,14 +50,15 @@ class TestBasePage:
         mock_sql = Mock()
         
         page = BasePage(mock_driver, mock_sql)
-        # Check if the enhanced version exists
-        if hasattr(page, 'element'):
-            assert hasattr(page, 'element')
-            assert hasattr(page, 'navigation') 
-            assert hasattr(page, 'screenshot')
-        else:
-            # Or check basic methods exist
-            assert hasattr(page, 'wait_for_element') or hasattr(page, 'driver')
+        # Check that solid base page has essential methods
+        assert hasattr(page, 'find_element')
+        assert hasattr(page, 'wait_for_element')
+        assert hasattr(page, 'click')
+        assert hasattr(page, 'send_keys')
+        assert hasattr(page, 'get_text')
+        assert hasattr(page, 'navigate_to')
+        assert hasattr(page, 'refresh_page')
+        assert hasattr(page, 'get_title')
 
 
 # Test Locators

@@ -9,7 +9,7 @@ import asyncio
 from playwright.async_api import async_playwright
 
 from config.settings import settings
-from utils.playwright_factory import create_playwright_session
+from utils.playwright_factory import create_playwright_session, PlaywrightFactory
 from pages.playwright_google_search_page import PlaywrightGoogleSearchPage
 
 
@@ -265,13 +265,14 @@ async def test_playwright_network_interception():
         # Set up network interception
         intercepted_requests = []
         
-        async def handle_request(request):
+        async def handle_request(route):
+            request = route.request
             intercepted_requests.append({
                 'url': request.url,
                 'method': request.method,
                 'resource_type': request.resource_type
             })
-            await request.continue_()
+            await route.continue_()
         
         # Enable request interception
         await playwright_page.page.route("**/*", handle_request)

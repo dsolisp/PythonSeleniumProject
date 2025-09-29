@@ -102,12 +102,10 @@ def test_base_page_functionality(driver):
 
 
 @pytest.mark.framework
-def test_element_actions_isolation():
-    """Test that our ElementActions class works independently."""
-    from pages.base_page import ElementActions
-
+def test_base_page_element_actions_integration():
+    """Test that our BasePage element actions work correctly."""
     driver = WebDriverFactory.create_chrome_driver(headless=True)
-    element_actions = ElementActions(driver)
+    base_page = BasePage(driver)
 
     try:
         # Navigate to test page
@@ -119,19 +117,19 @@ def test_element_actions_isolation():
         """
         driver.get(f"data:text/html,{test_html}")
 
-        # Test element finding
-        element = element_actions.find_element_safely(("id", "test"))
+        # Test element finding through BasePage
+        element = base_page.find_element(("id", "test"))
         assert element is not None, "Should find element"
 
-        # Test typing
-        success = element_actions.type_in_element(("id", "test"), "new value")
+        # Test typing through BasePage
+        success = base_page.send_keys(("id", "test"), "new value")
         assert success, "Should be able to type"
 
-        # Test clicking
-        success = element_actions.click_element(("id", "clickme"))
+        # Test clicking through BasePage
+        success = base_page.click(("id", "clickme"))
         assert success, "Should be able to click"
 
-        print("✅ ElementActions isolation test passed!")
+        print("✅ BasePage element actions integration test passed!")
 
     finally:
         driver.quit()
