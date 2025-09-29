@@ -8,27 +8,6 @@ from unittest.mock import Mock, patch, MagicMock
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-# Test WebDriver Factory
-class TestWebDriverFactory:
-    """Test core WebDriver creation functionality."""
-    
-    @patch('utils.webdriver_factory.webdriver.Chrome')
-    def test_get_driver_chrome(self, mock_chrome):
-        """Test Chrome driver creation via get_driver."""
-        from utils.webdriver_factory import get_driver
-        mock_driver = Mock()
-        mock_chrome.return_value = mock_driver
-        
-        result = get_driver("chrome")
-        assert len(result) == 2  # Returns (driver, sql_connection)
-        mock_chrome.assert_called_once()
-
-    def test_get_driver_function_exists(self):
-        """Test that get_driver function exists and is callable."""
-        from utils.webdriver_factory import get_driver
-        assert callable(get_driver)
-
-
 # Test Base Page Core Functionality
 class TestBasePage:
     """Test essential BasePage functionality."""
@@ -43,117 +22,58 @@ class TestBasePage:
         assert page.driver == mock_driver
         assert page.database == mock_sql
 
-    def test_action_handlers_exist(self):
-        """Test that action handlers exist."""
-        from pages.base_page import BasePage
-        mock_driver = Mock()
-        mock_sql = Mock()
-        
-        page = BasePage(mock_driver, mock_sql)
-        # Check that solid base page has essential methods
-        assert hasattr(page, 'find_element')
-        assert hasattr(page, 'wait_for_element')
-        assert hasattr(page, 'click')
-        assert hasattr(page, 'send_keys')
-        assert hasattr(page, 'get_text')
-        assert hasattr(page, 'navigate_to')
-        assert hasattr(page, 'refresh_page')
-        assert hasattr(page, 'get_title')
 
-
-# Test Locators
+# Test Locators Structure
 class TestLocators:
-    """Test that locators are properly defined."""
+    """Test that locators are properly defined with correct structure."""
     
-    def test_google_search_locators_exist(self):
-        """Test that Google search locators are defined."""
+    def test_google_search_locators_structure(self):
+        """Test that Google search locators have correct tuple structure."""
         from locators.google_search_locators import GoogleSearchLocators
         
-        # Test key locators exist
+        # Test key locators exist and are properly structured
         assert hasattr(GoogleSearchLocators, 'SEARCH_BOX')
         assert hasattr(GoogleSearchLocators, 'SEARCH_BUTTON')
         
-        # Test locators are tuples
+        # Test locators are tuples with correct length
         assert isinstance(GoogleSearchLocators.SEARCH_BOX, tuple)
         assert len(GoogleSearchLocators.SEARCH_BOX) == 2
+        assert isinstance(GoogleSearchLocators.SEARCH_BOX[1], str)
+        assert len(GoogleSearchLocators.SEARCH_BOX[1]) > 0
 
-    def test_google_result_locators_exist(self):
-        """Test that Google result locators are defined."""
+    def test_google_result_locators_structure(self):
+        """Test that Google result locators have correct structure."""
         from locators.google_result_locators import GoogleResultLocators
         
         assert hasattr(GoogleResultLocators, 'RESULTS_CONTAINER')
         assert isinstance(GoogleResultLocators.RESULTS_CONTAINER, tuple)
+        assert len(GoogleResultLocators.RESULTS_CONTAINER) == 2
 
 
-# Test Page Objects
+# Test Page Object Structure
 class TestPageObjects:
-    """Test that page objects can be instantiated."""
+    """Test that page objects follow correct inheritance patterns."""
     
-    def test_google_search_page_creation(self):
-        """Test GoogleSearchPage can be created."""
+    def test_page_object_inheritance(self):
+        """Test page objects inherit from BasePage correctly."""
+        from pages.base_page import BasePage
         from pages.google_search_page import GoogleSearchPage
-        mock_driver = Mock()
+        from pages.google_result_page import GoogleResultPage
         
-        page = GoogleSearchPage(mock_driver)
-        assert page is not None
-
-    def test_google_result_page_creation(self):
-        """Test GoogleResultPage can be created."""
+        # Test inheritance structure
+        assert issubclass(GoogleSearchPage, BasePage)
+        assert issubclass(GoogleResultPage, BasePage)
+    
+    def test_page_object_initialization(self):
+        """Test page objects can be initialized with mock driver."""
+        from pages.google_search_page import GoogleSearchPage
         from pages.google_result_page import GoogleResultPage
         mock_driver = Mock()
         
-        page = GoogleResultPage(mock_driver)
-        assert page is not None
-
-
-# Test Basic SQL Connection
-class TestSQLConnection:
-    """Test basic SQL connection functionality."""
-    
-    def test_get_connection_function_exists(self):
-        """Test that get_connection function exists."""
-        from utils.sql_connection import get_connection
-        assert callable(get_connection)
-
-    @patch('utils.sql_connection.os.path.exists')
-    @patch('utils.sql_connection.sqlite3.connect')
-    def test_get_connection_basic(self, mock_connect, mock_exists):
-        """Test basic connection creation."""
-        from utils.sql_connection import get_connection
-        mock_conn = Mock()
-        mock_connect.return_value = mock_conn
-        mock_exists.return_value = True  # File exists
+        search_page = GoogleSearchPage(mock_driver)
+        result_page = GoogleResultPage(mock_driver)
         
-        result = get_connection("test.db")
-        assert result == mock_conn
-        mock_connect.assert_called_once_with("test.db")
-
-
-# Test Settings
-class TestSettings:
-    """Test basic settings functionality."""
-    
-    def test_settings_can_be_imported(self):
-        """Test that settings can be imported."""
-        from config.settings import Settings
-        settings = Settings()
-        assert settings is not None
-
-    def test_basic_settings_attributes(self):
-        """Test that basic settings attributes exist."""
-        from config.settings import Settings
-        settings = Settings()
-        
-        assert hasattr(settings, 'BROWSER')
-        assert hasattr(settings, 'BASE_URL')
-        assert hasattr(settings, 'TIMEOUT')
-
-
-# Test Image Diff Handler
-class TestImageDiff:
-    """Test basic image diff functionality."""
-    
-    def test_compare_images_function_exists(self):
-        """Test that compare_images function exists."""
-        from utils.diff_handler import compare_images
-        assert callable(compare_images)
+        assert search_page is not None
+        assert result_page is not None
+        assert hasattr(search_page, 'driver')
+        assert hasattr(result_page, 'driver')

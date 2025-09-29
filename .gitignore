@@ -8,3 +8,5 @@ package.json
 /screenshots
 /screenshots_diff
 /screenshots_diff
+*.exe
+/drivers

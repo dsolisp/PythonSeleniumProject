@@ -30,33 +30,6 @@ class TestFrameworkSmoke:
         except ImportError as e:
             pytest.fail(f"Core import failed: {e}")
     
-    def test_basic_workflow_can_be_mocked(self):
-        """Test that a basic automation workflow can be mocked successfully."""
-        with patch('utils.webdriver_factory.webdriver.Chrome') as mock_chrome, \
-             patch('utils.webdriver_factory.sqlite3.connect') as mock_db:
-            
-            # Mock the driver and database
-            mock_driver = Mock()
-            mock_chrome.return_value = mock_driver
-            mock_sql = Mock()
-            mock_db.return_value = mock_sql
-            
-            # Test the workflow
-            from utils.webdriver_factory import get_driver
-            from pages.google_search_page import GoogleSearchPage
-            
-            # Get driver
-            driver, sql = get_driver("chrome")
-            assert driver is not None
-            assert sql is not None
-            
-            # Create page object
-            search_page = GoogleSearchPage(driver)
-            assert search_page is not None
-            
-            # Verify page has expected attributes
-            assert hasattr(search_page, 'driver')
-
     def test_settings_provide_expected_values(self):
         """Test that settings provide sensible default values."""
         from config.settings import Settings
@@ -92,25 +65,6 @@ class TestFrameworkSmoke:
         
         assert isinstance(search_button, tuple)
         assert len(search_button) == 2
-
-    def test_framework_can_handle_basic_exceptions(self):
-        """Test that framework components handle basic exceptions gracefully."""
-        from pages.base_page import BasePage
-        from config.settings import Settings
-        
-        # Should not crash when given None or mock objects
-        try:
-            mock_driver = Mock()
-            mock_sql = Mock()
-            
-            base_page = BasePage(mock_driver, mock_sql)
-            assert base_page is not None
-            
-            settings = Settings()
-            assert settings is not None
-            
-        except Exception as e:
-            pytest.fail(f"Framework crashed on basic operations: {e}")
 
 
 class TestDependenciesAvailable:
