@@ -1,5 +1,5 @@
-# QA Automation Framework Requirements
-# Includes core dependencies and local development tools
+# QA Automation Framework Requirements - Phase 2 Enhanced
+# Includes core dependencies, Phase 2 enhancements, and local development tools
 
 # Core Automation Framework
 selenium==4.16.0                  # Existing web automation
@@ -15,6 +15,25 @@ pytest>=8.4.2
 pytest-html>=4.1.1                # HTML test reports
 pytest-cov>=4.0.0                 # Code coverage reports
 pytest-asyncio>=1.2.0             # Async test support for Playwright
+pytest-xdist>=3.3.0               # Parallel test execution
+
+# Phase 2 Enhancement: Advanced Reporting & Analytics
+allure-pytest>=2.13.0             # Advanced test reporting with analytics
+pytest-json-report>=1.5.0         # JSON format reports for CI/CD integration
+
+# Phase 2 Enhancement: Data Management & Analytics
+pydantic>=2.5.0                   # Data validation and serialization
+pandas>=2.1.0                     # Data analysis and processing
+numpy>=1.24.0                     # Numerical computing for analytics
+PyYAML>=6.0.1                     # YAML data format support
+
+# Phase 2 Enhancement: Performance Monitoring
+psutil>=5.9.0                     # System and process monitoring
+memory-profiler>=0.61.0           # Memory usage profiling
+
+# Phase 2 Enhancement: Advanced Error Handling
+retry>=0.9.2                      # Retry mechanisms
+tenacity>=8.2.0                   # Advanced retry strategies
 
 # Assertion Libraries
 PyHamcrest>=2.0.4
@@ -25,6 +44,9 @@ Pillow>=10.0.0
 
 # Configuration & Environment
 python-dotenv>=1.0.1
+
+# Database Support (Enhanced)
+sqlite3                           # Built-in SQLite support
 
 # Local Development Tools (can be run locally)
 black>=23.0.0                     # Code formatting

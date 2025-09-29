@@ -1,6 +1,7 @@
 """
 Integration tests for page object interactions.
 Tests complete workflows and module interactions.
+All locators are centralized in locator classes following clean architecture.
 """
 
 import os
@@ -14,6 +15,8 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 from pages.base_page import BasePage
 from pages.google_search_page import GoogleSearchPage
 from pages.google_result_page import GoogleResultPage
+from locators.google_search_locators import GoogleSearchLocators
+from locators.test_framework_locators import TestFrameworkLocators
 from utils.webdriver_factory import get_driver
 from utils.sql_connection import get_connection, execute_query, insert_data, execute_and_fetch_one
 
@@ -180,8 +183,8 @@ class TestPageObjectIntegration:
         # Navigate to Google search page
         page.navigate_to("https://www.google.com")
         
-        # Test finding elements (this may vary based on Google's current layout)
-        search_elements = page.find_elements(("name", "q"))
+        # Test finding elements using locators
+        search_elements = page.find_elements(GoogleSearchLocators.SEARCH_BOX)
         
         # Google should have at least one search box
         assert len(search_elements) >= 0  # Allow for 0 in case of changes
@@ -197,8 +200,8 @@ class TestPageObjectIntegration:
         # Test navigation to invalid URL
         page.navigate_to("https://nonexistent-domain-12345.com")
         
-        # Test element finding on page that might not load
-        element = page.find_element(("id", "nonexistent-element"))
+        # Test element finding on page that might not load using locators
+        element = page.find_element(TestFrameworkLocators.NONEXISTENT_ELEMENT)
         assert element is None
         
         # Test screenshot on potentially problematic page

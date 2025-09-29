@@ -16,9 +16,9 @@ class GoogleSearchPage(BasePage):
     Provides methods for search operations and result handling.
     """
 
-    def __init__(self, driver_and_db):
-        """Initialize Google search page."""
-        super().__init__(driver_and_db)
+    def __init__(self, driver_and_db, test_name: str = None, environment: str = "test"):
+        """Initialize Google search page with enhanced features."""
+        super().__init__(driver_and_db, test_name=test_name, environment=environment)
         from config.settings import settings
 
         self.page_url = settings.BASE_URL
@@ -124,6 +124,14 @@ class GoogleSearchPage(BasePage):
     def get_search_input(self):
         """Get the search input element."""
         return self.find_element(GoogleSearchLocators.SEARCH_BOX)
+
+    def enter_search_term(self, search_term: str) -> bool:
+        """Enter search term with enhanced error handling."""
+        return self.send_keys(GoogleSearchLocators.SEARCH_BOX, search_term)
+
+    def click_search_button(self) -> bool:
+        """Click search button with enhanced features."""
+        return self.click(GoogleSearchLocators.SEARCH_BUTTON)
 
     def capture_search_input_screenshot(self, filename: str) -> str:
         """Capture screenshot of search input area."""

@@ -1,11 +1,14 @@
 """
 Framework functionality tests without external dependencies.
+All locators are centralized in locator classes following clean architecture.
 """
 
 import pytest
+from selenium.webdriver.common.by import By
 
 from pages.base_page import BasePage
 from utils.webdriver_factory import DatabaseFactory, WebDriverFactory, get_driver
+from locators.test_framework_locators import TestFrameworkLocators
 
 
 @pytest.mark.framework
@@ -22,8 +25,8 @@ def test_webdriver_factory():
     )
     driver.get(test_html)
 
-    # Find element to verify driver works
-    element = driver.find_element("name", "test")
+    # Find element to verify driver works using locators
+    element = driver.find_element(*TestFrameworkLocators.TEST_INPUT)
     assert element is not None, "Should find test element"
     assert (
         element.get_attribute("value") == "framework"
@@ -74,24 +77,24 @@ def test_base_page_functionality(driver):
         "Framework Test Page" in title
     ), f"Title should contain test page name, got: {title}"
 
-    # Test element finding
-    title_element = base_page.find_element(("id", "title"))
+    # Test element finding using locators
+    title_element = base_page.find_element(TestFrameworkLocators.TITLE_ELEMENT)
     assert title_element is not None, "Should find title element"
 
-    # Test text retrieval
-    title_text = base_page.get_text(("id", "title"))
+    # Test text retrieval using locators
+    title_text = base_page.get_text(TestFrameworkLocators.TITLE_ELEMENT)
     assert "Test Framework" in title_text, f"Should get correct text, got: {title_text}"
 
-    # Test element visibility
-    is_visible = base_page.is_element_visible(("id", "input1"))
+    # Test element visibility using locators
+    is_visible = base_page.is_element_visible(TestFrameworkLocators.TEST_INPUT_1)
     assert is_visible, "Input element should be visible"
 
-    # Test typing
-    type_success = base_page.send_keys(("id", "input1"), "Hello Framework!")
+    # Test typing using locators
+    type_success = base_page.send_keys(TestFrameworkLocators.TEST_INPUT_1, "Hello Framework!")
     assert type_success, "Should be able to type in input"
 
-    # Test clicking
-    click_success = base_page.click(("id", "btn1"))
+    # Test clicking using locators
+    click_success = base_page.click(TestFrameworkLocators.TEST_BUTTON_1)
     assert click_success, "Should be able to click button"
 
     # Test screenshot functionality
@@ -117,16 +120,16 @@ def test_base_page_element_actions_integration():
         """
         driver.get(f"data:text/html,{test_html}")
 
-        # Test element finding through BasePage
-        element = base_page.find_element(("id", "test"))
+        # Test element finding through BasePage using locators
+        element = base_page.find_element(TestFrameworkLocators.TEST_ELEMENT_ID)
         assert element is not None, "Should find element"
 
-        # Test typing through BasePage
-        success = base_page.send_keys(("id", "test"), "new value")
+        # Test typing through BasePage using locators
+        success = base_page.send_keys(TestFrameworkLocators.TEST_ELEMENT_ID, "new value")
         assert success, "Should be able to type"
 
-        # Test clicking through BasePage
-        success = base_page.click(("id", "clickme"))
+        # Test clicking through BasePage using locators
+        success = base_page.click(TestFrameworkLocators.CLICK_ME_BUTTON)
         assert success, "Should be able to click"
 
         print("✅ BasePage element actions integration test passed!")

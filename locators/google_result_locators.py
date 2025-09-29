@@ -26,6 +26,11 @@ class GoogleResultLocators:
     # Special result types
     DID_YOU_MEAN = (By.CSS_SELECTOR, ".gqLQtd a")  # "Did you mean" suggestions
     NO_RESULTS_MESSAGE = (By.CSS_SELECTOR, "#topstuff .med")  # No results message
+    
+    # Alternative result selectors for broader compatibility
+    SEARCH_RESULTS = (By.ID, "search")  # Main results container
+    ALL_H3_ELEMENTS = (By.XPATH, "//h3")  # All H3 elements (common result titles)
+    RESULT_ELEMENTS_DATA_VED = (By.CSS_SELECTOR, "[data-ved]")  # Elements with data-ved attribute
 
     # Dynamic locators with formatting - these need to be tuples for tests to pass
     RESULT_BY_NAME_XPATH = (By.XPATH, "//h3[.='{}']")
