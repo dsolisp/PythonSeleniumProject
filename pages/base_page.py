@@ -8,7 +8,7 @@ and test data integration.
 import time
 import functools
 from datetime import datetime
-from typing import Any, List, Optional, Tuple, Dict, Union
+from typing import Any, List, Optional, Tuple, Dict, Union, Callable
 from pathlib import Path
 
 from selenium import webdriver
@@ -41,16 +41,9 @@ except ImportError:
 
 class BasePage:
     """
-    Advanced base page class that provides essential functionality for page objects.
-    
-    Design principles:
-    - Simple and focused
-    - Easy to understand and maintain  
-    - Provides common patterns without over-engineering
-    - Graceful error handling with intelligent recovery
-    - Flexible timeout management
-    - Performance monitoring and analytics
-    - Test data integration
+    Base Page for Page Object Model
+    Provides common functionality for all page objects with advanced features.
+    Integrates YAML configuration, tenacity retry mechanisms, and performance monitoring.
     """
 
     def __init__(self, driver, database=None, timeout: int = 10, 
@@ -875,6 +868,89 @@ class BasePage:
                 
             self.performance_metrics[action].append(duration)
             self.action_start_time = None
+
+    def load_test_configuration(self, config_name: str = "browser_config", environment: str = "default") -> Dict[str, Any]:
+        """
+        Load YAML test configuration using TestDataManager.
+        Demonstrates practical integration of YAML configuration management.
+        """
+        if not ADVANCED_FEATURES_AVAILABLE:
+            return {"config": "YAML configuration not available"}
+        
+        try:
+            config = self.data_manager.load_yaml_config(config_name, environment)
+            self.logger.info(f"Loaded configuration: {config_name} for environment: {environment}")
+            return config
+        except Exception as e:
+            self.logger.warning(f"Failed to load configuration: {str(e)}")
+            return {"error": str(e)}
+    
+    def execute_with_retry_analytics(self, operation: Callable, operation_name: str = "operation", **kwargs) -> Any:
+        """
+        Execute operation with tenacity retry and performance analytics.
+        Demonstrates integration of retry libraries with performance monitoring.
+        """
+        if not ADVANCED_FEATURES_AVAILABLE:
+            return operation(**kwargs)
+        
+        start_time = time.time()
+        memory_before = self.error_handler.monitor_memory_usage()
+        
+        try:
+            # Use tenacity-based retry from error handler
+            result = self.error_handler.execute_with_tenacity_retry(
+                operation, 
+                max_attempts=3,
+                wait_strategy="exponential",
+                **kwargs
+            )
+            
+            duration = time.time() - start_time
+            memory_after = self.error_handler.monitor_memory_usage()
+            
+            # Log performance metrics
+            performance_data = {
+                "operation": operation_name,
+                "duration": duration,
+                "memory_before_mb": memory_before.get("memory_usage_mb", 0),
+                "memory_after_mb": memory_after.get("memory_usage_mb", 0),
+                "success": True,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            self.performance_data.append(performance_data)
+            self.logger.info(f"Operation '{operation_name}' completed in {duration:.2f}s")
+            
+            return result
+            
+        except Exception as e:
+            duration = time.time() - start_time
+            self.logger.error(f"Operation '{operation_name}' failed after {duration:.2f}s: {str(e)}")
+            raise
+    
+    def generate_performance_report(self) -> Dict[str, Any]:
+        """
+        Generate comprehensive performance report using pandas analytics.
+        Integrates with AdvancedTestReporter for data analysis.
+        """
+        if not ADVANCED_FEATURES_AVAILABLE or not self.performance_data:
+            return {"report": "No performance data available"}
+        
+        try:
+            # Use reporter's pandas analytics for insights
+            insights = self.test_reporter.get_performance_insights()
+            csv_file = self.test_reporter.export_to_csv("performance_report.csv")
+            
+            return {
+                "total_operations": len(self.performance_data),
+                "avg_duration": sum(d["duration"] for d in self.performance_data) / len(self.performance_data),
+                "detailed_insights": insights,
+                "data_exported": csv_file
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Failed to generate performance report: {str(e)}")
+            return {"error": str(e)}
 
     def _record_interaction(self, action: str, locator: Tuple[str, str], 
                           status: str, details: str = None) -> None:

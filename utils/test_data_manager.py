@@ -1,6 +1,6 @@
 """
-Advanced Test Data Manager for data-driven testing.
-Phase 2 Enhancement: Comprehensive test data management and parameterization.
+Test Data Manager for comprehensive data-driven testing.
+Supports multiple data formats and environments for robust test automation.
 """
 
 import json
@@ -57,7 +57,7 @@ class TestDataManager:
         
         if cache_key in self._cache:
             return self._cache[cache_key]
-
+        
         # Try different file formats
         for ext in ['.json', '.yaml', '.yml', '.csv']:
             file_path = self._get_env_file_path(filename, environment, ext)
@@ -69,8 +69,96 @@ class TestDataManager:
         # Fallback to default environment
         if environment != "default":
             return self.load_test_data(filename, "default")
+        
+        # Return empty dict if no file found instead of raising error
+        return {}
+
+    def load_yaml_config(self, config_name: str, environment: str = "default") -> Dict[str, Any]:
+        """
+        Load YAML configuration files for complex test setups.
+        Demonstrates meaningful YAML integration for configuration management.
+        
+        Args:
+            config_name: Name of the config file (without extension)
+            environment: Environment-specific config to load
             
-        raise FileNotFoundError(f"Test data file not found: {filename}")
+        Returns:
+            Dictionary containing configuration data
+        """
+        config_file = f"{config_name}_{environment}.yml"
+        config_path = self.data_dir / "configs" / config_file
+        
+        # Create configs directory if it doesn't exist
+        config_path.parent.mkdir(exist_ok=True)
+        
+        if not config_path.exists():
+            # Create default config if it doesn't exist
+            default_config = {
+                "test_environment": {
+                    "name": environment,
+                    "base_url": f"https://{environment}.example.com",
+                    "timeout": 10,
+                    "retry_attempts": 3
+                },
+                "test_data": {
+                    "user_pools": [
+                        {"role": "admin", "count": 2},
+                        {"role": "standard", "count": 5},
+                        {"role": "readonly", "count": 3}
+                    ],
+                    "test_scenarios": [
+                        {"name": "login_flow", "priority": "high", "data_set": "admin_users"},
+                        {"name": "search_functionality", "priority": "medium", "data_set": "search_queries"},
+                        {"name": "user_management", "priority": "high", "data_set": "user_accounts"}
+                    ]
+                },
+                "browser_config": {
+                    "default_browser": "chrome",
+                    "headless": True,
+                    "window_size": [1920, 1080],
+                    "wait_timeout": 10
+                }
+            }
+            
+            with open(config_path, 'w') as f:
+                yaml.dump(default_config, f, default_flow_style=False, indent=2)
+        
+        # Load and return the YAML config
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        return config
+    
+    def save_test_results_yaml(self, results: Dict[str, Any], filename: str = None) -> str:
+        """
+        Save test results in YAML format for human-readable reports.
+        Demonstrates YAML output functionality.
+        """
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"test_results_{timestamp}.yml"
+        
+        filepath = self.data_dir / "results" / filename
+        filepath.parent.mkdir(exist_ok=True)
+        
+        # Format results for YAML output
+        yaml_results = {
+            "test_execution": {
+                "timestamp": datetime.now().isoformat(),
+                "total_tests": results.get("total_tests", 0),
+                "passed": results.get("passed", 0),
+                "failed": results.get("failed", 0),
+                "success_rate": f"{results.get('success_rate', 0):.2%}"
+            },
+            "test_details": results.get("test_details", []),
+            "performance_metrics": results.get("performance_metrics", {}),
+            "environment_info": results.get("environment_info", {})
+        }
+        
+        with open(filepath, 'w') as f:
+            yaml.dump(yaml_results, f, default_flow_style=False, indent=2)
+        
+        return str(filepath)
 
     def get_search_scenarios(self, environment: str = "default") -> List[Dict[str, Any]]:
         """Get search test scenarios."""

@@ -1,6 +1,7 @@
 """
-Advanced Error Handling and Recovery System - Phase 2 Enhancement
-Intelligent error detection, classification, and automatic recovery mechanisms.
+Smart Error Handling and Recovery System
+Intelligent error classification and automatic recovery mechanisms with retry strategies.
+Integrates tenacity and retry libraries for robust error handling.
 """
 
 import time
@@ -12,6 +13,26 @@ from typing import Dict, List, Any, Optional, Callable, Union, Type
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+
+# Retry libraries for robust error handling
+try:
+    from tenacity import Retrying, stop_after_attempt, wait_exponential, retry_if_exception_type
+    from retry import retry
+    RETRY_AVAILABLE = True
+except ImportError:
+    RETRY_AVAILABLE = False
+    Retrying = None
+    retry = None
+
+# Memory and performance monitoring
+try:
+    import psutil
+    import memory_profiler
+    PROFILING_AVAILABLE = True
+except ImportError:
+    PROFILING_AVAILABLE = False
+    psutil = None
+    memory_profiler = None
 
 from selenium.common.exceptions import (
     TimeoutException, NoSuchElementException, ElementNotInteractableException,
@@ -504,6 +525,67 @@ class SmartErrorHandler:
             self.logger.warning(f"Failed to capture error screenshot: {str(e)}")
             return None
 
+    def monitor_memory_usage(self) -> Dict[str, Any]:
+        """
+        Monitor memory usage during test execution using psutil.
+        """
+        if not PROFILING_AVAILABLE:
+            return {"memory_monitoring": "Not available - psutil not installed"}
+        
+        process = psutil.Process()
+        memory_info = process.memory_info()
+        
+        return {
+            "current_memory_mb": round(memory_info.rss / 1024 / 1024, 2),
+            "memory_percent": round(process.memory_percent(), 2),
+            "cpu_percent": round(process.cpu_percent(), 2),
+            "timestamp": datetime.now().isoformat()
+        }
+
+    def execute_with_tenacity_retry(self, 
+                                   operation: Callable, 
+                                   *args, 
+                                   max_attempts: int = 3,
+                                   wait_strategy: str = "exponential",
+                                   **kwargs) -> Any:
+        """
+        Execute operation with tenacity-based retry logic.
+        Provides robust retry mechanisms with different wait strategies.
+        """
+        if not RETRY_AVAILABLE:
+            # Fallback to basic retry if tenacity not available
+            return self._basic_retry(operation, *args, max_attempts=max_attempts, **kwargs)
+        
+        # Configure wait strategy
+        if wait_strategy == "exponential":
+            wait_func = wait_exponential(multiplier=1, min=1, max=10)
+        else:
+            wait_func = wait_exponential(multiplier=1, min=1, max=3)
+        
+        # Use tenacity for robust retries
+        for attempt in Retrying(
+            stop=stop_after_attempt(max_attempts),
+            wait=wait_func,
+            retry=retry_if_exception_type((Exception,))
+        ):
+            with attempt:
+                return operation(*args, **kwargs)
+
+    def _basic_retry(self, operation: Callable, *args, max_attempts: int = 3, **kwargs) -> Any:
+        """Basic retry mechanism without tenacity."""
+        last_exception = None
+        
+        for attempt in range(max_attempts):
+            try:
+                return operation(*args, **kwargs)
+            except Exception as e:
+                last_exception = e
+                self.logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
+                if attempt < max_attempts - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+        
+        raise last_exception
+
 
 def smart_retry(max_attempts: int = 3, wait_time: float = 2.0, 
                exceptions: tuple = (Exception,)):
@@ -556,6 +638,64 @@ def with_error_recovery(error_handler: SmartErrorHandler,
         def navigate_to_page(self, url):
             self.driver.get(url)
     """
+    
+    def execute_with_tenacity_retry(self, 
+                                   operation: Callable, 
+                                   *args, 
+                                   max_attempts: int = 3,
+                                   wait_strategy: str = "exponential",
+                                   **kwargs) -> Any:
+        """
+        Execute operation with tenacity-based retry logic.
+        Provides robust retry mechanisms with different wait strategies.
+        """
+        if not RETRY_AVAILABLE:
+            # Fallback to basic retry if tenacity not available
+            return self._basic_retry(operation, *args, max_attempts=max_attempts, **kwargs)
+        
+        # Configure wait strategy
+        if wait_strategy == "exponential":
+            wait_func = wait_exponential(multiplier=1, min=1, max=10)
+        else:
+            wait_func = wait_exponential(multiplier=1, min=1, max=3)
+        
+        # Use tenacity for robust retries
+        for attempt in Retrying(
+            stop=stop_after_attempt(max_attempts),
+            wait=wait_func,
+            retry=retry_if_exception_type((
+                TimeoutException,
+                NoSuchElementException,
+                ElementNotInteractableException,
+                StaleElementReferenceException
+            ))
+        ):
+            with attempt:
+                try:
+                    result = operation(*args, **kwargs)
+                    self.logger.info(f"Operation succeeded on attempt {attempt.retry_state.attempt_number}")
+                    return result
+                except Exception as e:
+                    self.logger.warning(f"Attempt {attempt.retry_state.attempt_number} failed: {str(e)}")
+                    if attempt.retry_state.attempt_number == max_attempts:
+                        self.logger.error(f"All {max_attempts} attempts failed")
+                    raise
+    
+    def _basic_retry(self, operation: Callable, *args, max_attempts: int = 3, **kwargs) -> Any:
+        """Fallback retry mechanism when tenacity is not available."""
+        last_exception = None
+        
+        for attempt in range(max_attempts):
+            try:
+                return operation(*args, **kwargs)
+            except Exception as e:
+                last_exception = e
+                self.logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
+                if attempt < max_attempts - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+        
+        raise last_exception
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):

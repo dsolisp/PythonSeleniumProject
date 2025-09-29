@@ -10,3 +10,4 @@ package.json
 /screenshots_diff
 *.exe
 /drivers
+/reports

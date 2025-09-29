@@ -1,6 +1,7 @@
 """
-Advanced Test Reporter - Phase 2 Enhancement
-Comprehensive test reporting with analytics, trends, and insights.
+Advanced Test Reporter
+Comprehensive test reporting with analytics and trend analysis capabilities.
+Integrates pandas for data analysis and numpy for statistical computations.
 """
 
 import json
@@ -12,6 +13,24 @@ from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass, asdict
 from collections import defaultdict, Counter
 import statistics
+
+# Data analysis libraries
+try:
+    import pandas as pd
+    import numpy as np
+    ANALYTICS_AVAILABLE = True
+except ImportError:
+    ANALYTICS_AVAILABLE = False
+    pd = None
+    np = None
+
+# Template engine for HTML reports
+try:
+    from jinja2 import Template
+    TEMPLATING_AVAILABLE = True
+except ImportError:
+    TEMPLATING_AVAILABLE = False
+    Template = None
 
 
 @dataclass
@@ -631,6 +650,94 @@ class AdvancedTestReporter:
                 
             test_cases.append(case_xml)
         
+    def generate_dataframe_analytics(self) -> Optional[Dict[str, Any]]:
+        """
+        Generate pandas DataFrame for advanced analytics.
+        Leverages pandas for statistical analysis and numpy for computations.
+        """
+        if not ANALYTICS_AVAILABLE or not self.test_results:
+            return None
+        
+        # Convert test results to structured data
+        data = []
+        for result in self.test_results:
+            data.append({
+                'test_name': result.test_name,
+                'status': result.status,
+                'duration': result.duration,
+                'timestamp': result.timestamp,
+                'browser': result.browser,
+                'environment': result.environment,
+                'error_type': result.error_message or 'none',
+                'day_of_week': result.timestamp.strftime('%A'),
+                'hour': result.timestamp.hour
+            })
+        
+        df = pd.DataFrame(data)
+        
+        # Add computed columns using numpy
+        df['duration_zscore'] = np.abs((df['duration'] - df['duration'].mean()) / df['duration'].std())
+        df['is_outlier'] = df['duration_zscore'] > 2
+        df['success'] = df['status'] == 'passed'
+        
+        return df.to_dict('records')  # Return as dict for serialization
+    
+    def get_performance_insights(self) -> Dict[str, Any]:
+        """
+        Generate performance insights using pandas analytics.
+        """
+        df_data = self.generate_dataframe_analytics()
+        if df_data is None or not df_data:
+            return {"insights": "No data available for analysis"}
+        
+        if not ANALYTICS_AVAILABLE:
+            return {"insights": "Analytics not available - pandas not installed"}
+        
+        # Create DataFrame from data
+        df = pd.DataFrame(df_data)
+        
+        insights = {
+            "execution_stats": {
+                "avg_duration": float(df['duration'].mean()),
+                "median_duration": float(df['duration'].median()),
+                "std_duration": float(df['duration'].std()),
+                "slowest_tests": df.nlargest(3, 'duration')[['test_name', 'duration']].to_dict('records')
+            },
+            "success_patterns": {
+                "overall_success_rate": float(df['success'].mean()),
+                "success_by_browser": df.groupby('browser')['success'].mean().to_dict(),
+                "success_by_hour": df.groupby('hour')['success'].mean().to_dict(),
+                "success_by_day": df.groupby('day_of_week')['success'].mean().to_dict()
+            },
+            "anomaly_detection": {
+                "performance_outliers": int(df['is_outlier'].sum()),
+                "outlier_tests": df[df['is_outlier']]['test_name'].tolist()
+            }
+        }
+        
+        return insights
+    
+    def export_to_csv(self, filename: str = None) -> str:
+        """
+        Export test results to CSV using pandas for efficient processing.
+        """
+        df_data = self.generate_dataframe_analytics()
+        if df_data is None:
+            return "No data to export"
+        
+        if not ANALYTICS_AVAILABLE:
+            return "CSV export not available - pandas not installed"
+        
+        df = pd.DataFrame(df_data)
+        
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"test_results_{timestamp}.csv"
+        
+        filepath = self.reports_dir / filename
+        df.to_csv(filepath, index=False)
+        return str(filepath)
+
         return f"""<?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="{self.current_suite.suite_name}" 
            tests="{self.current_suite.total_tests}" 

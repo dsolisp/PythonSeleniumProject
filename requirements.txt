@@ -1,57 +1,60 @@
-# QA Automation Framework Requirements - Phase 2 Enhanced
-# Includes core dependencies, Phase 2 enhancements, and local development tools
+# Python Selenium Test Automation Framework Requirements
+# Core dependencies for web automation, testing, and analytics
 
 # Core Automation Framework
-selenium==4.16.0                  # Existing web automation
-webdriver-manager>=4.0.1
-requests>=2.31.0
+selenium==4.16.0                  # Web automation with WebDriver
+webdriver-manager>=4.0.1          # Automatic WebDriver management
+requests>=2.31.0                  # HTTP requests for API testing
 
-# Modern Web Automation (Priority 1)
+# Modern Web Automation
 playwright>=1.40.0                # Modern browser automation
 pytest-playwright>=0.4.3          # Playwright pytest integration
 
 # Test Framework & Reporting
-pytest>=8.4.2
+pytest>=8.4.2                     # Python testing framework
 pytest-html>=4.1.1                # HTML test reports
 pytest-cov>=4.0.0                 # Code coverage reports
 pytest-asyncio>=1.2.0             # Async test support for Playwright
 pytest-xdist>=3.3.0               # Parallel test execution
 
-# Phase 2 Enhancement: Advanced Reporting & Analytics
-allure-pytest>=2.13.0             # Advanced test reporting with analytics
+# Advanced Reporting & Analytics
+allure-pytest>=2.13.0             # Advanced test reporting with rich analytics
 pytest-json-report>=1.5.0         # JSON format reports for CI/CD integration
 
-# Phase 2 Enhancement: Data Management & Analytics
+# Data Management & Analytics (pandas integration)
 pydantic>=2.5.0                   # Data validation and serialization
-pandas>=2.1.0                     # Data analysis and processing
-numpy>=1.24.0                     # Numerical computing for analytics
-PyYAML>=6.0.1                     # YAML data format support
+pandas>=2.1.0                     # Data analysis for test result analytics
+numpy>=1.24.0                     # Numerical computing for statistical analysis
+PyYAML>=6.0.1                     # YAML configuration file support
 
-# Phase 2 Enhancement: Performance Monitoring
+# Performance Monitoring (psutil integration)
 psutil>=5.9.0                     # System and process monitoring
-memory-profiler>=0.61.0           # Memory usage profiling
+memory-profiler>=0.61.0           # Memory usage profiling for performance analysis
 
-# Phase 2 Enhancement: Advanced Error Handling
-retry>=0.9.2                      # Retry mechanisms
-tenacity>=8.2.0                   # Advanced retry strategies
+# Robust Error Handling (tenacity integration)
+retry>=0.9.2                      # Simple retry mechanisms
+tenacity>=8.2.0                   # Advanced retry strategies with exponential backoff
+
+# Template Engine for Reports
+jinja2>=3.1.0                     # Template engine for HTML report generation
 
 # Assertion Libraries
-PyHamcrest>=2.0.4
+PyHamcrest>=2.0.4                 # Rich assertion library
 
 # Visual Testing & Image Comparison
-pixelmatch>=0.3.0
-Pillow>=10.0.0
+pixelmatch>=0.3.0                 # Pixel-level image comparison
+Pillow>=10.0.0                    # Image processing and manipulation
 
-# Configuration & Environment
-python-dotenv>=1.0.1
+# Configuration & Environment Management
+python-dotenv>=1.0.1              # Environment variable management
 
-# Database Support (Enhanced)
-sqlite3                           # Built-in SQLite support
+# Database Support
+# sqlite3 (built-in)              # SQLite database support
 
-# Local Development Tools (can be run locally)
+# Development Tools (optional for local development)
 black>=23.0.0                     # Code formatting
 isort>=5.12.0                     # Import sorting
 flake8>=6.0.0                     # Code linting
-mypy>=1.5.0                       # Type checking
+mypy>=1.5.0                       # Static type checking
 bandit>=1.7.5                     # Security vulnerability scanning
 safety>=2.3.0                     # Security dependency checking
