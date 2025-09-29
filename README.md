@@ -2,14 +2,17 @@
 
 [![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://python.org)
 [![Selenium](https://img.shields.io/badge/Selenium-4.16-green.svg)](https://selenium.dev)
+[![Playwright](https://img.shields.io/badge/Playwright-1.40-blueviolet.svg)](https://playwright.dev)
 [![Pytest](https://img.shields.io/badge/Pytest-8.4-orange.svg)](https://pytest.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A clean, professional, and maintainable test automation framework built with Python, Selenium, and Pytest. Following SOLID principles and DRY methodology for scalable test automation.
+A clean, professional, and maintainable test automation framework built with Python, featuring both traditional Selenium WebDriver and modern Playwright capabilities. Following SOLID principles and DRY methodology for scalable test automation with 2025-ready features.
 
 ## 🚀 Features
 
+### Core Testing Capabilities
 - **Clean Architecture**: SOLID principles with specialized action handlers
+- **Dual Browser Automation**: Traditional Selenium + Modern Playwright support
 - **Environment Configuration**: Flexible environment variable support
 - **Multiple Test Types**: UI, API, Database, and Visual testing
 - **Professional Logging**: Structured logging with file and console output
@@ -18,6 +21,16 @@ A clean, professional, and maintainable test automation framework built with Pyt
 - **Screenshot Support**: Automatic failure screenshots and visual comparison
 - **Database Integration**: SQLite database testing capabilities
 - **CI/CD Ready**: Environment-based configuration for different deployment stages
+
+### Modern Playwright Features (Priority 1 - ✅ COMPLETED)
+- **Async Browser Automation**: Modern async/await patterns for faster execution
+- **Network Interception**: Monitor and mock network requests during tests
+- **Mobile Device Emulation**: Test responsive designs with real device simulation
+- **Multi-Browser Testing**: Run tests concurrently across Chromium, Firefox, and WebKit
+- **Performance Monitoring**: Built-in metrics collection and analysis
+- **Advanced Selectors**: Robust element selection with auto-wait capabilities
+- **Screenshot & Video**: Enhanced media capture for test evidence
+- **Headless & Headed Modes**: Flexible execution modes for debugging and CI/CD
 
 ## 📁 Project Structure
 
@@ -28,21 +41,27 @@ A clean, professional, and maintainable test automation framework built with Pyt
 │   ├── google_result_locators.py
 │   └── google_search_locators.py
 ├── pages/
-│   ├── base_page.py            # Core page object with action handlers
-│   ├── google_result_page.py
-│   └── google_search_page.py
+│   ├── base_page.py                    # Selenium base page with action handlers
+│   ├── playwright_base_page.py         # Modern async Playwright base page
+│   ├── google_result_page.py           # Selenium Google results page
+│   ├── google_search_page.py           # Selenium Google search page
+│   └── playwright_google_search_page.py # Modern async Google search with advanced features
 ├── resources/
 │   └── chinook.db              # SQLite database for testing
 ├── tests/
-│   ├── test_api.py             # API testing
-│   ├── test_framework_core.py  # Framework functionality tests
-│   ├── test_google_search.py   # UI automation tests
-│   └── test_image_diff.py      # Visual comparison tests
+│   ├── unit/                           # Comprehensive unit test suite (93 tests)
+│   ├── test_api.py                     # API testing
+│   ├── test_framework_core.py          # Framework functionality tests
+│   ├── test_google_search.py           # Traditional Selenium UI tests
+│   ├── test_playwright_google_search.py # Modern Playwright tests with advanced features
+│   ├── test_playwright_simple.py       # Basic Playwright examples
+│   └── test_image_diff.py              # Visual comparison tests
 ├── utils/
 │   ├── diff_handler.py         # Image comparison utilities
 │   ├── logger.py               # Simple logging utility
 │   ├── sql_connection.py       # Database connection utilities
-│   └── webdriver_factory.py    # WebDriver and database factories
+│   ├── webdriver_factory.py    # Traditional Selenium WebDriver factory
+│   └── playwright_factory.py   # Modern async Playwright browser factory
 ├── .env                        # Environment configuration
 ├── requirements.txt            # Project dependencies
 └── pytest.ini                 # Pytest configuration
@@ -186,6 +205,45 @@ python run_tests.py --type regression
 python run_tests.py --type all --verbose
 ```
 
+### Playwright Tests (Modern Async Browser Automation)
+
+**Install Playwright browsers (one-time setup):**
+```bash
+playwright install
+```
+
+**Run Playwright tests:**
+```bash
+# Run basic Playwright functionality tests
+pytest tests/test_playwright_simple.py -v
+
+# Run advanced Playwright Google search tests
+pytest tests/test_playwright_google_search.py -v
+
+# Run specific Playwright test scenarios
+pytest tests/test_playwright_google_search.py::test_playwright_google_search_basic
+pytest tests/test_playwright_google_search.py::test_playwright_multi_browser
+pytest tests/test_playwright_google_search.py::test_playwright_mobile_emulation
+
+# Run Playwright tests in headed mode (see browser)
+pytest tests/test_playwright_google_search.py --headed
+
+# Run Playwright tests with network interception
+pytest tests/test_playwright_google_search.py::test_playwright_network_interception -s
+
+# Run performance monitoring tests
+pytest tests/test_playwright_google_search.py::test_playwright_performance_monitoring -s
+```
+
+**Playwright Test Features:**
+- ✅ **Async Browser Automation**: Modern async/await patterns
+- ✅ **Network Interception**: Monitor and mock network requests
+- ✅ **Mobile Device Emulation**: iPhone, Android device simulation
+- ✅ **Multi-Browser Support**: Chromium, Firefox, WebKit
+- ✅ **Performance Metrics**: Core Web Vitals, load times
+- ✅ **Advanced Selectors**: Auto-wait, robust element selection
+- ✅ **CAPTCHA Detection**: Smart handling of anti-bot measures
+
 ### Test Categories
 ```bash
 # Run API tests only
@@ -194,11 +252,20 @@ pytest -m api
 # Run UI tests only  
 pytest -m smoke
 
+# Run Playwright tests only
+pytest -m playwright
+
+# Run traditional Selenium tests only
+pytest -m selenium
+
 # Run database tests
 pytest -m database
 
 # Run visual comparison tests
 pytest -m visual
+
+# Run performance tests
+pytest -m performance
 ```
 
 ## 🛠️ Local Development Tools

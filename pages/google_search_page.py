@@ -26,9 +26,12 @@ class GoogleSearchPage(BasePage):
     def open_google(self) -> bool:
         """Navigate to Google and verify page loaded."""
         if self.navigate_to(self.page_url):
-            return self.is_element_visible(
-                GoogleSearchLocators.SEARCH_INPUT, timeout=10
-            )
+            try:
+                return self.wait_for_element(
+                    GoogleSearchLocators.SEARCH_BOX, timeout=10
+                )
+            except Exception:
+                return False
         return False
 
     def navigate_to_google(self) -> bool:
@@ -44,12 +47,12 @@ class GoogleSearchPage(BasePage):
             return False
 
         # Clear and type search term
-        if not self.send_keys(GoogleSearchLocators.SEARCH_INPUT, search_term):
+        if not self.send_keys(GoogleSearchLocators.SEARCH_BOX, search_term):
             return False
 
         # Submit search
         if use_enter:
-            element = self.find_element(GoogleSearchLocators.SEARCH_INPUT)
+            element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
             if element:
                 element.send_keys(Keys.RETURN)
                 return True
@@ -119,15 +122,9 @@ class GoogleSearchPage(BasePage):
         return result
 
     def get_search_input(self):
-        """Get search input element - for backward compatibility."""
-        return self.find_element(GoogleSearchLocators.SEARCH_INPUT)
+        """Get the search input element."""
+        return self.find_element(GoogleSearchLocators.SEARCH_BOX)
 
     def capture_search_input_screenshot(self, filename: str) -> str:
-        """Take screenshot of search input element."""
-        element = self.find_element(GoogleSearchLocators.SEARCH_INPUT)
-        if element:
-            try:
-                return element.screenshot(filename)
-            except Exception:
-                return ""
-        return ""
+        """Capture screenshot of search input area."""
+        element = self.find_element(GoogleSearchLocators.SEARCH_BOX)

@@ -6,20 +6,23 @@ Basic improvements to the original framework without breaking changes.
 import os
 from pathlib import Path
 
-# Load environment variables from .env file if it exists
+# Import dotenv at module level so it can be mocked in tests
 try:
     from dotenv import load_dotenv
-
-    load_dotenv()
 except ImportError:
-    # dotenv not installed, that's okay - we'll use system env vars only
-    pass
-
+    load_dotenv = None
 
 class Settings:
     """Simple settings class without complex dependencies."""
 
     def __init__(self):
+        # Load environment variables from .env file if it exists
+        try:
+            if load_dotenv is not None:
+                load_dotenv()
+        except ImportError:
+            # Handle case where dotenv import fails
+            pass
         # Load from environment or use defaults
         self.BROWSER = os.getenv("BROWSER", "chrome")
         self.HEADLESS = os.getenv("HEADLESS", "false").lower() == "true"

@@ -6,3 +6,5 @@ package.json
 *.png
 /logs
 /screenshots
+/screenshots_diff
+/screenshots_diff

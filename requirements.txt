@@ -2,14 +2,19 @@
 # Includes core dependencies and local development tools
 
 # Core Automation Framework
-selenium==4.16.0
+selenium==4.16.0                  # Existing web automation
 webdriver-manager>=4.0.1
 requests>=2.31.0
+
+# Modern Web Automation (Priority 1)
+playwright>=1.40.0                # Modern browser automation
+pytest-playwright>=0.4.3          # Playwright pytest integration
 
 # Test Framework & Reporting
 pytest>=8.4.2
 pytest-html>=4.1.1                # HTML test reports
 pytest-cov>=4.0.0                 # Code coverage reports
+pytest-asyncio>=1.2.0             # Async test support for Playwright
 
 # Assertion Libraries
 PyHamcrest>=2.0.4

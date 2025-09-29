@@ -399,7 +399,7 @@ def close_connection(conn: sqlite3.Connection) -> None:
         logger.error(f"Error closing database connection: {str(e)}")
 
 
-def test_connection(db_file: str) -> bool:
+def validate_connection(db_file: str) -> bool:
     """
     Test database connection and basic functionality.
 

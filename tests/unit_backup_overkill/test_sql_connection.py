@@ -24,7 +24,7 @@ from utils.sql_connection import (
     get_table_info,
     get_table_names,
     close_connection,
-    test_connection,
+    validate_connection,
     get_artists,
     get_albums_by_artist,
     get_tracks_by_album,
@@ -383,7 +383,7 @@ class TestConnectionFunctions:
         mock_execute_query.return_value = mock_cursor
         mock_fetch_one.return_value = ("3.39.0",)
         
-        result = test_connection("/path/to/db.db")
+        result = validate_connection("/path/to/db.db")
         
         assert result is True
         mock_execute_query.assert_called_once_with(mock_connection, "SELECT sqlite_version()")
@@ -394,7 +394,7 @@ class TestConnectionFunctions:
         """Test connection test failure."""
         mock_context.side_effect = Exception("Connection failed")
         
-        result = test_connection("/path/to/db.db")
+        result = validate_connection("/path/to/db.db")
         
         assert result is False
 

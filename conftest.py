@@ -15,7 +15,7 @@ from utils.webdriver_factory import cleanup_driver_and_database, get_driver
 def pytest_addoption(parser):
     """Add command line options."""
     parser.addoption(
-        "--browser", action="store", default="chrome", help="Browser to use"
+        "--selenium-browser", action="store", default="chrome", help="Browser to use for Selenium tests"
     )
     parser.addoption("--headless", action="store_true", help="Run in headless mode")
 
@@ -24,7 +24,7 @@ def pytest_addoption(parser):
 def test_config(request) -> Dict[str, Any]:
     """Test configuration from command line."""
     return {
-        "browser": request.config.getoption("--browser"),
+        "browser": request.config.getoption("--selenium-browser"),
         "headless": request.config.getoption("--headless"),
     }
 
