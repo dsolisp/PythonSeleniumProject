@@ -17,9 +17,10 @@ pytest-cov>=4.0.0                 # Code coverage reports
 pytest-asyncio>=1.2.0             # Async test support for Playwright
 pytest-xdist>=3.3.0               # Parallel test execution
 
-# Advanced Reporting & Analytics
+# Advanced Reporting & Analytics (pandas integration)
 allure-pytest>=2.13.0             # Advanced test reporting with rich analytics
 pytest-json-report>=1.5.0         # JSON format reports for CI/CD integration
+structlog>=23.2.0                  # Structured logging for enterprise reporting
 
 # Data Management & Analytics (pandas integration)
 pydantic>=2.5.0                   # Data validation and serialization
