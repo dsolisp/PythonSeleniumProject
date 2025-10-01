@@ -253,7 +253,7 @@ class TestPerformanceBenchmarks:
             benchmark_time=benchmark.stats['mean']
         )
         
-        # Assert reasonable memory usage (less than 500MB for this test)
+        # Expect reasonable memory usage (less than 500MB for this test)
         assert_that(memory_usage, less_than(500))
     
     def test_concurrent_operations_benchmark(self, benchmark):

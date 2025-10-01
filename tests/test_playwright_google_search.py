@@ -417,7 +417,7 @@ async def test_playwright_performance_metrics():
             
             # Performance assertions
             assert_that(navigation_time, less_than(10000)), "Navigation should complete within 10 seconds"
-            if search_time > 0:  # Only assert if search actually happened
+            if search_time > 0:  # Only expect  if search actually happened
                 assert_that(search_time, less_than(15000)), "Search should complete within 15 seconds"
         
     finally:
