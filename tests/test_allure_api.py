@@ -1,6 +1,10 @@
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+, has_item)
 """
-Enhanced API tests with Allure reporting and structured logging.
-Demonstrates enterprise-grade API testing with detailed reporting.
+API tests with Allure reporting and structured logging.
 """
 
 import allure
@@ -11,15 +15,14 @@ import requests
 from typing import Dict, Any
 
 from utils.structured_logger import get_test_logger
+from config.settings import settings
 
 
 @allure.epic("API Testing")
 @allure.feature("REST API Validation")
 class TestAllureAPI:
-    """Enhanced API tests with Allure reporting and structured logging."""
 
     def setup_method(self, method):
-        """Set up test environment with structured logging."""
         self.test_logger = get_test_logger(method.__name__)
         self.test_logger.start_test(
             test_type="API",
@@ -27,8 +30,7 @@ class TestAllureAPI:
             framework="requests"
         )
         
-        # Base configuration
-        self.base_url = "https://jsonplaceholder.typicode.com"
+        self.base_url = settings.API_BASE_URL
         self.session = requests.Session()
         self.session.headers.update({
             "Content-Type": "application/json",
@@ -36,7 +38,6 @@ class TestAllureAPI:
         })
 
     def teardown_method(self):
-        """Clean up test environment."""
         if hasattr(self, 'session'):
             self.session.close()
             self.test_logger.log_step("Session cleanup", "close_session")
@@ -44,11 +45,9 @@ class TestAllureAPI:
         self.test_logger.end_test("COMPLETED")
 
     def _get_test_name(self) -> str:
-        """Get current test method name."""
         return self._pytestfixturefunction.__name__ if hasattr(self, '_pytestfixturefunction') else "unknown_test"
 
     def _log_api_response(self, response: requests.Response, operation: str) -> None:
-        """Log API response details for debugging and reporting."""
         self.test_logger.api_request(
             method=response.request.method,
             url=response.url,
@@ -56,7 +55,6 @@ class TestAllureAPI:
             response_time=response.elapsed.total_seconds() * 1000
         )
         
-        # Attach response details to Allure
         allure.attach(
             f"Method: {response.request.method}\n"
             f"URL: {response.url}\n"
@@ -77,7 +75,6 @@ class TestAllureAPI:
     """)
     @allure.tag("smoke", "api", "get")
     def test_get_posts_with_allure(self):
-        """Test GET /posts endpoint with enhanced reporting."""
         
         with allure.step("Send GET request to /posts endpoint"):
             start_time = time.time()
@@ -94,7 +91,7 @@ class TestAllureAPI:
                 expected=200,
                 actual=response.status_code
             )
-            assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+            assert_that(response.status_code, equal_to(200)), f"Expected 200, got {response.status_code}"
 
         with allure.step("Verify response content type"):
             content_type = response.headers.get('content-type', '')
@@ -104,7 +101,7 @@ class TestAllureAPI:
                 expected="application/json",
                 actual=content_type
             )
-            assert 'application/json' in content_type, f"Expected JSON content type, got {content_type}"
+            assert_that(content_type, contains_string('application/json')), f"Expected JSON content type, got {content_type}"
 
         with allure.step("Parse and validate JSON response"):
             try:
@@ -122,7 +119,7 @@ class TestAllureAPI:
                 expected="list",
                 actual=type(posts).__name__
             )
-            assert isinstance(posts, list), f"Expected list, got {type(posts)}"
+            assert_that(posts, instance_of(list)), f"Expected list, got {type(posts)}"
             
             # Verify list is not empty
             self.test_logger.log_assertion(
@@ -131,7 +128,7 @@ class TestAllureAPI:
                 expected=">0 posts",
                 actual=len(posts)
             )
-            assert len(posts) > 0, "Posts list should not be empty"
+            assert_that(len(posts), greater_than(0)), "Posts list should not be empty"
             
             # Attach posts count to Allure
             allure.attach(
@@ -151,7 +148,7 @@ class TestAllureAPI:
                     expected=f"'{field}' field present",
                     actual=f"Fields: {list(first_post.keys())}"
                 )
-                assert field in first_post, f"Post missing required field: {field}"
+                assert_that(first_post, has_item(field)), f"Post missing required field: {field}"
             
             # Attach first post sample to Allure
             allure.attach(
@@ -177,7 +174,7 @@ class TestAllureAPI:
             self._log_api_response(response, f"GET Post {post_id}")
 
         with allure.step("Verify successful response"):
-            assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+            assert_that(response.status_code, equal_to(200)), f"Expected 200, got {response.status_code}"
             
             self.test_logger.log_assertion(
                 "Single post retrieval successful",
@@ -196,12 +193,12 @@ class TestAllureAPI:
                 expected=post_id,
                 actual=post['id']
             )
-            assert post['id'] == post_id, f"Expected post ID {post_id}, got {post['id']}"
+            assert_that(post['id'], equal_to(post_id)), f"Expected post ID {post_id}, got {post['id']}"
             
             # Verify data types
-            assert isinstance(post['title'], str), "Title should be string"
-            assert isinstance(post['body'], str), "Body should be string"
-            assert isinstance(post['userId'], int), "UserId should be integer"
+            assert_that(post['title'], instance_of(str)), "Title should be string"
+            assert_that(post['body'], instance_of(str)), "Body should be string"
+            assert_that(post['userId'], instance_of(int)), "UserId should be integer"
             
             allure.attach(
                 json.dumps(post, indent=2),
@@ -247,13 +244,13 @@ class TestAllureAPI:
                 expected=201,
                 actual=response.status_code
             )
-            assert response.status_code == 201, f"Expected 201, got {response.status_code}"
+            assert_that(response.status_code, equal_to(201)), f"Expected 201, got {response.status_code}"
 
         with allure.step("Validate created post data"):
             created_post = response.json()
             
             # Verify the created post has an ID
-            assert 'id' in created_post, "Created post should have an ID"
+            assert_that(created_post, contains_string('id')), "Created post should have an ID"
             self.test_logger.log_assertion(
                 "Created post has ID",
                 'id' in created_post,
@@ -263,7 +260,7 @@ class TestAllureAPI:
             
             # Verify the data matches what we sent
             for key, value in new_post_data.items():
-                assert created_post[key] == value, f"Expected {key}='{value}', got '{created_post[key]}'"
+                assert_that(created_post[key], equal_to(value)), f"Expected {key}='{value}', got '{created_post[key]}'"
                 self.test_logger.log_assertion(
                     f"Created post {key} matches",
                     created_post[key] == value,
@@ -300,7 +297,7 @@ class TestAllureAPI:
                 expected=404,
                 actual=response.status_code
             )
-            assert response.status_code == 404, f"Expected 404, got {response.status_code}"
+            assert_that(response.status_code, equal_to(404)), f"Expected 404, got {response.status_code}"
 
         with allure.step("Verify error response structure"):
             # Some APIs return empty body for 404, others return error details
@@ -387,7 +384,7 @@ class TestAllureAPI:
             )
 
         with allure.step("Validate performance requirements"):
-            assert avg_response_time < max_response_time, f"Average response time too slow: {avg_response_time:.2f}ms"
-            assert all(data["status_code"] == 200 for data in performance_data), "Some requests failed"
+            assert_that(avg_response_time, less_than(max_response_time)), f"Average response time too slow: {avg_response_time:.2f}ms"
+            assert_that(all(data["status_code"], equal_to(200 for data in performance_data))), "Some requests failed"
 
         self.test_logger.end_test("PASS")

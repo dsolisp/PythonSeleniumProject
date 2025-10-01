@@ -1,6 +1,10 @@
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+, has_item)
 """
-Enhanced Google Search tests with Allure reporting and structured logging.
-Demonstrates enterprise-grade test reporting capabilities.
+Google Search tests with Allure reporting and structured logging.
 """
 
 import allure
@@ -14,15 +18,14 @@ from pages.google_search_page import GoogleSearchPage
 from pages.google_result_page import GoogleResultPage
 from utils.webdriver_factory import WebDriverFactory
 from utils.structured_logger import get_test_logger
+from config.settings import settings
 
 
 @allure.epic("Web Automation")
 @allure.feature("Search Functionality")
 class TestAllureGoogleSearch:
-    """Enhanced Google Search tests with Allure reporting and detailed logging."""
 
     def setup_method(self, method):
-        """Set up test environment with structured logging."""
         self.test_logger = get_test_logger(method.__name__)
         self.test_logger.start_test(
             browser="chrome",
@@ -31,16 +34,13 @@ class TestAllureGoogleSearch:
         )
 
     def teardown_method(self):
-        """Clean up test environment."""
         if hasattr(self, 'driver') and self.driver:
             self.driver.quit()
             self.test_logger.log_step("Browser cleanup", "quit_driver")
         
-        # Mark test as completed (will be overridden by test result)
         self.test_logger.end_test("COMPLETED")
 
     def _get_test_name(self) -> str:
-        """Get current test method name."""
         return self._pytestfixturefunction.__name__ if hasattr(self, '_pytestfixturefunction') else "unknown_test"
 
     @allure.story("Basic Search")
@@ -53,7 +53,6 @@ class TestAllureGoogleSearch:
     """)
     @allure.tag("smoke", "critical")
     def test_basic_search_with_allure(self):
-        """Test basic Google search with enhanced reporting."""
         
         with allure.step("Initialize WebDriver"):
             factory = WebDriverFactory()
@@ -63,9 +62,8 @@ class TestAllureGoogleSearch:
         with allure.step("Navigate to Google homepage"):
             search_page = GoogleSearchPage(self.driver)
             search_page.open()
-            self.test_logger.browser_action("navigate", url="https://www.google.com")
+            self.test_logger.browser_action("navigate", url=settings.BASE_URL)
             
-            # Attach screenshot to Allure report
             allure.attach(
                 self.driver.get_screenshot_as_png(),
                 name="Google Homepage",
@@ -73,7 +71,7 @@ class TestAllureGoogleSearch:
             )
 
         with allure.step("Perform search for 'Selenium Python'"):
-            search_term = "Selenium Python"
+            search_term = settings.SELENIUM_SEARCH_TERM
             search_page.search(search_term)
             self.test_logger.browser_action("search", element="search_input", value=search_term)
 
@@ -84,7 +82,6 @@ class TestAllureGoogleSearch:
             )
             self.test_logger.log_step("Wait for results", "explicit_wait")
             
-            # Attach search results screenshot
             allure.attach(
                 self.driver.get_screenshot_as_png(),
                 name="Search Results",
@@ -94,7 +91,6 @@ class TestAllureGoogleSearch:
         with allure.step("Verify search results are displayed"):
             results = result_page.get_search_results()
             
-            # Log assertion with structured logging
             self.test_logger.log_assertion(
                 "Search results count > 0",
                 len(results) > 0,
@@ -102,9 +98,8 @@ class TestAllureGoogleSearch:
                 actual=len(results)
             )
             
-            assert len(results) > 0, f"Expected search results, but got {len(results)}"
+            assert_that(len(results), greater_than(0)), f"Expected search results, but got {len(results)}"
             
-            # Add result count to Allure report
             allure.attach(
                 f"Found {len(results)} search results",
                 name="Results Count",
@@ -122,9 +117,8 @@ class TestAllureGoogleSearch:
                 actual=page_title
             )
             
-            assert search_term_lower in page_title, f"Expected '{search_term}' in title, but got '{page_title}'"
+            assert_that(page_title, has_item(search_term_lower)), f"Expected '{search_term}' in title, but got '{page_title}'"
 
-        # Log performance metrics
         self.test_logger.performance_metric("page_load_time", 2.5, "seconds")
         self.test_logger.end_test("PASS")
 
@@ -134,7 +128,6 @@ class TestAllureGoogleSearch:
     @allure.description("Test search functionality with multiple search terms")
     @allure.tag("regression")
     def test_multiple_search_terms_with_allure(self):
-        """Test searching with multiple terms."""
         
         with allure.step("Setup browser and navigate to Google"):
             factory = WebDriverFactory()
@@ -143,28 +136,24 @@ class TestAllureGoogleSearch:
             search_page.open()
             self.test_logger.log_step("Browser setup", "navigate_to_google")
 
-        search_terms = ["Python automation", "Selenium WebDriver", "Test framework"]
+        search_terms = settings.SEARCH_TERMS_LIST
         
         for i, term in enumerate(search_terms, 1):
             with allure.step(f"Search {i}: '{term}'"):
-                # Clear previous search if not first
                 if i > 1:
                     search_page.clear_search()
                     self.test_logger.browser_action("clear", element="search_input")
                 
-                # Perform search
                 search_page.search(term)
                 self.test_logger.browser_action("search", element="search_input", value=term)
                 
-                # Wait for results
                 result_page = GoogleResultPage(self.driver)
                 WebDriverWait(self.driver, 10).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "div.g"))
                 )
                 
-                # Verify results
                 results = result_page.get_search_results()
-                assert len(results) > 0, f"No results found for '{term}'"
+                assert_that(len(results), greater_than(0)), f"No results found for '{term}'"
                 
                 self.test_logger.log_assertion(
                     f"Results found for '{term}'",
@@ -173,7 +162,6 @@ class TestAllureGoogleSearch:
                     actual=len(results)
                 )
                 
-                # Attach screenshot for each search
                 allure.attach(
                     self.driver.get_screenshot_as_png(),
                     name=f"Search Results for '{term}'",
@@ -188,21 +176,18 @@ class TestAllureGoogleSearch:
     @allure.description("Test to measure and report search performance")
     @allure.tag("performance")
     def test_search_performance_with_allure(self):
-        """Test search performance with timing measurements."""
         
         with allure.step("Initialize performance measurement"):
             factory = WebDriverFactory()
             self.driver = factory.create_chrome_driver()
             search_page = GoogleSearchPage(self.driver)
             
-            # Measure page load time
             start_time = time.time()
             search_page.open()
-            load_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+            load_time = (time.time() - start_time) * 1000
             
             self.test_logger.performance_metric("google_homepage_load", load_time, "ms")
             
-            # Add performance data to Allure
             allure.attach(
                 f"Homepage load time: {load_time:.2f}ms",
                 name="Performance Metrics",
@@ -210,12 +195,11 @@ class TestAllureGoogleSearch:
             )
 
         with allure.step("Measure search execution time"):
-            search_term = "Selenium performance testing"
+            search_term = settings.PERFORMANCE_SEARCH_TERM
             
             start_time = time.time()
             search_page.search(search_term)
             
-            # Wait for results and measure
             result_page = GoogleResultPage(self.driver)
             WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div.g"))
@@ -225,9 +209,8 @@ class TestAllureGoogleSearch:
             self.test_logger.performance_metric("search_execution_time", search_time, "ms")
 
         with allure.step("Verify performance thresholds"):
-            # Assert performance requirements
-            max_load_time = 5000  # 5 seconds
-            max_search_time = 3000  # 3 seconds
+            max_load_time = 5000
+            max_search_time = 3000
             
             self.test_logger.log_assertion(
                 "Homepage load under threshold",
@@ -243,8 +226,8 @@ class TestAllureGoogleSearch:
                 actual=f"{search_time:.2f}ms"
             )
             
-            assert load_time < max_load_time, f"Page load too slow: {load_time:.2f}ms"
-            assert search_time < max_search_time, f"Search too slow: {search_time:.2f}ms"
+            assert_that(load_time, less_than(max_load_time)), f"Page load too slow: {load_time:.2f}ms"
+            assert_that(search_time, less_than(max_search_time)), f"Search too slow: {search_time:.2f}ms"
 
         self.test_logger.end_test("PASS")
 
@@ -254,7 +237,6 @@ class TestAllureGoogleSearch:
     @allure.description("Verify system behavior with empty search query")
     @allure.tag("edge_case")
     def test_empty_search_with_allure(self):
-        """Test behavior with empty search query."""
         
         with allure.step("Setup and navigate to Google"):
             factory = WebDriverFactory()
@@ -264,15 +246,12 @@ class TestAllureGoogleSearch:
 
         with allure.step("Attempt search with empty query"):
             try:
-                # Try to search with empty string
                 search_page.search("")
                 self.test_logger.browser_action("search", element="search_input", value="")
                 
-                # Capture the behavior
                 current_url = self.driver.current_url
                 page_title = self.driver.title
                 
-                # Log the system behavior
                 self.test_logger.log_step("Empty search behavior", "capture_response")
                 
                 allure.attach(
@@ -281,8 +260,7 @@ class TestAllureGoogleSearch:
                     attachment_type=allure.attachment_type.TEXT
                 )
                 
-                # Verify we're still on Google (empty search typically doesn't navigate)
-                assert "google.com" in current_url, "Should remain on Google after empty search"
+                assert_that(current_url, contains_string("google.com")), "Should remain on Google after empty search"
                 
                 self.test_logger.log_assertion(
                     "Remains on Google after empty search",

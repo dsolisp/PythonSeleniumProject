@@ -182,7 +182,7 @@ class StructuredLogger:
         )
 
 
-class TestExecutionLogger:
+class ExecutionLogger:
     """
     Specialized logger for test execution lifecycle with timing and context.
     """
@@ -280,7 +280,7 @@ def get_logger(name: str = "TestFramework", level: str = "INFO") -> StructuredLo
     return StructuredLogger(name, level)
 
 
-def get_test_logger(test_name: str) -> TestExecutionLogger:
+def get_test_logger(test_name: str) -> ExecutionLogger:
     """
     Factory function to create test execution logger.
     
@@ -290,7 +290,7 @@ def get_test_logger(test_name: str) -> TestExecutionLogger:
     Returns:
         TestExecutionLogger: Test-specific logger
     """
-    return TestExecutionLogger(test_name)
+    return ExecutionLogger(test_name)
 
 
 # Backwards compatibility with existing logging

@@ -1,9 +1,14 @@
 """Unit tests for structured_logger module."""
 import pytest
 from unittest.mock import Mock, patch
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+)
 from utils.structured_logger import (
     StructuredLogger,
-    TestExecutionLogger,
+    ExecutionLogger,
     get_logger,
     get_test_logger,
     framework_logger
@@ -16,37 +21,39 @@ class TestStructuredLogger:
     def test_logger_instantiation(self):
         """Test that StructuredLogger can be instantiated."""
         logger = StructuredLogger("TestLogger")
-        assert logger is not None
-        assert logger.name == "TestLogger"
+        assert_that(logger, is_(not_none()))
+        assert_that(logger.name, equal_to("TestLogger"))
     
     def test_logger_has_required_methods(self):
         """Test that logger has all required logging methods."""
         logger = StructuredLogger("TestLogger")
         
         # Standard logging methods
-        assert hasattr(logger, 'debug')
-        assert hasattr(logger, 'info')
-        assert hasattr(logger, 'warning')
-        assert hasattr(logger, 'error')
-        assert hasattr(logger, 'critical')
+        assert_that(logger, has_property('debug'))
+        assert_that(logger, has_property('info'))
+        assert_that(logger, has_property('warning'))
+        assert_that(logger, has_property('error'))
+        assert_that(logger, has_property('critical'))
         
         # Specialized logging methods
-        assert hasattr(logger, 'test_start')
-        assert hasattr(logger, 'test_end')
-        assert hasattr(logger, 'test_step')
-        assert hasattr(logger, 'performance_metric')
-        assert hasattr(logger, 'browser_action')
-        assert hasattr(logger, 'api_request')
-        assert hasattr(logger, 'database_operation')
-        assert hasattr(logger, 'assertion_result')
+        assert_that(logger, has_property('test_start'))
+        assert_that(logger, has_property('test_end'))
+        assert_that(logger, has_property('test_step'))
+        assert_that(logger, has_property('performance_metric'))
+        assert_that(logger, has_property('browser_action'))
+        assert_that(logger, has_property('api_request'))
+        assert_that(logger, has_property('database_operation'))
+        assert_that(logger, has_property('assertion_result'))
     
     def test_logger_level_configuration(self):
         """Test that logger level can be configured."""
         debug_logger = StructuredLogger("DebugLogger", "DEBUG")
         error_logger = StructuredLogger("ErrorLogger", "ERROR")
         
-        assert debug_logger.level == 10  # DEBUG level
-        assert error_logger.level == 40  # ERROR level
+        # DEBUG level
+        assert_that(debug_logger.level, equal_to(10))
+        # ERROR level
+        assert_that(error_logger.level, equal_to(40))
     
     def test_logging_methods_callable(self):
         """Test that all logging methods are callable."""
@@ -66,24 +73,24 @@ class TestStructuredLogger:
             pytest.fail(f"Logging method failed: {e}")
 
 
-class TestTestExecutionLogger:
-    """Test cases for TestExecutionLogger class."""
+class TestExecutionLogger:
+    """Test cases for ExecutionLogger class."""
     
     def test_test_execution_logger_instantiation(self):
-        """Test that TestExecutionLogger can be instantiated."""
-        test_logger = TestExecutionLogger("test_example")
-        assert test_logger is not None
-        assert test_logger.test_name == "test_example"
-        assert test_logger.step_count == 0
+        """Test that ExecutionLogger can be instantiated."""
+        test_logger = ExecutionLogger("test_example")
+        assert_that(test_logger, is_(not_none()))
+        assert_that(test_logger.test_name, equal_to("test_example"))
+        assert_that(test_logger.step_count, equal_to(0))
     
     def test_test_lifecycle_methods(self):
         """Test that test lifecycle methods exist and are callable."""
-        test_logger = TestExecutionLogger("test_example")
+        test_logger = ExecutionLogger("test_example")
         
-        assert hasattr(test_logger, 'start_test')
-        assert hasattr(test_logger, 'end_test')
-        assert hasattr(test_logger, 'log_step')
-        assert hasattr(test_logger, 'log_assertion')
+        assert_that(test_logger, has_property('start_test'))
+        assert_that(test_logger, has_property('end_test'))
+        assert_that(test_logger, has_property('log_step'))
+        assert_that(test_logger, has_property('log_assertion'))
         
         # These should not raise exceptions
         try:
@@ -96,13 +103,13 @@ class TestTestExecutionLogger:
     
     def test_step_counting(self):
         """Test that step counting works correctly."""
-        test_logger = TestExecutionLogger("test_example")
+        test_logger = ExecutionLogger("test_example")
         
-        assert test_logger.step_count == 0
+        assert_that(test_logger.step_count, equal_to(0))
         test_logger.log_step("Step 1", "action1")
-        assert test_logger.step_count == 1
+        assert_that(test_logger.step_count, equal_to(1))
         test_logger.log_step("Step 2", "action2")
-        assert test_logger.step_count == 2
+        assert_that(test_logger.step_count, equal_to(2))
 
 
 class TestFactoryFunctions:
@@ -111,21 +118,21 @@ class TestFactoryFunctions:
     def test_get_logger_factory(self):
         """Test that get_logger factory function works."""
         logger = get_logger("FactoryTest", "INFO")
-        assert logger is not None
-        assert isinstance(logger, StructuredLogger)
-        assert logger.name == "FactoryTest"
+        assert_that(logger, is_(not_none()))
+        assert_that(logger, instance_of(StructuredLogger))
+        assert_that(logger.name, equal_to("FactoryTest"))
     
     def test_get_test_logger_factory(self):
         """Test that get_test_logger factory function works."""
         test_logger = get_test_logger("factory_test_method")
-        assert test_logger is not None
-        assert isinstance(test_logger, TestExecutionLogger)
-        assert test_logger.test_name == "factory_test_method"
+        assert_that(test_logger, is_(not_none()))
+        assert_that(test_logger, instance_of(ExecutionLogger))
+        assert_that(test_logger.test_name, equal_to("factory_test_method"))
     
     def test_framework_logger_exists(self):
         """Test that global framework logger exists."""
-        assert framework_logger is not None
-        assert isinstance(framework_logger, StructuredLogger)
+        assert_that(framework_logger, is_(not_none()))
+        assert_that(framework_logger, instance_of(StructuredLogger))
 
 
 class TestBackwardsCompatibility:
@@ -135,9 +142,9 @@ class TestBackwardsCompatibility:
         """Test that legacy logging functions exist for backwards compatibility."""
         from utils.structured_logger import log_info, log_error, log_warning
         
-        assert callable(log_info)
-        assert callable(log_error)
-        assert callable(log_warning)
+        assert_that(callable(log_info), is_(True))
+        assert_that(callable(log_error), is_(True))
+        assert_that(callable(log_warning), is_(True))
     
     def test_legacy_logging_functions_callable(self):
         """Test that legacy logging functions can be called."""

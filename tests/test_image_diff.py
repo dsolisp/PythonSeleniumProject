@@ -1,76 +1,68 @@
 """
-Visual regression tests with comprehensive image comparison capabilities.
+Visual regression tests with image comparison capabilities.
 """
 
 import os
 
 import pytest
-from hamcrest import assert_that, less_than
+from hamcrest import assert_that, less_than, is_, has_property, not_none, greater_than
 
 import utils.diff_handler as diff_handler
 from pages.base_page import BasePage
 from pages.google_search_page import GoogleSearchPage
+from config.settings import settings
 
 
 @pytest.mark.visual
 @pytest.mark.parametrize("tc_id", ["tc_1234"])
 def test_visual_comparison(tc_id, driver):
-    """Visual regression test with better error reporting and flexibility."""
     base_page = BasePage(driver)
     google_search_page = GoogleSearchPage(driver)
 
     print(f"🔍 Running visual comparison test for: {tc_id}")
 
-    # Define screenshot paths
     expected_image = f"screenshots_diff/{tc_id}_expected_screenshot.png"
     actual_image = f"screenshots_diff/{tc_id}_actual_screenshot.png"
     diff_output_path = f"screenshots_diff/{tc_id}_diff.png"
 
     try:
-        # Ensure screenshots directory exists
         os.makedirs("screenshots_diff", exist_ok=True)
 
-        # Navigate to Google if not already there
         if "google.com" not in base_page.driver.current_url:
-            from config.settings import settings
-
             base_page.driver.get(settings.BASE_URL)
             base_page.wait_for_page_load()
 
-        # Capture the baseline screenshot (expected)
         print(f"📸 Capturing expected screenshot: {expected_image}")
         google_search_page.capture_search_input_screenshot(expected_image)
 
-        # Perform actions that might change the visual appearance
         element = google_search_page.get_search_input()
         if element:
             element.send_keys("Visual Test Query")
             print("✍️ Added text to search input")
 
-        # Capture the actual screenshot after changes
         print(f"📸 Capturing actual screenshot: {actual_image}")
         google_search_page.capture_search_input_screenshot(actual_image)
 
-        # Verify both screenshots were created
-        assert os.path.exists(
-            expected_image
-        ), f"Expected screenshot not found: {expected_image}"
-        assert os.path.exists(
-            actual_image
-        ), f"Actual screenshot not found: {actual_image}"
+        assert_that(
+            os.path.exists(expected_image), 
+            is_(True), 
+            f"Expected screenshot not found: {expected_image}"
+        )
+        assert_that(
+            os.path.exists(actual_image), 
+            is_(True), 
+            f"Actual screenshot not found: {actual_image}"
+        )
 
-        # Compare images and generate diff
         print("🔄 Comparing images...")
         visual_difference = diff_handler.compare_images(
             expected_image, actual_image, diff_output_path
         )
 
-        # Assertion with detailed feedback
         if visual_difference == 0:
             print("✅ Perfect match - no visual differences detected")
         else:
-            # Allow for minor differences (anti-aliasing, rendering variations)
-            tolerance = 50000  # pixels - Google pages can have dynamic content
+            tolerance = 50000  
 
             if visual_difference <= tolerance:
                 print(
@@ -78,7 +70,6 @@ def test_visual_comparison(tc_id, driver):
                     f"(within tolerance)"
                 )
             else:
-                # Generate detailed error message
                 error_msg = (
                     f"Significant visual differences found: {visual_difference} pixels "
                     f"(tolerance: {tolerance})"
@@ -89,7 +80,6 @@ def test_visual_comparison(tc_id, driver):
                 print(f"❌ {error_msg}")
                 pytest.fail(error_msg)
 
-        # Clean assertion for CI/CD compatibility
         assert_that(
             visual_difference,
             less_than(50001),
@@ -102,7 +92,6 @@ def test_visual_comparison(tc_id, driver):
         error_msg = f"Visual comparison test failed: {str(e)}"
         print(f"❌ {error_msg}")
 
-        # Provide debugging information
         if os.path.exists(expected_image):
             print(f"Expected image exists: {expected_image}")
         if os.path.exists(actual_image):
@@ -116,7 +105,6 @@ def test_visual_comparison(tc_id, driver):
 @pytest.mark.visual
 @pytest.mark.smoke
 def test_screenshot_functionality():
-    """Test that screenshot capture mechanism works correctly."""
     driver_tuple = None
     try:
         from conftest import get_driver
@@ -126,28 +114,26 @@ def test_screenshot_functionality():
         base_page = BasePage(driver_tuple)
         google_search_page = GoogleSearchPage(driver_tuple)
 
-        # Navigate to Google
-        from config.settings import settings
-
         base_page.driver.get(settings.BASE_URL)
         base_page.wait_for_page_load()
 
-        # Test screenshot capture using base page method
         test_screenshot_name = "test_functionality.png"
         screenshot_path = base_page.take_screenshot(test_screenshot_name)
 
-        # Verify screenshot was created
-        assert screenshot_path is not None, "Screenshot method should return a path"
-        assert os.path.exists(
-            screenshot_path
-        ), f"Test screenshot not created: {screenshot_path}"
-        assert (
-            os.path.getsize(screenshot_path) > 0
-        ), "Screenshot file should not be empty"
+        assert_that(screenshot_path, is_(not_none()), "Screenshot method should return a path")
+        assert_that(
+            os.path.exists(screenshot_path), 
+            is_(True), 
+            f"Test screenshot not created: {screenshot_path}"
+        )
+        assert_that(
+            os.path.getsize(screenshot_path), 
+            greater_than(0), 
+            "Screenshot file should not be empty"
+        )
 
         print("✅ Screenshot functionality test passed")
 
-        # Cleanup
         if os.path.exists(screenshot_path):
             os.remove(screenshot_path)
 
@@ -167,15 +153,13 @@ def test_screenshot_functionality():
 
 @pytest.mark.visual
 def test_diff_handler_availability():
-    """Test that the diff handler module and functions are available."""
     try:
-        # Test that required functions exist
-        assert hasattr(
-            diff_handler, "compare_images"
-        ), "diff_handler should have compare_images function"
+        assert_that(
+            diff_handler, 
+            has_property("compare_images"), 
+            "diff_handler should have compare_images function"
+        )
 
-        # Test with dummy parameters to verify function signature
-        # This won't actually run comparison but verifies the function exists
         print("✅ Diff handler module is properly imported and accessible")
 
     except ImportError as e:

@@ -1,3 +1,8 @@
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+)
 """
 Real Unit Tests for SQL Connection Functions
 Testing actual function logic with proper mocks and edge cases.
@@ -44,10 +49,10 @@ class TestDatabaseConnectionFunctions:
         
         result = get_connection("test.db")
         
-        assert result == mock_conn
+        assert_that(result, equal_to(mock_conn))
         mock_connect.assert_called_once_with("test.db")
         mock_conn.execute.assert_called_with("PRAGMA foreign_keys = ON")
-        assert mock_conn.row_factory == sqlite3.Row
+        assert_that(mock_conn.row_factory, equal_to(sqlite3.Row))
 
 
 class TestQueryExecutionFunctions:
@@ -61,7 +66,7 @@ class TestQueryExecutionFunctions:
         
         result = execute_query(mock_conn, "SELECT 1")
         
-        assert result == mock_cursor
+        assert_that(result, equal_to(mock_cursor))
         mock_cursor.execute.assert_called_once_with("SELECT 1")
     
     def test_execute_query_with_params(self):
@@ -72,7 +77,7 @@ class TestQueryExecutionFunctions:
         
         result = execute_query(mock_conn, "SELECT * FROM users WHERE id = ?", (1,))
         
-        assert result == mock_cursor
+        assert_that(result, equal_to(mock_cursor))
         mock_cursor.execute.assert_called_once_with("SELECT * FROM users WHERE id = ?", (1,))
     
     def test_execute_query_sqlite_error(self):
@@ -93,7 +98,7 @@ class TestQueryExecutionFunctions:
         
         result = execute_query_safe(mock_conn, "SELECT 1")
         
-        assert result == mock_cursor
+        assert_that(result, equal_to(mock_cursor))
     
     def test_execute_query_safe_failure(self):
         """Test execute_query_safe returns None on failure."""
@@ -104,7 +109,7 @@ class TestQueryExecutionFunctions:
         
         result = execute_query_safe(mock_conn, "INVALID SQL")
         
-        assert result is None
+        assert_that(result, is_(none()))
 
 
 class TestDataFetchingFunctions:
@@ -118,7 +123,7 @@ class TestDataFetchingFunctions:
         
         result = fetch_one(mock_cursor)
         
-        assert result == mock_row
+        assert_that(result, equal_to(mock_row))
         mock_cursor.fetchone.assert_called_once()
     
     def test_fetch_one_no_results(self):
@@ -128,7 +133,7 @@ class TestDataFetchingFunctions:
         
         result = fetch_one(mock_cursor)
         
-        assert result is None
+        assert_that(result, is_(none()))
     
     def test_fetch_one_exception(self):
         """Test fetch_one handles exceptions."""
@@ -137,7 +142,7 @@ class TestDataFetchingFunctions:
         
         result = fetch_one(mock_cursor)
         
-        assert result is None
+        assert_that(result, is_(none()))
     
     def test_fetch_all_success(self):
         """Test fetch_all returns all rows."""
@@ -147,8 +152,8 @@ class TestDataFetchingFunctions:
         
         result = fetch_all(mock_cursor)
         
-        assert result == mock_rows
-        assert len(result) == 3
+        assert_that(result, equal_to(mock_rows))
+        assert_that(len(result), equal_to(3))
     
     def test_fetch_all_exception(self):
         """Test fetch_all handles exceptions."""
@@ -157,7 +162,7 @@ class TestDataFetchingFunctions:
         
         result = fetch_all(mock_cursor)
         
-        assert result == []
+        assert_that(result, equal_to([]))
     
     def test_fetch_many_success(self):
         """Test fetch_many returns specified number of rows."""
@@ -167,7 +172,7 @@ class TestDataFetchingFunctions:
         
         result = fetch_many(mock_cursor, 2)
         
-        assert result == mock_rows
+        assert_that(result, equal_to(mock_rows))
         mock_cursor.fetchmany.assert_called_once_with(2)
     
     def test_fetch_many_exception(self):
@@ -177,7 +182,7 @@ class TestDataFetchingFunctions:
         
         result = fetch_many(mock_cursor, 5)
         
-        assert result == []
+        assert_that(result, equal_to([]))
 
 
 class TestDataModificationFunctions:
@@ -192,7 +197,7 @@ class TestDataModificationFunctions:
         with patch('utils.sql_connection.execute_query', return_value=mock_cursor):
             result = insert_data(mock_conn, "users", {"name": "John", "age": 30})
         
-        assert result == 123
+        assert_that(result, equal_to(123))
         mock_conn.commit.assert_called_once()
     
     def test_insert_data_exception(self):
@@ -202,7 +207,7 @@ class TestDataModificationFunctions:
         with patch('utils.sql_connection.execute_query', side_effect=Exception("Insert failed")):
             result = insert_data(mock_conn, "users", {"name": "John"})
         
-        assert result is None
+        assert_that(result, is_(none()))
         mock_conn.rollback.assert_called_once()
     
     def test_update_data_success(self):
@@ -214,7 +219,7 @@ class TestDataModificationFunctions:
         with patch('utils.sql_connection.execute_query', return_value=mock_cursor):
             result = update_data(mock_conn, "users", {"name": "Jane"}, "id = ?", (1,))
         
-        assert result == 2
+        assert_that(result, equal_to(2))
         mock_conn.commit.assert_called_once()
     
     def test_update_data_exception(self):
@@ -224,7 +229,7 @@ class TestDataModificationFunctions:
         with patch('utils.sql_connection.execute_query', side_effect=Exception("Update failed")):
             result = update_data(mock_conn, "users", {"name": "Jane"}, "id = ?", (1,))
         
-        assert result == 0
+        assert_that(result, equal_to(0))
         mock_conn.rollback.assert_called_once()
     
     def test_delete_data_success(self):
@@ -236,7 +241,7 @@ class TestDataModificationFunctions:
         with patch('utils.sql_connection.execute_query', return_value=mock_cursor):
             result = delete_data(mock_conn, "users", "id = ?", (1,))
         
-        assert result == 1
+        assert_that(result, equal_to(1))
         mock_conn.commit.assert_called_once()
     
     def test_delete_data_exception(self):
@@ -246,7 +251,7 @@ class TestDataModificationFunctions:
         with patch('utils.sql_connection.execute_query', side_effect=Exception("Delete failed")):
             result = delete_data(mock_conn, "users", "id = ?", (1,))
         
-        assert result == 0
+        assert_that(result, equal_to(0))
         mock_conn.rollback.assert_called_once()
 
 
@@ -261,7 +266,7 @@ class TestUtilityFunctions:
         with patch('utils.sql_connection.execute_and_fetch_all', return_value=mock_rows):
             result = get_table_info(mock_conn, "users")
         
-        assert result == mock_rows
+        assert_that(result, equal_to(mock_rows))
     
     def test_get_table_names_success(self):
         """Test get_table_names extracts table names correctly."""
@@ -271,7 +276,7 @@ class TestUtilityFunctions:
         with patch('utils.sql_connection.execute_and_fetch_all', return_value=mock_rows):
             result = get_table_names(mock_conn)
         
-        assert result == ["users", "products"]
+        assert_that(result, equal_to(["users", "products"]))
     
     def test_get_table_names_exception(self):
         """Test get_table_names handles exceptions."""
@@ -280,7 +285,7 @@ class TestUtilityFunctions:
         with patch('utils.sql_connection.execute_and_fetch_all', side_effect=Exception("Failed")):
             result = get_table_names(mock_conn)
         
-        assert result == []
+        assert_that(result, equal_to([]))
     
     def test_close_connection_success(self):
         """Test close_connection calls close method."""
@@ -319,7 +324,7 @@ class TestValidationFunctions:
         
         result = validate_connection("test.db")
         
-        assert result is True
+        assert_that(result, is_(True))
     
     @patch('utils.sql_connection.get_connection_context')
     def test_validate_connection_failure(self, mock_context):
@@ -328,4 +333,4 @@ class TestValidationFunctions:
         
         result = validate_connection("test.db")
         
-        assert result is False
+        assert_that(result, is_(False))

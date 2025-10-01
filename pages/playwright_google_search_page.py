@@ -8,6 +8,7 @@ from typing import Optional, List
 from playwright.async_api import Page
 
 from pages.playwright_base_page import PlaywrightBasePage
+from config.settings import settings
 
 
 class PlaywrightGoogleSearchPage(PlaywrightBasePage):
@@ -30,7 +31,7 @@ class PlaywrightGoogleSearchPage(PlaywrightBasePage):
     def __init__(self, page: Page):
         """Initialize Google Search page."""
         super().__init__(page)
-        self.base_url = "https://www.google.com"
+        self.base_url = settings.BASE_URL
         
     async def open_google(self) -> bool:
         """

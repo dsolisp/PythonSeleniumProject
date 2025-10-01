@@ -1,3 +1,8 @@
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+, ends_with)
 """
 Unit tests for framework components with advanced capabilities.
 Validates data management, reporting, and error handling functionality.
@@ -10,8 +15,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
-from utils.test_data_manager import TestDataManager, TestDataSet
-from utils.test_reporter import AdvancedTestReporter, TestResult, TestSuite
+from utils.test_data_manager import DataManager, DataSet
+from utils.test_reporter import AdvancedTestReporter, Result, Suite
 from utils.error_handler import ErrorClassifier, RecoveryManager, SmartErrorHandler, ErrorContext
 
 
@@ -21,12 +26,12 @@ class TestTestDataManager:
     def setup_method(self):
         """Setup test data manager with temporary directory."""
         self.temp_dir = tempfile.mkdtemp()
-        self.data_manager = TestDataManager(self.temp_dir)
+        self.data_manager = DataManager(self.temp_dir)
 
     def test_init_creates_directory(self):
         """Test that initialization creates data directory."""
-        assert Path(self.temp_dir).exists()
-        assert self.data_manager.data_dir == Path(self.temp_dir)
+        assert_that(Path(self.temp_dir).exists(), is_(True))
+        assert_that(self.data_manager.data_dir, equal_to(Path(self.temp_dir)))
 
     def test_load_test_data_json(self):
         """Test loading JSON test data."""
@@ -39,7 +44,7 @@ class TestTestDataManager:
         
         # Load and verify
         loaded_data = self.data_manager.load_test_data("test_data")
-        assert loaded_data == test_data
+        assert_that(loaded_data, equal_to(test_data))
 
     def test_load_test_data_caching(self):
         """Test that data is cached after first load."""
@@ -54,8 +59,8 @@ class TestTestDataManager:
         data1 = self.data_manager.load_test_data("test_data")
         data2 = self.data_manager.load_test_data("test_data")
         
-        assert data1 == data2
-        assert "test_data_default" in self.data_manager._cache
+        assert_that(data1, equal_to(data2))
+        assert_that(self.data_manager._cache, contains_string("test_data_default"))
 
     def test_get_search_scenarios(self):
         """Test getting search scenarios."""
@@ -72,9 +77,9 @@ class TestTestDataManager:
             json.dump(test_data, f)
         
         scenarios = self.data_manager.get_search_scenarios()
-        assert len(scenarios) == 2
-        assert scenarios[0]["name"] == "test1"
-        assert scenarios[1]["search_term"] == "selenium"
+        assert_that(len(scenarios), equal_to(2))
+        assert_that(scenarios[0]["name"], equal_to("test1"))
+        assert_that(scenarios[1]["search_term"], equal_to("selenium"))
 
     def test_get_user_accounts_filtered_by_role(self):
         """Test getting user accounts filtered by role."""
@@ -91,35 +96,35 @@ class TestTestDataManager:
             json.dump(test_data, f)
         
         admin_accounts = self.data_manager.get_user_accounts("admin")
-        assert len(admin_accounts) == 2
-        assert all(acc["role"] == "admin" for acc in admin_accounts)
+        assert_that(len(admin_accounts), equal_to(2))
+        assert_that(all(acc["role"], equal_to("admin" for acc in admin_accounts)))
         
         standard_accounts = self.data_manager.get_user_accounts("standard")
-        assert len(standard_accounts) == 1
-        assert standard_accounts[0]["username"] == "user1"
+        assert_that(len(standard_accounts), equal_to(1))
+        assert_that(standard_accounts[0]["username"], equal_to("user1"))
 
     def test_generate_test_user(self):
         """Test dynamic test user generation."""
         user = self.data_manager.generate_test_user("admin")
         
-        assert user["role"] == "admin"
-        assert "username" in user
-        assert "password" in user
-        assert "email" in user
-        assert "permissions" in user
-        assert "admin" in user["permissions"]
-        assert user["active"] is True
+        assert_that(user["role"], equal_to("admin"))
+        assert_that(user, contains_string("username"))
+        assert_that(user, contains_string("password"))
+        assert_that(user, contains_string("email"))
+        assert_that(user, contains_string("permissions"))
+        assert_that(user["permissions"], contains_string("admin"))
+        assert_that(user["active"], is_(True))
 
     def test_generate_search_data(self):
         """Test dynamic search data generation."""
         search_data = self.data_manager.generate_search_data(3)
         
-        assert len(search_data) == 3
+        assert_that(len(search_data), equal_to(3))
         for scenario in search_data:
-            assert "name" in scenario
-            assert "search_term" in scenario
-            assert "expected_results_count" in scenario
-            assert scenario["generated"] is True
+            assert_that(scenario, contains_string("name"))
+            assert_that(scenario, contains_string("search_term"))
+            assert_that(scenario, contains_string("expected_results_count"))
+            assert_that(scenario["generated"], is_(True))
 
     def test_validate_data_schema(self):
         """Test data schema validation."""
@@ -128,16 +133,16 @@ class TestTestDataManager:
             "name": "test_search",
             "search_term": "python testing"
         }
-        assert self.data_manager.validate_data_schema(valid_scenario, "search_scenario")
+        assert_that(self.data_manager.validate_data_schema(valid_scenario, "search_scenario"), is_(True))
         
         # Invalid search scenario (missing required field)
         invalid_scenario = {
             "search_term": "python testing"  # Missing 'name'
         }
-        assert not self.data_manager.validate_data_schema(invalid_scenario, "search_scenario")
+        assert_that(self.data_manager.validate_data_schema(invalid_scenario, is_(False)), "search_scenario")
         
         # Unknown schema
-        assert not self.data_manager.validate_data_schema(valid_scenario, "unknown_schema")
+        assert_that(self.data_manager.validate_data_schema(valid_scenario, is_(False)), "unknown_schema")
 
     def test_cleanup_old_results(self):
         """Test cleanup of old result files."""
@@ -162,8 +167,8 @@ class TestTestDataManager:
         self.data_manager.cleanup_old_results(30)
         
         # Verify old file is gone, recent file remains
-        assert not old_file.exists()
-        assert recent_file.exists()
+        assert_that(old_file.exists(), is_(False))
+        assert_that(recent_file.exists(), is_(True))
 
 
 class TestAdvancedTestReporter:
@@ -178,25 +183,25 @@ class TestAdvancedTestReporter:
         """Test that initialization creates report directories."""
         expected_dirs = ["json", "html", "trends", "analytics"]
         for dir_name in expected_dirs:
-            assert (Path(self.temp_dir) / dir_name).exists()
+            assert_that((Path(self.temp_dir) / dir_name).exists(), is_(True))
 
     def test_start_test_suite(self):
         """Test starting a test suite."""
         self.reporter.start_test_suite("Test_Suite", "qa", "chrome")
         
         suite = self.reporter.current_suite
-        assert suite is not None
-        assert suite.suite_name == "Test_Suite"
-        assert suite.environment == "qa"
-        assert suite.browser == "chrome"
-        assert suite.total_tests == 0
+        assert_that(suite, is_(not_none()))
+        assert_that(suite.suite_name, equal_to("Test_Suite"))
+        assert_that(suite.environment, equal_to("qa"))
+        assert_that(suite.browser, equal_to("chrome"))
+        assert_that(suite.total_tests, equal_to(0))
 
     def test_add_test_result(self):
         """Test adding test results to suite."""
         self.reporter.start_test_suite("Test_Suite", "local", "chrome")
         
         # Add passed test
-        passed_result = TestResult(
+        passed_result = Result(
             test_name="test_pass",
             status="PASSED",
             duration=2.5,
@@ -207,7 +212,7 @@ class TestAdvancedTestReporter:
         self.reporter.add_test_result(passed_result)
         
         # Add failed test
-        failed_result = TestResult(
+        failed_result = Result(
             test_name="test_fail",
             status="FAILED",
             duration=1.8,
@@ -220,17 +225,17 @@ class TestAdvancedTestReporter:
         
         # Verify suite statistics
         suite = self.reporter.current_suite
-        assert suite.total_tests == 2
-        assert suite.passed == 1
-        assert suite.failed == 1
-        assert suite.total_duration == 4.3
+        assert_that(suite.total_tests, equal_to(2))
+        assert_that(suite.passed, equal_to(1))
+        assert_that(suite.failed, equal_to(1))
+        assert_that(suite.total_duration, equal_to(4.3))
 
     def test_generate_json_report(self):
         """Test JSON report generation."""
         self.reporter.start_test_suite("JSON_Test", "local", "chrome")
         
         # Add a test result
-        result = TestResult(
+        result = Result(
             test_name="test_json",
             status="PASSED",
             duration=1.5,
@@ -244,23 +249,23 @@ class TestAdvancedTestReporter:
         report_path = self.reporter.generate_json_report("test_report.json")
         
         # Verify file exists and contains expected data
-        assert Path(report_path).exists()
+        assert_that(Path(report_path).exists(), is_(True))
         
         with open(report_path, 'r') as f:
             report_data = json.load(f)
         
-        assert "suite_summary" in report_data
-        assert "metrics" in report_data
-        assert "test_results" in report_data
-        assert report_data["suite_summary"]["suite_name"] == "JSON_Test"
-        assert len(report_data["test_results"]) == 1
+        assert_that(report_data, contains_string("suite_summary"))
+        assert_that(report_data, contains_string("metrics"))
+        assert_that(report_data, contains_string("test_results"))
+        assert_that(report_data["suite_summary"]["suite_name"], equal_to("JSON_Test"))
+        assert_that(len(report_data["test_results"]), equal_to(1))
 
     def test_generate_html_report(self):
         """Test HTML report generation."""
         self.reporter.start_test_suite("HTML_Test", "local", "chrome")
         
         # Add test results
-        result = TestResult(
+        result = Result(
             test_name="test_html",
             status="PASSED",
             duration=2.0,
@@ -274,21 +279,21 @@ class TestAdvancedTestReporter:
         report_path = self.reporter.generate_html_report("test_report.html")
         
         # Verify file exists and contains HTML content
-        assert Path(report_path).exists()
+        assert_that(Path(report_path).exists(), is_(True))
         
         with open(report_path, 'r') as f:
             html_content = f.read()
         
-        assert "<!DOCTYPE html>" in html_content
-        assert "Test Execution Report" in html_content
-        assert "HTML_Test" in html_content
+        assert_that(html_content, contains_string("<!DOCTYPE html>"))
+        assert_that(html_content, contains_string("Test Execution Report"))
+        assert_that(html_content, contains_string("HTML_Test"))
 
     def test_get_failure_patterns(self):
         """Test failure pattern analysis."""
         self.reporter.start_test_suite("Failure_Test", "local", "chrome")
         
         # Add failed tests with different error patterns
-        timeout_result = TestResult(
+        timeout_result = Result(
             test_name="test_timeout",
             status="FAILED",
             duration=30.0,
@@ -298,7 +303,7 @@ class TestAdvancedTestReporter:
             error_message="TimeoutException: Element not found within timeout"
         )
         
-        element_result = TestResult(
+        element_result = Result(
             test_name="test_element",
             status="FAILED",
             duration=5.0,
@@ -314,9 +319,9 @@ class TestAdvancedTestReporter:
         # Analyze failure patterns
         patterns = self.reporter.get_failure_patterns()
         
-        assert patterns["total_failures"] == 2
-        assert "error_patterns" in patterns
-        assert "most_failing_tests" in patterns
+        assert_that(patterns["total_failures"], equal_to(2))
+        assert_that(patterns, contains_string("error_patterns"))
+        assert_that(patterns, contains_string("most_failing_tests"))
 
 
 class TestErrorClassifier:
@@ -341,9 +346,9 @@ class TestErrorClassifier:
         
         classification = self.classifier.classify_error(error, context)
         
-        assert classification["error_type"] == "TimeoutException"
-        assert classification["classification"]["category"] == "timeout"
-        assert classification["classification"]["severity"].value == "medium"
+        assert_that(classification["error_type"], equal_to("TimeoutException"))
+        assert_that(classification["classification"]["category"], equal_to("timeout"))
+        assert_that(classification["classification"]["severity"].value, equal_to("medium"))
 
     def test_classify_element_not_found_error(self):
         """Test classification of element not found errors."""
@@ -360,9 +365,9 @@ class TestErrorClassifier:
         
         classification = self.classifier.classify_error(error, context)
         
-        assert classification["error_type"] == "NoSuchElementException"
-        assert classification["classification"]["category"] == "element_not_found"
-        assert classification["classification"]["severity"].value == "high"
+        assert_that(classification["error_type"], equal_to("NoSuchElementException"))
+        assert_that(classification["classification"]["category"], equal_to("element_not_found"))
+        assert_that(classification["classification"]["severity"].value, equal_to("high"))
 
     def test_classify_unknown_error(self):
         """Test classification of unknown errors."""
@@ -377,9 +382,9 @@ class TestErrorClassifier:
         
         classification = self.classifier.classify_error(error, context)
         
-        assert classification["error_type"] == "ValueError"
-        assert classification["classification"]["category"] == "unknown"
-        assert classification["confidence"] == 0.3
+        assert_that(classification["error_type"], equal_to("ValueError"))
+        assert_that(classification["classification"]["category"], equal_to("unknown"))
+        assert_that(classification["confidence"], equal_to(0.3))
 
 
 class TestRecoveryManager:
@@ -393,7 +398,7 @@ class TestRecoveryManager:
     def test_get_recovery_statistics_empty(self):
         """Test getting recovery statistics when no recoveries recorded."""
         stats = self.recovery_manager.get_recovery_statistics()
-        assert stats["message"] == "No recovery attempts recorded"
+        assert_that(stats["message"], equal_to("No recovery attempts recorded"))
 
     def test_retry_recovery_success(self):
         """Test successful retry recovery."""
@@ -422,9 +427,9 @@ class TestRecoveryManager:
             mock_driver, error_context, recovery_action
         )
         
-        assert result is True
-        assert len(self.recovery_manager.recovery_history) == 1
-        assert self.recovery_manager.recovery_history[0]["success"] is True
+        assert_that(result, is_(True))
+        assert_that(len(self.recovery_manager.recovery_history), equal_to(1))
+        assert_that(self.recovery_manager.recovery_history[0]["success"], is_(True))
 
     def test_retry_recovery_failure(self):
         """Test failed retry recovery."""
@@ -453,9 +458,9 @@ class TestRecoveryManager:
             mock_driver, error_context, recovery_action
         )
         
-        assert result is False
-        assert len(self.recovery_manager.recovery_history) == 1
-        assert self.recovery_manager.recovery_history[0]["success"] is False
+        assert_that(result, is_(False))
+        assert_that(len(self.recovery_manager.recovery_history), equal_to(1))
+        assert_that(self.recovery_manager.recovery_history[0]["success"], is_(False))
 
     @patch('selenium.webdriver.support.ui.WebDriverWait')
     def test_refresh_recovery(self, mock_wait):
@@ -494,7 +499,7 @@ class TestRecoveryManager:
         mock_driver.refresh.assert_called_once()
         # Verify document ready state was checked
         mock_driver.execute_script.assert_called_with("return document.readyState")
-        assert result is True
+        assert_that(result, is_(True))
 
     def test_get_recovery_statistics_with_data(self):
         """Test getting recovery statistics with recorded data."""
@@ -522,17 +527,17 @@ class TestRecoveryManager:
         
         stats = self.recovery_manager.get_recovery_statistics()
         
-        assert stats["total_recovery_attempts"] == 3
-        assert stats["successful_recoveries"] == 2
-        assert stats["success_rate"] == 66.67
-        assert stats["average_recovery_time"] == 2.17
+        assert_that(stats["total_recovery_attempts"], equal_to(3))
+        assert_that(stats["successful_recoveries"], equal_to(2))
+        assert_that(stats["success_rate"], equal_to(66.67))
+        assert_that(stats["average_recovery_time"], equal_to(2.17))
         
         # Check strategy-specific stats
         strategy_stats = stats["strategy_performance"]
-        assert strategy_stats["retry"]["total"] == 2
-        assert strategy_stats["retry"]["successful"] == 1
-        assert strategy_stats["refresh"]["total"] == 1
-        assert strategy_stats["refresh"]["successful"] == 1
+        assert_that(strategy_stats["retry"]["total"], equal_to(2))
+        assert_that(strategy_stats["retry"]["successful"], equal_to(1))
+        assert_that(strategy_stats["refresh"]["total"], equal_to(1))
+        assert_that(strategy_stats["refresh"]["successful"], equal_to(1))
 
 
 class TestSmartErrorHandler:
@@ -547,7 +552,7 @@ class TestSmartErrorHandler:
 
     def test_init_creates_screenshots_dir(self):
         """Test that initialization creates screenshots directory."""
-        assert Path(self.temp_dir).exists()
+        assert_that(Path(self.temp_dir).exists(), is_(True))
 
     @patch('utils.error_handler.SmartErrorHandler._capture_error_screenshot')
     def test_handle_error_with_recovery(self, mock_screenshot):
@@ -565,7 +570,7 @@ class TestSmartErrorHandler:
             error = Exception("TimeoutException: Element not found after timeout")
             result = self.error_handler.handle_error(error, mock_driver, "test_name")
             
-            assert result is True
+            assert_that(result, is_(True))
             mock_recovery.assert_called_once()
 
     @patch('utils.error_handler.SmartErrorHandler._capture_error_screenshot')
@@ -584,7 +589,7 @@ class TestSmartErrorHandler:
             error = Exception("NoSuchElementException: Unable to locate element")
             result = self.error_handler.handle_error(error, mock_driver, "test_name")
             
-            assert result is False
+            assert_that(result, is_(False))
             mock_recovery.assert_called_once()
 
     def test_capture_error_screenshot_success(self):
@@ -609,9 +614,9 @@ class TestSmartErrorHandler:
         
         result = self.error_handler._capture_error_screenshot(mock_driver, "test_name")
         
-        assert result is not None
-        assert "error_test_name_" in result
-        assert result.endswith(".png")
+        assert_that(result, is_(not_none()))
+        assert_that(result, contains_string("error_test_name_"))
+        assert_that(result, ends_with('.png'))
 
     def test_capture_error_screenshot_failure(self):
         """Test screenshot capture failure."""
@@ -620,7 +625,7 @@ class TestSmartErrorHandler:
         
         result = self.error_handler._capture_error_screenshot(mock_driver, "test_name")
         
-        assert result is None
+        assert_that(result, is_(none()))
 
 
 if __name__ == "__main__":

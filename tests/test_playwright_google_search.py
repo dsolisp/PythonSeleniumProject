@@ -1,7 +1,10 @@
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+)
 """
-NEW Playwright Google search tests demonstrating modern browser automation.
-This file showcases Playwright capabilities alongside existing Selenium tests.
-Original Selenium tests in test_google_search.py remain UNCHANGED.
+Playwright Google search tests demonstrating modern browser automation.
 """
 
 import pytest
@@ -16,10 +19,6 @@ from pages.playwright_google_search_page import PlaywrightGoogleSearchPage
 @pytest.mark.playwright
 @pytest.mark.asyncio
 async def test_playwright_google_search_basic():
-    """
-    Basic Google search test using Playwright.
-    Demonstrates modern async browser automation.
-    """
     factory, playwright_page = None, None
     
     try:
@@ -39,10 +38,13 @@ async def test_playwright_google_search_basic():
         
         # Verify page loaded
         title = await google_page.get_title()
-        assert "Google" in title
+        assert_that(title, contains_string("Google"))
         
         # Perform search
-        search_term = "Python automation testing playwright"
+        # Basic Google search test
+        search_term = settings.PLAYWRIGHT_SEARCH_TERM
+        
+        # Navigate to Google
         search_success = await google_page.search_for(search_term, wait_for_results=True)
         
         if not search_success:
@@ -50,24 +52,24 @@ async def test_playwright_google_search_basic():
         
         # Wait for search completion
         completion_success = await google_page.wait_for_search_completion()
-        assert completion_success, "Search should complete within timeout"
+        assert_that(completion_success, is_(True)), "Search should complete within timeout"
         
         # Verify search was performed
         current_url = await google_page.get_url()
-        assert "search" in current_url.lower(), f"Should be on search results page: {current_url}"
+        assert_that(current_url.lower(), contains_string("search")), f"Should be on search results page: {current_url}"
         
         # Check for results (if not blocked by CAPTCHA)
         if await google_page.has_results():
             result_count = await google_page.get_result_count()
-            assert result_count > 0, "Should have search results"
+            assert_that(result_count, greater_than(0)), "Should have search results"
             
             # Get result titles
             titles = await google_page.get_result_titles()
-            assert len(titles) > 0, "Should have result titles"
+            assert_that(len(titles), greater_than(0)), "Should have result titles"
             
             # Verify search term relevance (basic check)
             titles_text = " ".join(titles).lower()
-            assert any(word in titles_text for word in ["python", "automation", "testing"]), \
+            assert_that(any(word in titles_text for word in ["python", "automation", "testing"]), is_(True)), \
                 "Results should be relevant to search term"
             
             print(f"✅ Found {result_count} results for '{search_term}'")
@@ -120,7 +122,7 @@ async def test_playwright_google_search_with_suggestions():
         suggestions = await google_page.get_search_suggestions()
         
         if suggestions:
-            assert len(suggestions) > 0, "Should have search suggestions"
+            assert_that(len(suggestions), greater_than(0)), "Should have search suggestions"
             print(f"✅ Found {len(suggestions)} search suggestions")
             for i, suggestion in enumerate(suggestions[:3]):
                 print(f"  {i+1}. {suggestion}")
@@ -133,7 +135,7 @@ async def test_playwright_google_search_with_suggestions():
         # Verify search completed
         await google_page.wait_for_search_completion()
         current_url = await google_page.get_url()
-        assert "search" in current_url.lower()
+        assert_that(current_url.lower(), contains_string("search"))
         
     finally:
         if factory:
@@ -174,7 +176,7 @@ async def test_playwright_advanced_search():
         
         # Verify advanced search
         current_url = await google_page.get_url()
-        assert "search" in current_url.lower()
+        assert_that(current_url.lower(), contains_string("search"))
         
         # The URL should contain our search parameters
         url_lower = current_url.lower()
@@ -285,11 +287,11 @@ async def test_playwright_network_interception():
             pytest.skip("Could not open Google")
         
         # Verify we intercepted requests
-        assert len(intercepted_requests) > 0, "Should have intercepted network requests"
+        assert_that(len(intercepted_requests), greater_than(0)), "Should have intercepted network requests"
         
         # Analyze intercepted requests
         google_requests = [req for req in intercepted_requests if 'google' in req['url']]
-        assert len(google_requests) > 0, "Should have Google-related requests"
+        assert_that(len(google_requests), greater_than(0)), "Should have Google-related requests"
         
         # Check for different resource types
         resource_types = set(req['resource_type'] for req in intercepted_requests)
@@ -298,7 +300,7 @@ async def test_playwright_network_interception():
         
         # Verify we got the main document
         document_requests = [req for req in intercepted_requests if req['resource_type'] == 'document']
-        assert len(document_requests) > 0, "Should have document requests"
+        assert_that(len(document_requests), greater_than(0)), "Should have document requests"
         
     finally:
         if factory:
@@ -336,8 +338,8 @@ async def test_playwright_mobile_emulation():
         
         # Verify mobile layout
         viewport_size = await page.evaluate("() => ({width: window.innerWidth, height: window.innerHeight})")
-        assert viewport_size['width'] == 390, "Should have mobile viewport width"
-        assert viewport_size['height'] == 844, "Should have mobile viewport height"
+        assert_that(viewport_size['width'], equal_to(390)), "Should have mobile viewport width"
+        assert_that(viewport_size['height'], equal_to(844)), "Should have mobile viewport height"
         
         # Test mobile search
         search_success = await google_page.search_for("mobile testing playwright")
@@ -414,9 +416,9 @@ async def test_playwright_performance_metrics():
             print(f"  Total Time: {metrics['totalTime']:.2f}ms")
             
             # Performance assertions
-            assert navigation_time < 10000, "Navigation should complete within 10 seconds"
+            assert_that(navigation_time, less_than(10000)), "Navigation should complete within 10 seconds"
             if search_time > 0:  # Only assert if search actually happened
-                assert search_time < 15000, "Search should complete within 15 seconds"
+                assert_that(search_time, less_than(15000)), "Search should complete within 15 seconds"
         
     finally:
         if factory:

@@ -1,6 +1,10 @@
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+)
 """
 Framework functionality tests without external dependencies.
-All locators are centralized in locator classes following clean architecture.
 """
 
 import pytest
@@ -13,46 +17,39 @@ from locators.test_framework_locators import TestFrameworkLocators
 
 @pytest.mark.framework
 def test_webdriver_factory():
-    """Test that our WebDriver factory works correctly."""
-    # Test individual factory methods
     driver = WebDriverFactory.create_chrome_driver(headless=True)
-    assert driver is not None, "WebDriver should be created"
+    assert_that(driver, is_(not_none())), "WebDriver should be created"
 
-    # Test basic functionality
     test_html = (
         "data:text/html,<html><body><h1>Test Page</h1>"
         "<input name='test' value='framework'></body></html>"
     )
     driver.get(test_html)
 
-    # Find element to verify driver works using locators
     element = driver.find_element(*TestFrameworkLocators.TEST_INPUT)
-    assert element is not None, "Should find test element"
-    assert (
-        element.get_attribute("value") == "framework"
-    ), "Element should have correct value"
+    assert_that(element, is_(not_none()), "Should find test element")
+    assert_that(
+        element.get_attribute("value"), 
+        equal_to("framework"), 
+        "Element should have correct value"
+    )
 
     driver.quit()
 
 
 @pytest.mark.framework
 def test_database_factory():
-    """Test that our Database factory works correctly."""
     db = DatabaseFactory.create_database_connection()
 
     if db:
-        # Database exists, test basic functionality
-        assert db is not None, "Database connection should be created"
+        assert_that(db, is_(not_none())), "Database connection should be created"
         db.close()
     else:
-        # No database available, which is fine
         pytest.skip("No database available for testing")
 
 
 @pytest.mark.framework
 def test_base_page_functionality(driver):
-    """Test BasePage functionality with a simple HTML page."""
-    # Create a simple test page
     test_html = """
     <html>
     <head><title>Framework Test Page</title></head>
@@ -68,50 +65,42 @@ def test_base_page_functionality(driver):
 
     base_page = BasePage(driver)
 
-    # Navigate to test page
     base_page.navigate_to(f"data:text/html,{test_html}")
 
-    # Test navigation functionality
     title = base_page.get_title()
-    assert (
-        "Framework Test Page" in title
-    ), f"Title should contain test page name, got: {title}"
+    assert_that(
+        title, 
+        contains_string("Framework Test Page"), 
+        f"Title should contain test page name, got: {title}"
+    )
 
-    # Test element finding using locators
     title_element = base_page.find_element(TestFrameworkLocators.TITLE_ELEMENT)
-    assert title_element is not None, "Should find title element"
+    assert_that(title_element, is_(not_none())), "Should find title element"
 
-    # Test text retrieval using locators
     title_text = base_page.get_text(TestFrameworkLocators.TITLE_ELEMENT)
-    assert "Test Framework" in title_text, f"Should get correct text, got: {title_text}"
+    assert_that(title_text, contains_string("Test Framework")), f"Should get correct text, got: {title_text}"
 
-    # Test element visibility using locators
     is_visible = base_page.is_element_visible(TestFrameworkLocators.TEST_INPUT_1)
-    assert is_visible, "Input element should be visible"
+    assert_that(is_visible, is_(True)), "Input element should be visible"
 
-    # Test typing using locators
     type_success = base_page.send_keys(TestFrameworkLocators.TEST_INPUT_1, "Hello Framework!")
-    assert type_success, "Should be able to type in input"
+    assert_that(type_success, is_(True)), "Should be able to type in input"
 
-    # Test clicking using locators
     click_success = base_page.click(TestFrameworkLocators.TEST_BUTTON_1)
-    assert click_success, "Should be able to click button"
+    assert_that(click_success, is_(True)), "Should be able to click button"
 
-    # Test screenshot functionality
     screenshot_path = base_page.take_screenshot("framework_test.png")
-    assert screenshot_path, "Should be able to take screenshot"
+    assert_that(screenshot_path, is_(True)), "Should be able to take screenshot"
 
     print("✅ All BasePage functionality tests passed!")
 
 
 @pytest.mark.framework
 def test_base_page_element_actions_integration():
-    """Test that our BasePage element actions work correctly."""
     driver = WebDriverFactory.create_chrome_driver(headless=True)
     base_page = BasePage(driver)
 
     try:
-        # Navigate to test page
         test_html = """
         <html><body>
             <input id="test" name="test" value="initial">
@@ -120,17 +109,14 @@ def test_base_page_element_actions_integration():
         """
         driver.get(f"data:text/html,{test_html}")
 
-        # Test element finding through BasePage using locators
         element = base_page.find_element(TestFrameworkLocators.TEST_ELEMENT_ID)
-        assert element is not None, "Should find element"
+        assert_that(element, is_(not_none())), "Should find element"
 
-        # Test typing through BasePage using locators
         success = base_page.send_keys(TestFrameworkLocators.TEST_ELEMENT_ID, "new value")
-        assert success, "Should be able to type"
+        assert_that(success, is_(True)), "Should be able to type"
 
-        # Test clicking through BasePage using locators
         success = base_page.click(TestFrameworkLocators.CLICK_ME_BUTTON)
-        assert success, "Should be able to click"
+        assert_that(success, is_(True)), "Should be able to click"
 
         print("✅ BasePage element actions integration test passed!")
 
@@ -140,30 +126,23 @@ def test_base_page_element_actions_integration():
 
 @pytest.mark.framework
 def test_framework_integration():
-    """Integration test for the complete framework."""
     driver, db = get_driver(headless=True)
 
     try:
-        # Test that we can create pages and perform basic operations
         base_page = BasePage((driver, db))
 
-        # Navigate to a simple page
         simple_page = (
             "data:text/html,<html><body><h1>Integration Test</h1>"
             "<p>Framework working!</p></body></html>"
         )
         success = base_page.navigate_to(simple_page)
-        assert success, "Should be able to navigate"
+        assert_that(success, is_(True)), "Should be able to navigate"
 
-        # Verify page content - data URLs don't have titles
         current_url = base_page.get_current_url()
-        assert "data:text/html" in current_url, "Should be on test page"
+        assert_that(current_url, contains_string("data:text/html")), "Should be on test page"
 
-        # Test database if available
         if db:
-            # Simple database test
             query_result = base_page.execute_query("SELECT 1 as test")
-            # This might return empty list if not implemented, which is fine
             print(f"Database query result: {query_result}")
 
         print("✅ Framework integration test passed!")
@@ -175,5 +154,4 @@ def test_framework_integration():
 
 
 if __name__ == "__main__":
-    # Run framework tests directly
     pytest.main([__file__, "-v"])

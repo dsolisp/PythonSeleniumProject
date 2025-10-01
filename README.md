@@ -110,6 +110,7 @@ PythonSeleniumProject/
 ├── 📁 tests/                          # Test suites and validation
 │   ├── __init__.py
 │   ├── unit/                          # Unit tests for framework components
+│   ├── performance/                   # Performance & load testing suite ⚡
 │   ├── test_api.py                    # REST API testing examples
 │   ├── test_google_search.py          # Web UI automation tests
 │   └── test_image_diff.py             # Visual comparison testing
@@ -119,6 +120,8 @@ PythonSeleniumProject/
     ├── diff_handler.py                # Image comparison and visual testing
     ├── sql_connection.py              # Database connection and utilities
     ├── webdriver_factory.py           # WebDriver creation and management
+    ├── structured_logger.py           # Enterprise JSON logging with StructLog ✨
+    ├── performance_monitor.py         # Performance monitoring & benchmarking ⚡
     ├── test_data_manager.py           # Advanced test data management with YAML ✨
     ├── test_reporter.py               # Analytics reporting with pandas & jinja2 ✨
     └── error_handler.py               # Smart error recovery with tenacity & psutil ✨
@@ -443,20 +446,99 @@ test_logger.end_test("PASS")
 # {"logger_name": "TestExecution.test_user_login", "event_type": "test_start", "test_name": "test_user_login", "duration_seconds": 2.45, "total_steps": 3, "timestamp": "2025-09-30T02:45:15.678Z", "level": "info"}
 ```
 
+#### Performance Monitoring & Load Testing ⚡ NEW
+```python
+from utils.performance_monitor import (
+    PerformanceMonitor, 
+    web_performance, 
+    api_performance,
+    performance_test,
+    benchmark_decorator
+)
+
+# Function execution timing with decorators
+monitor = PerformanceMonitor("LoginTests")
+
+@monitor.timer(name="login_operation")
+def perform_login(driver, username, password):
+    # Login implementation with automatic timing
+    pass
+
+# Performance threshold testing
+@performance_test(threshold_ms=2000, name="page_load_test")
+def test_page_load_performance():
+    driver.get("https://example.com")
+    # Fails if page load exceeds 2000ms
+
+# WebDriver operation monitoring
+load_time = web_performance.monitor_page_load(driver, "https://example.com")
+find_time = web_performance.monitor_element_find(driver, By.ID, "username")
+
+# API performance monitoring
+import requests
+session = requests.Session()
+timing_data = api_performance.monitor_api_request(session, "GET", "https://api.example.com/users")
+
+# Function benchmarking with statistics
+stats = monitor.benchmark_function(expensive_operation, iterations=100)
+print(f"Mean: {stats['mean']:.2f}ms, Std Dev: {stats['stddev']:.2f}ms")
+
+# Pytest-benchmark integration
+@benchmark_decorator(iterations=50)
+def test_search_performance(benchmark):
+    from hamcrest import assert_that, not_none
+    result = benchmark(perform_search, "test query")
+    assert_that(result, not_none())
+```
+
+#### Load Testing with Locust ⚡ NEW
+```bash
+# Start load testing (API endpoints)
+locust -f tests/performance/locustfile.py --host=https://api.example.com
+
+# Run predefined load test scenarios
+locust -f tests/performance/locustfile.py --users 50 --spawn-rate 5 --run-time 5m
+
+# Background load testing with monitoring
+locust -f tests/performance/locustfile.py --headless --users 25 --spawn-rate 2 --run-time 10m --html load_test_report.html
+```
+
+```python
+# Custom load test user (tests/performance/locustfile.py)
+from locust import HttpUser, task, between
+
+class APILoadTestUser(HttpUser):
+    wait_time = between(1, 3)
+    
+    @task(3)  # Weight 3 - most common
+    def test_api_get(self):
+        self.client.get("/api/users")
+    
+    @task(2)  # Weight 2 - common
+    def test_api_post(self):
+        self.client.post("/api/users", json={"name": "test"})
+    
+    @task(1)  # Weight 1 - less common
+    def test_api_search(self):
+        self.client.get("/api/search?q=selenium")
+```
+
 ### Visual Testing Examples
 ```python
 # Basic visual comparison
 def test_homepage_visual():
+    from hamcrest import assert_that, greater_than
     page.navigate_to("https://example.com")
     page.capture_screenshot("homepage")
     diff_result = page.compare_screenshots("homepage", "baseline_homepage")
-    assert diff_result.similarity > 0.95
+    assert_that(diff_result.similarity, greater_than(0.95))
 
 # Advanced visual testing with regions
 def test_specific_component():
+    from hamcrest import assert_that, is_
     element = page.find_element("//div[@id='header']")
     page.capture_element_screenshot(element, "header_component")
-    assert page.compare_element_visual("header_component", tolerance=0.02)
+    assert_that(page.compare_element_visual("header_component", tolerance=0.02), is_(True))
 ```
 
 ## 🔧 Configuration & Customization
@@ -718,11 +800,12 @@ class TestUserRegistration:
     
     @pytest.mark.parametrize("user_type", ["basic", "premium", "enterprise"])
     def test_registration_flow(self, user_type):
+        from hamcrest import assert_that, is_
         user_data = self.data_manager.get_user_data(user_type)
         
         # Test with environment-specific data
         registration_page.fill_form(user_data)
-        assert registration_page.is_registration_successful()
+        assert_that(registration_page.is_registration_successful(), is_(True))
 ```
 
 ### Error Recovery Strategies

@@ -36,6 +36,25 @@ class Settings:
         self.API_BASE_URL = os.getenv(
             "API_BASE_URL", "https://jsonplaceholder.typicode.com"
         )
+        self.GOOGLE_SEARCH_URL = os.getenv("GOOGLE_SEARCH_URL", "https://www.google.com/search?q=test")
+        
+        # Test URLs for different testing scenarios
+        self.TEST_API_URL = os.getenv("TEST_API_URL", "https://httpbin.org/json")
+        self.TEST_HTML_URL = os.getenv("TEST_HTML_URL", "https://httpbin.org/html")
+        self.EXAMPLE_URL = os.getenv("EXAMPLE_URL", "https://example.com")
+        self.TEST_URL = os.getenv("TEST_URL", "https://test.com")
+        self.API_TEST_URL = os.getenv("API_TEST_URL", "https://api.test.com/data")
+        self.INVALID_URL = os.getenv("INVALID_URL", "https://nonexistent-domain-12345.com")
+        
+        # Test Data - Search Terms
+        self.DEFAULT_SEARCH_TERM = os.getenv("DEFAULT_SEARCH_TERM", "Python automation testing")
+        self.SELENIUM_SEARCH_TERM = os.getenv("SELENIUM_SEARCH_TERM", "Selenium Python")
+        self.PERFORMANCE_SEARCH_TERM = os.getenv("PERFORMANCE_SEARCH_TERM", "selenium testing performance")
+        self.PLAYWRIGHT_SEARCH_TERM = os.getenv("PLAYWRIGHT_SEARCH_TERM", "Python automation testing playwright")
+        
+        # Test Data - Lists
+        search_terms_str = os.getenv("SEARCH_TERMS_LIST", "Python automation,Selenium WebDriver,Test framework")
+        self.SEARCH_TERMS_LIST = [term.strip() for term in search_terms_str.split(",")]
 
         # Database
         self.DB_PATH = os.getenv("DB_PATH", "resources/chinook.db")

@@ -1,3 +1,8 @@
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+)
 """
 Integration tests for page object interactions.
 Tests complete workflows and module interactions.
@@ -19,6 +24,7 @@ from locators.google_search_locators import GoogleSearchLocators
 from locators.test_framework_locators import TestFrameworkLocators
 from utils.webdriver_factory import get_driver
 from utils.sql_connection import get_connection, execute_query, insert_data, execute_and_fetch_one
+from config.settings import settings
 
 
 class TestPageObjectIntegration:
@@ -66,9 +72,9 @@ class TestPageObjectIntegration:
         base_page = BasePage(chrome_driver, conn)
         
         # Test navigation integration
-        base_page.navigate_to("https://www.google.com")
+        base_page.navigate_to(settings.BASE_URL)
         current_url = base_page.get_current_url()
-        assert "google.com" in current_url
+        assert_that(current_url, contains_string("google.com"))
         
         # Test database integration through direct methods
         test_data = {"test_name": "integration_test", "result": "passed"}
@@ -79,8 +85,8 @@ class TestPageObjectIntegration:
         fetched_record = base_page.execute_query(
             "SELECT * FROM test_results WHERE test_name = ?", ("integration_test",)
         )
-        assert fetched_record is not None
-        assert len(fetched_record) > 0
+        assert_that(fetched_record, is_(not_none()))
+        assert_that(len(fetched_record), greater_than(0))
         
         conn.close()
 
@@ -90,18 +96,18 @@ class TestPageObjectIntegration:
         result_page = GoogleResultPage(chrome_driver)
         
         # Test that both pages have access to core methods
-        assert hasattr(search_page, 'find_element')
-        assert hasattr(search_page, 'navigate_to')
-        assert hasattr(search_page, 'take_screenshot')
+        assert_that(search_page, has_property('find_element'))
+        assert_that(search_page, has_property('navigate_to'))
+        assert_that(search_page, has_property('take_screenshot'))
         
-        assert hasattr(result_page, 'find_element')
-        assert hasattr(result_page, 'navigate_to')
-        assert hasattr(result_page, 'take_screenshot')
+        assert_that(result_page, has_property('find_element'))
+        assert_that(result_page, has_property('navigate_to'))
+        assert_that(result_page, has_property('take_screenshot'))
         
         # Test navigation between pages
-        search_page.navigate_to("https://www.google.com")
+        search_page.navigate_to(settings.BASE_URL)
         title = search_page.get_title()
-        assert "Google" in title
+        assert_that(title, contains_string("Google"))
 
     @patch('utils.webdriver_factory.webdriver.Chrome')
     def test_webdriver_factory_integration(self, mock_chrome):
@@ -113,7 +119,7 @@ class TestPageObjectIntegration:
         driver = get_driver("chrome")
         page = BasePage(driver)
         
-        assert page.driver == mock_driver
+        assert_that(page.driver, equal_to(mock_driver))
 
     def test_database_integration_with_page_actions(self, temp_database):
         """Test database operations integration with page actions."""
@@ -136,7 +142,7 @@ class TestPageObjectIntegration:
         
         # Verify all records were inserted
         all_records = page.execute_query("SELECT * FROM test_results")
-        assert len(all_records) == 3
+        assert_that(len(all_records), equal_to(3))
         
         # Test update operation
         update_query = "UPDATE test_results SET result = ? WHERE test_name = ?"
@@ -146,8 +152,8 @@ class TestPageObjectIntegration:
         updated_record = page.execute_query(
             "SELECT result FROM test_results WHERE test_name = ?", ("test_2",)
         )
-        assert len(updated_record) > 0
-        assert updated_record[0][0] == "re-tested"
+        assert_that(len(updated_record), greater_than(0))
+        assert_that(updated_record[0][0], equal_to("re-tested"))
         
         # Test delete operation
         delete_query = "DELETE FROM test_results WHERE result = ?"
@@ -155,7 +161,7 @@ class TestPageObjectIntegration:
         
         # Verify deletion
         remaining_records = page.execute_query("SELECT * FROM test_results")
-        assert len(remaining_records) == 2
+        assert_that(len(remaining_records), equal_to(2))
         
         conn.close()
 
@@ -164,7 +170,7 @@ class TestPageObjectIntegration:
         page = BasePage(chrome_driver)
         
         # Navigate to a page for screenshot
-        page.navigate_to("https://www.google.com")
+        page.navigate_to(settings.BASE_URL)
         
         # Create temporary directory for screenshots
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -172,26 +178,26 @@ class TestPageObjectIntegration:
             
             # Take screenshot
             saved_path = page.take_screenshot("integration_test.png")
-            assert saved_path is not None
-            assert os.path.exists(saved_path)
-            assert os.path.getsize(saved_path) > 0
+            assert_that(saved_path, is_(not_none()))
+            assert_that(os.path.exists(saved_path), is_(True))
+            assert_that(os.path.getsize(saved_path), greater_than(0))
 
     def test_element_actions_integration(self, chrome_driver):
         """Test element actions integration with real browser."""
         page = BasePage(chrome_driver)
         
         # Navigate to Google search page
-        page.navigate_to("https://www.google.com")
+        page.navigate_to(settings.BASE_URL)
         
         # Test finding elements using locators
         search_elements = page.find_elements(GoogleSearchLocators.SEARCH_BOX)
         
-        # Google should have at least one search box
-        assert len(search_elements) >= 0  # Allow for 0 in case of changes
+        # Google should have at least one search box (Allow for 0 in case of changes)
+        assert_that(len(search_elements), greater_than_or_equal_to(0))
         
         # Test that page loaded successfully
         current_url = page.get_current_url()
-        assert "google.com" in current_url
+        assert_that(current_url, contains_string("google.com"))
 
     def test_error_handling_integration(self, chrome_driver):
         """Test error handling across integrated components."""
@@ -202,12 +208,12 @@ class TestPageObjectIntegration:
         
         # Test element finding on page that might not load using locators
         element = page.find_element(TestFrameworkLocators.NONEXISTENT_ELEMENT)
-        assert element is None
+        assert_that(element, is_(none()))
         
         # Test screenshot on potentially problematic page
         screenshot_path = page.take_screenshot("error_test.png")
         # Result may vary, but shouldn't raise unhandled exceptions
-        assert screenshot_path is not None or screenshot_path is None
+        assert_that(screenshot_path is not None or screenshot_path, is_(none()))
 
     def test_multiple_page_objects_integration(self, chrome_driver):
         """Test integration between multiple page objects."""
@@ -215,21 +221,23 @@ class TestPageObjectIntegration:
         result_page = GoogleResultPage(chrome_driver)
         
         # Both should be able to navigate
-        search_page.navigate_to("https://www.google.com")
+        search_page.navigate_to(settings.BASE_URL)
         search_title = search_page.get_title()
         
         # Switch to results page object (same driver)
-        result_page.navigate_to("https://www.google.com/search?q=test")
+        result_page.navigate_to(settings.GOOGLE_SEARCH_URL)
         result_title = result_page.get_title()
         
         # Both operations should work - titles may vary based on Google's current layout
-        assert search_title is not None and len(search_title) > 0
-        assert result_title is not None and len(result_title) > 0
+        assert_that(search_title is not None and len(search_title), greater_than(0))
+        assert_that(result_title is not None and len(result_title), greater_than(0))
         # Accept various Google page titles (Google, google.com, or test-related)
         search_valid = any(term in search_title.lower() for term in ["google", "search"])
-        result_valid = any(term in result_title.lower() for term in ["google", "search", "test", "www.google.com"])
-        assert search_valid or len(search_title) > 0  # At least has some title
-        assert result_valid or len(result_title) > 0  # At least has some title
+        result_valid = any(term in result_title.lower() for term in ["google", "search", "test", "google.com"])
+        # At least has some title
+        assert_that(search_valid or len(search_title), greater_than(0))
+        # At least has some title  
+        assert_that(result_valid or len(result_title), greater_than(0))
 
 
 class TestConfigurationIntegration:
@@ -246,9 +254,9 @@ class TestConfigurationIntegration:
         
         settings = Settings()
         
-        assert settings.BASE_URL == 'https://test.example.com'
-        assert settings.BROWSER == 'chrome'
-        assert settings.HEADLESS is True
+        assert_that(settings.BASE_URL, equal_to('https://test.example.com'))
+        assert_that(settings.BROWSER, equal_to('chrome'))
+        assert_that(settings.HEADLESS, is_(True))
 
     def test_logger_integration_across_modules(self):
         """Test logger integration across different modules."""
@@ -279,8 +287,8 @@ class TestConfigurationIntegration:
             page = BasePage(mock_driver, conn)
             
             # Test that page object can perform database operations (core functionality)
-            assert page.driver == mock_driver
-            assert page.database == conn
+            assert_that(page.driver, equal_to(mock_driver))
+            assert_that(page.database, equal_to(conn))
             
             # Test database integration through page actions
             query = "INSERT INTO test_results (test_name, result) VALUES (?, ?)"
@@ -329,7 +337,7 @@ class TestEndToEndWorkflow:
             search_page.execute_query(start_query, ("end_to_end_workflow", "started"))
             
             # Navigate to search page
-            search_page.navigate_to("https://www.google.com")
+            search_page.navigate_to(settings.BASE_URL)
             
             # Take screenshot
             screenshot_path = search_page.take_screenshot("workflow_test.png")
@@ -346,12 +354,12 @@ class TestEndToEndWorkflow:
                 ("end_to_end_workflow",)
             )
             
-            assert final_result is not None
-            assert len(final_result) > 0
-            assert final_result[0][0] in ["completed", "failed"]
+            assert_that(final_result, is_(not_none()))
+            assert_that(len(final_result), greater_than(0))
+            assert_that(final_result[0][0], is_in(["completed", "failed"]))
             
             if screenshot_success:
-                assert os.path.exists(screenshot_path)
+                assert_that(os.path.exists(screenshot_path), is_(True))
             
         finally:
             # Cleanup

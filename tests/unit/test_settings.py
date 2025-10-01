@@ -1,3 +1,8 @@
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+)
 """
 Real Unit Tests for Settings Class
 Testing configuration logic and edge cases.
@@ -18,18 +23,18 @@ class TestSettingsClass:
         """Test Settings uses correct default values."""
         settings = Settings()
         
-        assert settings.BROWSER == "chrome"
-        assert settings.HEADLESS is False
-        assert settings.TIMEOUT == 10
-        assert settings.SCREENSHOT_ON_FAILURE is True
-        assert settings.BASE_URL == "https://www.google.com"
-        assert settings.API_BASE_URL == "https://jsonplaceholder.typicode.com"
-        assert settings.DB_PATH == "resources/chinook.db"
-        assert settings.ENVIRONMENT == "local"
-        assert settings.DEBUG is True
-        assert settings.LOG_LEVEL == "INFO"
-        assert settings.VISUAL_THRESHOLD == 1000
-        assert settings.SAVE_DIFF_IMAGES is True
+        assert_that(settings.BROWSER, equal_to("chrome"))
+        assert_that(settings.HEADLESS, is_(False))
+        assert_that(settings.TIMEOUT, equal_to(10))
+        assert_that(settings.SCREENSHOT_ON_FAILURE, is_(True))
+        assert_that(settings.BASE_URL, equal_to("https://www.google.com"))
+        assert_that(settings.API_BASE_URL, equal_to("https://jsonplaceholder.typicode.com"))
+        assert_that(settings.DB_PATH, equal_to("resources/chinook.db"))
+        assert_that(settings.ENVIRONMENT, equal_to("local"))
+        assert_that(settings.DEBUG, is_(True))
+        assert_that(settings.LOG_LEVEL, equal_to("INFO"))
+        assert_that(settings.VISUAL_THRESHOLD, equal_to(1000))
+        assert_that(settings.SAVE_DIFF_IMAGES, is_(True))
     
     @patch.dict(os.environ, {
         'BROWSER': 'firefox',
@@ -52,18 +57,18 @@ class TestSettingsClass:
         """Test Settings reads from environment variables."""
         settings = Settings()
         
-        assert settings.BROWSER == "firefox"
-        assert settings.HEADLESS is True
-        assert settings.TIMEOUT == 30
-        assert settings.SCREENSHOT_ON_FAILURE is False
-        assert settings.BASE_URL == "https://example.com"
-        assert settings.API_BASE_URL == "https://api.example.com"
-        assert settings.DB_PATH == "/custom/db.sqlite"
-        assert settings.ENVIRONMENT == "production"
-        assert settings.DEBUG is False
-        assert settings.LOG_LEVEL == "ERROR"
-        assert settings.VISUAL_THRESHOLD == 5000
-        assert settings.SAVE_DIFF_IMAGES is False
+        assert_that(settings.BROWSER, equal_to("firefox"))
+        assert_that(settings.HEADLESS, is_(True))
+        assert_that(settings.TIMEOUT, equal_to(30))
+        assert_that(settings.SCREENSHOT_ON_FAILURE, is_(False))
+        assert_that(settings.BASE_URL, equal_to("https://example.com"))
+        assert_that(settings.API_BASE_URL, equal_to("https://api.example.com"))
+        assert_that(settings.DB_PATH, equal_to("/custom/db.sqlite"))
+        assert_that(settings.ENVIRONMENT, equal_to("production"))
+        assert_that(settings.DEBUG, is_(False))
+        assert_that(settings.LOG_LEVEL, equal_to("ERROR"))
+        assert_that(settings.VISUAL_THRESHOLD, equal_to(5000))
+        assert_that(settings.SAVE_DIFF_IMAGES, is_(False))
     
     @patch.dict(os.environ, {'TIMEOUT': 'invalid'})
     def test_settings_invalid_timeout(self):
@@ -82,7 +87,7 @@ class TestSettingsClass:
         """Test Settings handles invalid boolean values."""
         settings = Settings()
         # Invalid boolean should default to False
-        assert settings.HEADLESS is False
+        assert_that(settings.HEADLESS, is_(False))
     
     @patch('config.settings.load_dotenv')
     def test_settings_loads_dotenv(self, mock_load_dotenv):
@@ -95,7 +100,8 @@ class TestSettingsClass:
         """Test Settings handles missing python-dotenv package."""
         # Should not raise exception
         settings = Settings()
-        assert settings.BROWSER == "chrome"  # Should still have defaults
+        # Should still have defaults
+        assert_that(settings.BROWSER, equal_to("chrome"))
     
     @patch('config.settings.load_dotenv')
     def test_settings_handles_dotenv_import_error(self, mock_load_dotenv):
@@ -104,7 +110,7 @@ class TestSettingsClass:
         
         # Should not raise exception
         settings = Settings()
-        assert settings.BROWSER == "chrome"
+        assert_that(settings.BROWSER, equal_to("chrome"))
     
     @patch('pathlib.Path.mkdir')
     def test_settings_creates_directories(self, mock_mkdir):
@@ -112,7 +118,7 @@ class TestSettingsClass:
         settings = Settings()
         
         # Should call mkdir for reports, screenshots, and logs directories
-        assert mock_mkdir.call_count == 3
+        assert_that(mock_mkdir.call_count, equal_to(3))
         # Verify mkdir was called with correct arguments
         mock_mkdir.assert_any_call(parents=True, exist_ok=True)
     
@@ -125,7 +131,8 @@ class TestSettingsClass:
         # Instead the Settings class should handle the error gracefully
         try:
             settings = Settings()
-            assert settings.BROWSER == "chrome"  # Should still initialize other attributes
+            # Should still initialize other attributes
+            assert_that(settings.BROWSER, equal_to("chrome"))
         except OSError:
             # If it does raise, that's also acceptable behavior
             pass
@@ -136,31 +143,31 @@ class TestSettingsClass:
         
         # PROJECT_ROOT should be parent of config directory
         expected_root = Path(__file__).parent.parent.parent
-        assert settings.PROJECT_ROOT == expected_root
+        assert_that(settings.PROJECT_ROOT, equal_to(expected_root))
     
     def test_settings_directory_paths(self):
         """Test Settings calculates correct directory paths."""
         settings = Settings()
         
-        assert settings.REPORTS_DIR == settings.PROJECT_ROOT / "reports"
-        assert settings.SCREENSHOTS_DIR == settings.PROJECT_ROOT / "screenshots"
-        assert settings.LOGS_DIR == settings.PROJECT_ROOT / "logs"
+        assert_that(settings.REPORTS_DIR, equal_to(settings.PROJECT_ROOT / "reports"))
+        assert_that(settings.SCREENSHOTS_DIR, equal_to(settings.PROJECT_ROOT / "screenshots"))
+        assert_that(settings.LOGS_DIR, equal_to(settings.PROJECT_ROOT / "logs"))
     
     @patch.dict(os.environ, {'REPORTS_DIR': 'test_reports'})
     def test_settings_custom_directory_paths(self):
         """Test Settings uses custom directory paths from environment."""
         settings = Settings()
         
-        assert settings.REPORTS_DIR == settings.PROJECT_ROOT / "test_reports"
+        assert_that(settings.REPORTS_DIR, equal_to(settings.PROJECT_ROOT / "test_reports"))
     
     def test_settings_pathlib_objects(self):
         """Test Settings directory attributes are Path objects."""
         settings = Settings()
         
-        assert isinstance(settings.PROJECT_ROOT, Path)
-        assert isinstance(settings.REPORTS_DIR, Path)
-        assert isinstance(settings.SCREENSHOTS_DIR, Path)
-        assert isinstance(settings.LOGS_DIR, Path)
+        assert_that(settings.PROJECT_ROOT, instance_of(Path))
+        assert_that(settings.REPORTS_DIR, instance_of(Path))
+        assert_that(settings.SCREENSHOTS_DIR, instance_of(Path))
+        assert_that(settings.LOGS_DIR, instance_of(Path))
 
 
 class TestSettingsEdgeCases:
@@ -170,19 +177,20 @@ class TestSettingsEdgeCases:
     def test_settings_zero_timeout(self):
         """Test Settings handles zero timeout."""
         settings = Settings()
-        assert settings.TIMEOUT == 0
+        assert_that(settings.TIMEOUT, equal_to(0))
     
     @patch.dict(os.environ, {'TIMEOUT': '-5'})
     def test_settings_negative_timeout(self):
         """Test Settings handles negative timeout."""
         settings = Settings()
-        assert settings.TIMEOUT == -5  # Settings doesn't validate this
+        # Settings doesn't validate this
+        assert_that(settings.TIMEOUT, equal_to(-5))
     
     @patch.dict(os.environ, {'VISUAL_THRESHOLD': '0'})
     def test_settings_zero_visual_threshold(self):
         """Test Settings handles zero visual threshold."""
         settings = Settings()
-        assert settings.VISUAL_THRESHOLD == 0
+        assert_that(settings.VISUAL_THRESHOLD, equal_to(0))
     
     @patch.dict(os.environ, {
         'BASE_URL': '',
@@ -193,12 +201,13 @@ class TestSettingsEdgeCases:
         """Test Settings handles empty string values."""
         settings = Settings()
         
-        assert settings.BASE_URL == ""
-        assert settings.API_BASE_URL == ""
-        assert settings.DB_PATH == ""
+        assert_that(settings.BASE_URL, equal_to(""))
+        assert_that(settings.API_BASE_URL, equal_to(""))
+        assert_that(settings.DB_PATH, equal_to(""))
     
     @patch.dict(os.environ, {'BROWSER': 'CHROME'})
     def test_settings_case_sensitivity(self):
         """Test Settings preserves case from environment."""
         settings = Settings()
-        assert settings.BROWSER == "CHROME"  # Case preserved
+        # Case preserved
+        assert_that(settings.BROWSER, equal_to("CHROME"))

@@ -1,3 +1,8 @@
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+)
 """
 Real Unit Tests for Image Diff Handler
 Testing actual image comparison logic.
@@ -29,7 +34,7 @@ class TestImageDiffHandler:
         
         result = compare_images("img1.png", "img2.png", "diff.png")
         
-        assert result == 42
+        assert_that(result, equal_to(42))
         mock_open.assert_any_call("img1.png")
         mock_open.assert_any_call("img2.png")
         mock_new.assert_called_once_with("RGBA", (100, 100))
@@ -54,7 +59,8 @@ class TestImageDiffHandler:
         with patch('builtins.print') as mock_print:
             result = compare_images("img1.png", "img2.png", "diff.png")
         
-        assert result == 1  # Function returns 1 on ValueError
+        # Function returns 1 on ValueError
+        assert_that(result, equal_to(1))
         mock_print.assert_called_once_with("ValueError")
         # Save should NOT be called when ValueError occurs before save
         mock_img_diff.save.assert_not_called()
@@ -103,7 +109,7 @@ class TestImageDiffHandler:
         
         result = compare_images("identical1.png", "identical2.png", "no_diff.png")
         
-        assert result == 0
+        assert_that(result, equal_to(0))
         mock_new.assert_called_once_with("RGBA", (200, 150))
     
     @patch('utils.diff_handler.Image.open')
@@ -123,7 +129,7 @@ class TestImageDiffHandler:
         
         result = compare_images("very_different1.png", "very_different2.png", "big_diff.png")
         
-        assert result == 50000
+        assert_that(result, equal_to(50000))
         mock_new.assert_called_once_with("RGBA", (1000, 1000))
     
     @patch('utils.diff_handler.Image.open')

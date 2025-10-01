@@ -34,7 +34,7 @@ except ImportError:
 
 
 @dataclass
-class TestResult:
+class Result:
     """Detailed test result with comprehensive metadata."""
     test_name: str
     status: str  # PASSED, FAILED, SKIPPED, ERROR
@@ -56,7 +56,7 @@ class TestResult:
 
 
 @dataclass
-class TestSuite:
+class Suite:
     """Test suite execution summary."""
     suite_name: str
     total_tests: int
@@ -105,13 +105,13 @@ class AdvancedTestReporter:
         (self.reports_dir / "trends").mkdir(exist_ok=True)
         (self.reports_dir / "analytics").mkdir(exist_ok=True)
         
-        self.current_suite: Optional[TestSuite] = None
-        self.test_results: List[TestResult] = []
+        self.current_suite: Optional[Suite] = None
+        self.test_results: List[Result] = []
         
     def start_test_suite(self, suite_name: str, environment: str = "local", 
                         browser: str = "chrome") -> None:
         """Start tracking a new test suite."""
-        self.current_suite = TestSuite(
+        self.current_suite = Suite(
             suite_name=suite_name,
             total_tests=0,
             passed=0,
@@ -126,7 +126,7 @@ class AdvancedTestReporter:
         )
         self.test_results.clear()
 
-    def add_test_result(self, result: TestResult) -> None:
+    def add_test_result(self, result: Result) -> None:
         """Add a test result to the current suite."""
         if not self.current_suite:
             raise ValueError("No active test suite. Call start_test_suite() first.")
@@ -145,7 +145,7 @@ class AdvancedTestReporter:
         elif result.status == "ERROR":
             self.current_suite.errors += 1
 
-    def end_test_suite(self) -> TestSuite:
+    def end_test_suite(self) -> Suite:
         """End the current test suite and return summary."""
         if not self.current_suite:
             raise ValueError("No active test suite.")
@@ -372,7 +372,7 @@ class AdvancedTestReporter:
             "performance_distribution": self._get_performance_distribution(durations)
         }
 
-    def _extract_common_errors(self, failed_tests: List[TestResult]) -> List[str]:
+    def _extract_common_errors(self, failed_tests: List[Result]) -> List[str]:
         """Extract common error patterns from failed tests."""
         error_messages = [t.error_message for t in failed_tests if t.error_message]
         
@@ -388,7 +388,7 @@ class AdvancedTestReporter:
                 
         return list(set(common_patterns))
 
-    def _get_failure_distribution(self, failed_tests: List[TestResult]) -> Dict[str, int]:
+    def _get_failure_distribution(self, failed_tests: List[Result]) -> Dict[str, int]:
         """Get distribution of failures by test name."""
         return dict(Counter([t.test_name for t in failed_tests]))
 
@@ -487,11 +487,11 @@ class AdvancedTestReporter:
             
         return [test for test, count in Counter(all_failures).most_common(5)]
 
-    def _get_most_failing_tests(self, failed_tests: List[TestResult]) -> List[str]:
+    def _get_most_failing_tests(self, failed_tests: List[Result]) -> List[str]:
         """Get tests that fail most frequently."""
         return [test for test, count in Counter([t.test_name for t in failed_tests]).most_common(5)]
 
-    def _analyze_failures_by_browser(self, failed_tests: List[TestResult]) -> Dict[str, int]:
+    def _analyze_failures_by_browser(self, failed_tests: List[Result]) -> Dict[str, int]:
         """Analyze failure distribution by browser."""
         return dict(Counter([t.browser for t in failed_tests]))
 

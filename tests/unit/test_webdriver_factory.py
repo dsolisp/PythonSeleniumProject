@@ -1,3 +1,8 @@
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+)
 """
 Real Unit Tests for WebDriver Factory Functions
 Testing actual factory logic and configuration.
@@ -22,7 +27,7 @@ class TestWebDriverFactory:
         
         result = WebDriverFactory.create_chrome_driver()
         
-        assert result == mock_driver
+        assert_that(result, equal_to(mock_driver))
         mock_chrome.assert_called_once()
         # Verify anti-detection script was executed
         mock_driver.execute_script.assert_called_once()
@@ -38,7 +43,7 @@ class TestWebDriverFactory:
         
         result = WebDriverFactory.create_chrome_driver(headless=True)
         
-        assert result == mock_driver
+        assert_that(result, equal_to(mock_driver))
         # Should not maximize window in headless mode
         mock_driver.maximize_window.assert_not_called()
     
@@ -52,7 +57,7 @@ class TestWebDriverFactory:
         
         result = WebDriverFactory.create_chrome_driver(window_size=(1024, 768))
         
-        assert result == mock_driver
+        assert_that(result, equal_to(mock_driver))
         # Should not maximize window when size is specified
         mock_driver.maximize_window.assert_not_called()
     
@@ -66,7 +71,7 @@ class TestWebDriverFactory:
         
         result = WebDriverFactory.create_firefox_driver()
         
-        assert result == mock_driver
+        assert_that(result, equal_to(mock_driver))
         mock_firefox.assert_called_once()
         mock_driver.maximize_window.assert_called_once()
     
@@ -80,7 +85,7 @@ class TestWebDriverFactory:
         
         result = WebDriverFactory.create_edge_driver()
         
-        assert result == mock_driver
+        assert_that(result, equal_to(mock_driver))
         mock_edge.assert_called_once()
         mock_driver.execute_script.assert_called_once()
         mock_driver.maximize_window.assert_called_once()
@@ -99,8 +104,8 @@ class TestDatabaseFactory:
         
         result = DatabaseFactory.create_database_connection()
         
-        assert result == mock_conn
-        assert mock_conn.row_factory == mock_connect.return_value.row_factory
+        assert_that(result, equal_to(mock_conn))
+        assert_that(mock_conn.row_factory, equal_to(mock_connect.return_value.row_factory))
     
     @patch('utils.webdriver_factory.os.path.exists')
     def test_create_database_connection_file_not_found(self, mock_exists):
@@ -109,7 +114,7 @@ class TestDatabaseFactory:
         
         result = DatabaseFactory.create_database_connection()
         
-        assert result is None
+        assert_that(result, is_(none()))
     
     @patch('utils.webdriver_factory.sqlite3.connect')
     def test_create_database_connection_custom_path(self, mock_connect):
@@ -119,7 +124,7 @@ class TestDatabaseFactory:
         
         result = DatabaseFactory.create_database_connection("/custom/path.db")
         
-        assert result == mock_conn
+        assert_that(result, equal_to(mock_conn))
         mock_connect.assert_called_with("/custom/path.db")
     
     @patch('utils.webdriver_factory.sqlite3.connect')
@@ -129,7 +134,7 @@ class TestDatabaseFactory:
         
         result = DatabaseFactory.create_database_connection("/custom/path.db")
         
-        assert result is None
+        assert_that(result, is_(none()))
 
 
 class TestGetDriverFunction:
@@ -146,8 +151,8 @@ class TestGetDriverFunction:
         
         driver, database = get_driver("chrome")
         
-        assert driver == mock_driver
-        assert database == mock_database
+        assert_that(driver, equal_to(mock_driver))
+        assert_that(database, equal_to(mock_database))
         mock_chrome.assert_called_once_with(headless=False)
         mock_driver.implicitly_wait.assert_called_once()
     
@@ -162,8 +167,8 @@ class TestGetDriverFunction:
         
         driver, database = get_driver("firefox", headless=True)
         
-        assert driver == mock_driver
-        assert database == mock_database
+        assert_that(driver, equal_to(mock_driver))
+        assert_that(database, equal_to(mock_database))
         mock_firefox.assert_called_once_with(headless=True)
     
     @patch('utils.webdriver_factory.WebDriverFactory.create_edge_driver')
@@ -177,8 +182,8 @@ class TestGetDriverFunction:
         
         driver, database = get_driver("edge", window_size=(800, 600))
         
-        assert driver == mock_driver
-        assert database == mock_database
+        assert_that(driver, equal_to(mock_driver))
+        assert_that(database, equal_to(mock_database))
         mock_edge.assert_called_once_with(headless=False, window_size=(800, 600))
     
     def test_get_driver_unsupported_browser(self):

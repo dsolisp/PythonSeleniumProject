@@ -1,3 +1,8 @@
+from hamcrest import (
+    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
+    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
+    has_key, contains_string, has_property, is_in, is_not
+, ends_with, has_item)
 """
 Unit tests for library integrations (pandas, yaml, psutil, tenacity, jinja2, numpy).
 Validates that all new library features are working correctly.
@@ -20,7 +25,7 @@ class TestPandasIntegration:
 
     def test_pandas_dataframe_creation(self):
         """Test that pandas DataFrames are created correctly."""
-        from utils.test_reporter import AdvancedTestReporter, TestResult
+        from utils.test_reporter import AdvancedTestReporter, Result
         import pandas as pd
         
         reporter = AdvancedTestReporter(self.temp_dir)
@@ -28,9 +33,9 @@ class TestPandasIntegration:
         
         # Add test results
         results = [
-            TestResult('test1', 'passed', 1.5, datetime.now(), 'test', 'chrome'),
-            TestResult('test2', 'failed', 2.3, datetime.now(), 'test', 'chrome'),
-            TestResult('test3', 'passed', 0.8, datetime.now(), 'test', 'chrome')
+            Result('test1', 'passed', 1.5, datetime.now(), 'test', 'chrome'),
+            Result('test2', 'failed', 2.3, datetime.now(), 'test', 'chrome'),
+            Result('test3', 'passed', 0.8, datetime.now(), 'test', 'chrome')
         ]
         
         for result in results:
@@ -38,48 +43,48 @@ class TestPandasIntegration:
         
         # Test DataFrame generation
         analytics = reporter.generate_dataframe_analytics()
-        assert analytics is not None
-        assert len(analytics) == 3
+        assert_that(analytics, is_(not_none()))
+        assert_that(len(analytics), equal_to(3))
         
         # Verify DataFrame structure
         df = pd.DataFrame(analytics)
         expected_columns = ['test_name', 'status', 'duration', 'timestamp', 'browser', 'environment']
         for col in expected_columns:
-            assert col in df.columns
+            assert_that(df.columns, has_item(col))
         
         # Test statistical analysis
-        assert df['duration'].mean() > 0
-        assert df['duration'].std() >= 0
-        assert 'is_outlier' in df.columns
-        assert 'duration_zscore' in df.columns
+        assert_that(df['duration'].mean(), greater_than(0))
+        assert_that(df['duration'].std(), greater_than_or_equal_to(0))
+        assert_that(df.columns, contains_string('is_outlier'))
+        assert_that(df.columns, contains_string('duration_zscore'))
 
     def test_csv_export_functionality(self):
         """Test CSV export using pandas."""
-        from utils.test_reporter import AdvancedTestReporter, TestResult
+        from utils.test_reporter import AdvancedTestReporter, Result
         import pandas as pd
         
         reporter = AdvancedTestReporter(self.temp_dir)
         reporter.start_test_suite('csv_test', 'test', 'chrome')
         
         # Add test result
-        result = TestResult('test_csv', 'passed', 1.2, datetime.now(), 'test', 'chrome')
+        result = Result('test_csv', 'passed', 1.2, datetime.now(), 'test', 'chrome')
         reporter.add_test_result(result)
         
         # Export to CSV
         csv_file = reporter.export_to_csv()
-        assert csv_file is not None
-        assert os.path.exists(csv_file)
-        assert csv_file.endswith('.csv')
+        assert_that(csv_file, is_(not_none()))
+        assert_that(os.path.exists(csv_file), is_(True))
+        assert_that(csv_file, ends_with('.csv'))
         
         # Verify CSV content
         df = pd.read_csv(csv_file)
-        assert len(df) == 1
-        assert 'test_name' in df.columns
-        assert df.iloc[0]['test_name'] == 'test_csv'
+        assert_that(len(df), equal_to(1))
+        assert_that(df.columns, contains_string('test_name'))
+        assert_that(df.iloc[0]['test_name'], equal_to('test_csv'))
 
     def test_numpy_statistical_operations(self):
         """Test numpy integration for statistical calculations."""
-        from utils.test_reporter import AdvancedTestReporter, TestResult
+        from utils.test_reporter import AdvancedTestReporter, Result
         import pandas as pd
         import numpy as np
         
@@ -89,7 +94,7 @@ class TestPandasIntegration:
         # Add results with varied durations for statistical analysis
         durations = [1.0, 2.0, 3.0, 10.0, 1.5]  # 10.0 should be an outlier
         for i, duration in enumerate(durations):
-            result = TestResult(f'test_{i}', 'passed', duration, datetime.now(), 'test', 'chrome')
+            result = Result(f'test_{i}', 'passed', duration, datetime.now(), 'test', 'chrome')
             reporter.add_test_result(result)
         
         # Generate analytics
@@ -101,12 +106,12 @@ class TestPandasIntegration:
         std_duration = df['duration'].std()
         
         # Verify z-score calculation
-        assert 'duration_zscore' in df.columns
+        assert_that(df.columns, contains_string('duration_zscore'))
         
         # The outlier (10.0) should have a high z-score
         outliers = df[df['is_outlier'] == True]
         if len(outliers) > 0:
-            assert outliers.iloc[0]['duration'] == 10.0
+            assert_that(outliers.iloc[0]['duration'], equal_to(10.0))
 
 
 class TestYAMLIntegration:
@@ -118,23 +123,23 @@ class TestYAMLIntegration:
 
     def test_yaml_config_loading(self):
         """Test YAML configuration loading."""
-        from utils.test_data_manager import TestDataManager
+        from utils.test_data_manager import DataManager
         
-        manager = TestDataManager(self.temp_dir)
+        manager = DataManager(self.temp_dir)
         
         # Load YAML config (should create default if not exists)
         config = manager.load_yaml_config('browser_settings', 'test')
         
-        assert isinstance(config, dict)
-        assert len(config) > 0
-        assert 'test_environment' in config or 'browser_config' in config
+        assert_that(config, instance_of(dict))
+        assert_that(len(config), greater_than(0))
+        assert_that(config or 'browser_config' in config, contains_string('test_environment'))
 
     def test_yaml_data_export(self):
         """Test YAML data export functionality."""
-        from utils.test_data_manager import TestDataManager
+        from utils.test_data_manager import DataManager
         import yaml
         
-        manager = TestDataManager(self.temp_dir)
+        manager = DataManager(self.temp_dir)
         
         # Test data to export (matching the expected structure)
         test_data = {
@@ -149,31 +154,31 @@ class TestYAMLIntegration:
         
         # Export to YAML
         yaml_file = manager.save_test_results_yaml(test_data)
-        assert yaml_file is not None
-        assert os.path.exists(yaml_file)
-        assert yaml_file.endswith('.yml')
+        assert_that(yaml_file, is_(not_none()))
+        assert_that(os.path.exists(yaml_file), is_(True))
+        assert_that(yaml_file, ends_with('.yml'))
         
         # Verify YAML content
         with open(yaml_file, 'r') as f:
             loaded_data = yaml.safe_load(f)
         
-        assert loaded_data is not None
-        assert 'test_execution' in loaded_data
-        assert loaded_data['test_execution']['total_tests'] == 5
+        assert_that(loaded_data, is_(not_none()))
+        assert_that(loaded_data, contains_string('test_execution'))
+        assert_that(loaded_data['test_execution']['total_tests'], equal_to(5))
 
     def test_yaml_configuration_structure(self):
         """Test that YAML configurations have expected structure."""
-        from utils.test_data_manager import TestDataManager
+        from utils.test_data_manager import DataManager
         
-        manager = TestDataManager(self.temp_dir)
+        manager = DataManager(self.temp_dir)
         
         # Load config for different environments
         for env in ['test', 'qa', 'production']:
             config = manager.load_yaml_config('browser_settings', env)
             
-            assert isinstance(config, dict)
+            assert_that(config, instance_of(dict))
             # Should have basic structure
-            assert len(config) >= 1
+            assert_that(len(config), greater_than_or_equal_to(1))
 
 
 class TestPsutilIntegration:
@@ -188,18 +193,18 @@ class TestPsutilIntegration:
         # Test memory monitoring
         memory_data = handler.monitor_memory_usage()
         
-        assert isinstance(memory_data, dict)
-        assert 'current_memory_mb' in memory_data
-        assert 'memory_percent' in memory_data
-        assert 'cpu_percent' in memory_data
-        assert 'timestamp' in memory_data
+        assert_that(memory_data, instance_of(dict))
+        assert_that(memory_data, contains_string('current_memory_mb'))
+        assert_that(memory_data, contains_string('memory_percent'))
+        assert_that(memory_data, contains_string('cpu_percent'))
+        assert_that(memory_data, contains_string('timestamp'))
         
         # Verify data types and ranges
-        assert isinstance(memory_data['current_memory_mb'], (int, float))
-        assert isinstance(memory_data['memory_percent'], (int, float))
-        assert isinstance(memory_data['cpu_percent'], (int, float))
-        assert memory_data['current_memory_mb'] > 0
-        assert 0 <= memory_data['memory_percent'] <= 100
+        assert_that(memory_data['current_memory_mb'], instance_of((int, float)))
+        assert_that(memory_data['memory_percent'], instance_of((int, float)))
+        assert_that(memory_data['cpu_percent'], instance_of((int, float)))
+        assert_that(memory_data['current_memory_mb'], greater_than(0))
+        assert_that(0, less_than_or_equal_to(memory_data['memory_percent'] <= 100))
 
     def test_system_info_collection(self):
         """Test system information collection."""
@@ -209,10 +214,10 @@ class TestPsutilIntegration:
         cpu_count = psutil.cpu_count()
         memory_info = psutil.virtual_memory()
         
-        assert cpu_count > 0
-        assert memory_info.total > 0
-        assert hasattr(memory_info, 'available')
-        assert hasattr(memory_info, 'percent')
+        assert_that(cpu_count, greater_than(0))
+        assert_that(memory_info.total, greater_than(0))
+        assert_that(memory_info, has_property('available'))
+        assert_that(memory_info, has_property('percent'))
 
 
 class TestTenacityIntegration:
@@ -228,9 +233,9 @@ class TestTenacityIntegration:
             wait=wait_exponential(multiplier=1, min=1, max=10)
         )
         
-        assert retry_config is not None
-        assert hasattr(retry_config, 'stop')
-        assert hasattr(retry_config, 'wait')
+        assert_that(retry_config, is_(not_none()))
+        assert_that(retry_config, has_property('stop'))
+        assert_that(retry_config, has_property('wait'))
 
     def test_error_handler_retry_integration(self):
         """Test that error handler integrates with tenacity."""
@@ -239,7 +244,7 @@ class TestTenacityIntegration:
         handler = SmartErrorHandler()
         
         # Check that handler has retry capabilities
-        assert hasattr(handler, 'execute_with_tenacity_retry')
+        assert_that(handler, has_property('execute_with_tenacity_retry'))
 
     def test_retry_execution_simulation(self):
         """Test retry execution with tenacity."""
@@ -264,8 +269,9 @@ class TestTenacityIntegration:
         # Execute with retry
         result = retry_config(flaky_function)
         
-        assert result == "Success"
-        assert call_count == 2  # Should have been called twice
+        assert_that(result, equal_to("Success"))
+        # Should have been called twice
+        assert_that(call_count, equal_to(2))
 
 
 class TestJinja2Integration:
@@ -284,8 +290,8 @@ class TestJinja2Integration:
             description='This is a test description'
         )
         
-        assert '<h1>Test Report</h1>' in rendered
-        assert '<p>This is a test description</p>' in rendered
+        assert_that(rendered, contains_string('<h1>Test Report</h1>'))
+        assert_that(rendered, contains_string('<p>This is a test description</p>'))
 
     def test_html_report_template(self):
         """Test HTML report template functionality."""
@@ -339,14 +345,14 @@ class TestJinja2Integration:
         rendered = html_template.render(**test_data)
         
         # Verify rendered content
-        assert '<!DOCTYPE html>' in rendered
-        assert '<title>Integration Tests - Test Report</title>' in rendered
-        assert 'Environment: test' in rendered
-        assert 'Browser: chrome' in rendered
-        assert 'Total Tests: 3' in rendered
-        assert 'Success Rate: 66.7%' in rendered
-        assert '<td>test1</td>' in rendered
-        assert '<td>passed</td>' in rendered
+        assert_that(rendered, contains_string('<!DOCTYPE html>'))
+        assert_that(rendered, contains_string('<title>Integration Tests - Test Report</title>'))
+        assert_that(rendered, contains_string('Environment: test'))
+        assert_that(rendered, contains_string('Browser: chrome'))
+        assert_that(rendered, contains_string('Total Tests: 3'))
+        assert_that(rendered, contains_string('Success Rate: 66.7%'))
+        assert_that(rendered, contains_string('<td>test1</td>'))
+        assert_that(rendered, contains_string('<td>passed</td>'))
 
 
 class TestNumpyIntegration:
@@ -364,16 +370,16 @@ class TestNumpyIntegration:
         std = np.std(data)
         z_scores = np.abs((data - mean) / std)
         
-        assert mean > 0
-        assert std > 0
-        assert len(z_scores) == len(data)
+        assert_that(mean, greater_than(0))
+        assert_that(std, greater_than(0))
+        assert_that(len(z_scores), equal_to(len(data)))
         
         # Test outlier detection (z-score > 2)
         outliers = z_scores > 2
         outlier_values = data[outliers]
         
         # 15.0 should be detected as an outlier
-        assert 15.0 in outlier_values
+        assert_that(outlier_values, has_item(15.0))
 
     def test_numpy_with_pandas_integration(self):
         """Test numpy operations within pandas context."""
@@ -391,14 +397,14 @@ class TestNumpyIntegration:
         df['is_outlier'] = df['duration_zscore'] > 2
         
         # Verify calculations
-        assert 'duration_zscore' in df.columns
-        assert 'is_outlier' in df.columns
-        assert df['is_outlier'].dtype == bool
+        assert_that(df.columns, contains_string('duration_zscore'))
+        assert_that(df.columns, contains_string('is_outlier'))
+        assert_that(df['is_outlier'].dtype, equal_to(bool))
         
         # The value 10.0 should be detected as an outlier
         outliers = df[df['is_outlier'] == True]
         if len(outliers) > 0:
-            assert 10.0 in outliers['duration'].values
+            assert_that(outliers['duration'].values, has_item(10.0))
 
 
 class TestLibraryIntegrationSmokeTest:
@@ -415,12 +421,12 @@ class TestLibraryIntegrationSmokeTest:
             import jinja2
             
             # Basic functionality test
-            assert hasattr(pandas, 'DataFrame')
-            assert hasattr(numpy, 'array')
-            assert hasattr(yaml, 'load')
-            assert hasattr(psutil, 'Process')
-            assert hasattr(tenacity, 'Retrying')
-            assert hasattr(jinja2, 'Template')
+            assert_that(pandas, has_property('DataFrame'))
+            assert_that(numpy, has_property('array'))
+            assert_that(yaml, has_property('load'))
+            assert_that(psutil, has_property('Process'))
+            assert_that(tenacity, has_property('Retrying'))
+            assert_that(jinja2, has_property('Template'))
             
         except ImportError as e:
             pytest.fail(f"Library import failed: {e}")
@@ -428,27 +434,27 @@ class TestLibraryIntegrationSmokeTest:
     def test_framework_components_with_libraries(self):
         """Test that framework components use libraries correctly."""
         from utils.test_reporter import AdvancedTestReporter
-        from utils.test_data_manager import TestDataManager
+        from utils.test_data_manager import DataManager
         from utils.error_handler import SmartErrorHandler
         
         # Test that components can be instantiated
         temp_dir = tempfile.mkdtemp()
         
         reporter = AdvancedTestReporter(temp_dir)
-        data_manager = TestDataManager(temp_dir)
+        data_manager = DataManager(temp_dir)
         error_handler = SmartErrorHandler()
         
         # Test basic functionality
-        assert reporter is not None
-        assert data_manager is not None
-        assert error_handler is not None
+        assert_that(reporter, is_(not_none()))
+        assert_that(data_manager, is_(not_none()))
+        assert_that(error_handler, is_(not_none()))
         
         # Test that they have library-enabled methods
-        assert hasattr(reporter, 'generate_dataframe_analytics')
-        assert hasattr(reporter, 'export_to_csv')
-        assert hasattr(data_manager, 'load_yaml_config')
-        assert hasattr(data_manager, 'save_test_results_yaml')
-        assert hasattr(error_handler, 'monitor_memory_usage')
+        assert_that(reporter, has_property('generate_dataframe_analytics'))
+        assert_that(reporter, has_property('export_to_csv'))
+        assert_that(data_manager, has_property('load_yaml_config'))
+        assert_that(data_manager, has_property('save_test_results_yaml'))
+        assert_that(error_handler, has_property('monitor_memory_usage'))
 
 
 if __name__ == "__main__":

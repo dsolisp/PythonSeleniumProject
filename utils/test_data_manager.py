@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 
 
 @dataclass
-class TestDataSet:
+class DataSet:
     """Represents a complete test data set with metadata."""
     name: str
     data: Dict[str, Any]
@@ -23,7 +23,7 @@ class TestDataSet:
     tags: List[str]
 
 
-class TestDataManager:
+class DataManager:
     """
     Comprehensive test data manager supporting multiple formats and environments.
     
@@ -428,4 +428,4 @@ class TestDataManager:
 
 
 # Global test data manager instance
-test_data_manager = TestDataManager()
+test_data_manager = DataManager()
