@@ -1,8 +1,8 @@
 from hamcrest import (
     assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
     greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
-    has_key, contains_string, has_property, is_in, is_not
-, ends_with)
+    has_key, has_item, contains_string, has_property, is_in, is_not, ends_with
+)
 """
 Unit tests for framework components with advanced capabilities.
 Validates data management, reporting, and error handling functionality.
@@ -60,7 +60,7 @@ class TestTestDataManager:
         data2 = self.data_manager.load_test_data("test_data")
         
         assert_that(data1, equal_to(data2))
-        assert_that(self.data_manager._cache, contains_string("test_data_default"))
+        assert_that(self.data_manager._cache, has_key("test_data_default"))
 
     def test_get_search_scenarios(self):
         """Test getting search scenarios."""
@@ -97,7 +97,7 @@ class TestTestDataManager:
         
         admin_accounts = self.data_manager.get_user_accounts("admin")
         assert_that(len(admin_accounts), equal_to(2))
-        assert_that(all(acc["role"], equal_to("admin" for acc in admin_accounts)))
+        assert_that(all(acc["role"] == "admin" for acc in admin_accounts), is_(True))
         
         standard_accounts = self.data_manager.get_user_accounts("standard")
         assert_that(len(standard_accounts), equal_to(1))
@@ -108,11 +108,11 @@ class TestTestDataManager:
         user = self.data_manager.generate_test_user("admin")
         
         assert_that(user["role"], equal_to("admin"))
-        assert_that(user, contains_string("username"))
-        assert_that(user, contains_string("password"))
-        assert_that(user, contains_string("email"))
-        assert_that(user, contains_string("permissions"))
-        assert_that(user["permissions"], contains_string("admin"))
+        assert_that(user, has_key("username"))
+        assert_that(user, has_key("password"))
+        assert_that(user, has_key("email"))
+        assert_that(user, has_key("permissions"))
+        assert_that(user["permissions"], has_item("admin"))
         assert_that(user["active"], is_(True))
 
     def test_generate_search_data(self):
@@ -121,9 +121,9 @@ class TestTestDataManager:
         
         assert_that(len(search_data), equal_to(3))
         for scenario in search_data:
-            assert_that(scenario, contains_string("name"))
-            assert_that(scenario, contains_string("search_term"))
-            assert_that(scenario, contains_string("expected_results_count"))
+            assert_that(scenario, has_key("name"))
+            assert_that(scenario, has_key("search_term"))
+            assert_that(scenario, has_key("expected_results_count"))
             assert_that(scenario["generated"], is_(True))
 
     def test_validate_data_schema(self):
@@ -139,10 +139,10 @@ class TestTestDataManager:
         invalid_scenario = {
             "search_term": "python testing"  # Missing 'name'
         }
-        assert_that(self.data_manager.validate_data_schema(invalid_scenario, is_(False)), "search_scenario")
+        assert_that(self.data_manager.validate_data_schema(invalid_scenario, "search_scenario"), is_(False))
         
         # Unknown schema
-        assert_that(self.data_manager.validate_data_schema(valid_scenario, is_(False)), "unknown_schema")
+        assert_that(self.data_manager.validate_data_schema(valid_scenario, "unknown_schema"), is_(False))
 
     def test_cleanup_old_results(self):
         """Test cleanup of old result files."""
@@ -254,9 +254,9 @@ class TestAdvancedTestReporter:
         with open(report_path, 'r') as f:
             report_data = json.load(f)
         
-        assert_that(report_data, contains_string("suite_summary"))
-        assert_that(report_data, contains_string("metrics"))
-        assert_that(report_data, contains_string("test_results"))
+        assert_that(report_data, has_key("suite_summary"))
+        assert_that(report_data, has_key("metrics"))
+        assert_that(report_data, has_key("test_results"))
         assert_that(report_data["suite_summary"]["suite_name"], equal_to("JSON_Test"))
         assert_that(len(report_data["test_results"]), equal_to(1))
 
@@ -320,8 +320,8 @@ class TestAdvancedTestReporter:
         patterns = self.reporter.get_failure_patterns()
         
         assert_that(patterns["total_failures"], equal_to(2))
-        assert_that(patterns, contains_string("error_patterns"))
-        assert_that(patterns, contains_string("most_failing_tests"))
+        assert_that(patterns, has_key("error_patterns"))
+        assert_that(patterns, has_key("most_failing_tests"))
 
 
 class TestErrorClassifier:

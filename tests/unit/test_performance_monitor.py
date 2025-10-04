@@ -1,7 +1,7 @@
 from hamcrest import (
     assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
     greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
-    has_key, contains_string, has_property, is_in, is_not
+    has_key, has_item, contains_string, has_property, is_in, is_not
 )
 """
 Unit tests for performance monitoring utilities.
@@ -78,7 +78,7 @@ class TestPerformanceMonitor:
         """Test setting performance thresholds."""
         self.monitor.set_threshold("test_metric", 500.0, "ms")
         
-        assert_that(self.monitor.thresholds, contains_string("test_metric"))
+        assert_that(self.monitor.thresholds, has_key("test_metric"))
         assert_that(self.monitor.thresholds["test_metric"], equal_to(500.0))
     
     def test_record_metric(self):
@@ -183,9 +183,9 @@ class TestPerformanceMonitor:
         # Should record 3 metrics
         assert_that(len(self.monitor.metrics), equal_to(3))
         metric_names = [m.name for m in self.monitor.metrics]
-        assert_that(metric_names, contains_string("test_memory_rss_mb"))
-        assert_that(metric_names, contains_string("test_memory_vms_mb"))
-        assert_that(metric_names, contains_string("test_memory_percent"))
+        assert_that(metric_names, has_item("test_memory_rss_mb"))
+        assert_that(metric_names, has_item("test_memory_vms_mb"))
+        assert_that(metric_names, has_item("test_memory_percent"))
     
     @patch('psutil.cpu_percent')
     def test_measure_cpu_usage(self, mock_cpu_percent):
@@ -210,12 +210,12 @@ class TestPerformanceMonitor:
         
         stats = self.monitor.benchmark_function(test_func, iterations=3, delay=0.01)
         
-        assert_that(stats, contains_string("mean"))
-        assert_that(stats, contains_string("median"))
-        assert_that(stats, contains_string("min"))
-        assert_that(stats, contains_string("max"))
-        assert_that(stats, contains_string("stddev"))
-        assert_that(stats, contains_string("iterations"))
+        assert_that(stats, has_key("mean"))
+        assert_that(stats, has_key("median"))
+        assert_that(stats, has_key("min"))
+        assert_that(stats, has_key("max"))
+        assert_that(stats, has_key("stddev"))
+        assert_that(stats, has_key("iterations"))
         assert_that(stats["iterations"], equal_to(3))
         # Should be at least 10ms
         assert_that(stats["mean"], greater_than_or_equal_to(10))
@@ -239,7 +239,7 @@ class TestPerformanceMonitor:
         
         assert_that(summary["total_metrics"], equal_to(1))
         assert_that(summary["unique_metric_names"], equal_to(1))
-        assert_that(summary["metrics"], contains_string("single_test"))
+        assert_that(summary["metrics"], has_key("single_test"))
         
         metric_info = summary["metrics"]["single_test"]
         assert_that(metric_info["count"], equal_to(1))
@@ -276,10 +276,10 @@ class TestWebDriverPerformanceMonitor:
     def test_webdriver_monitor_initialization(self):
         """Test WebDriver monitor initialization with default thresholds."""
         assert_that(self.web_monitor.name, equal_to("WebDriver"))
-        assert_that(self.web_monitor.thresholds, contains_string("page_load_time"))
-        assert_that(self.web_monitor.thresholds, contains_string("element_find_time"))
-        assert_that(self.web_monitor.thresholds, contains_string("click_operation_time"))
-        assert_that(self.web_monitor.thresholds, contains_string("form_fill_time"))
+        assert_that(self.web_monitor.thresholds, has_key("page_load_time"))
+        assert_that(self.web_monitor.thresholds, has_key("element_find_time"))
+        assert_that(self.web_monitor.thresholds, has_key("click_operation_time"))
+        assert_that(self.web_monitor.thresholds, has_key("form_fill_time"))
     
     def test_monitor_page_load(self):
         """Test page load monitoring."""
@@ -325,9 +325,9 @@ class TestAPIPerformanceMonitor:
     def test_api_monitor_initialization(self):
         """Test API monitor initialization with default thresholds."""
         assert_that(self.api_monitor.name, equal_to("API"))
-        assert_that(self.api_monitor.thresholds, contains_string("api_response_time"))
-        assert_that(self.api_monitor.thresholds, contains_string("api_first_byte_time"))
-        assert_that(self.api_monitor.thresholds, contains_string("api_total_time"))
+        assert_that(self.api_monitor.thresholds, has_key("api_response_time"))
+        assert_that(self.api_monitor.thresholds, has_key("api_first_byte_time"))
+        assert_that(self.api_monitor.thresholds, has_key("api_total_time"))
     
     def test_monitor_api_request(self):
         """Test API request monitoring."""
@@ -347,13 +347,13 @@ class TestAPIPerformanceMonitor:
         
         assert_that(timing_data["response_time"], equal_to(500.0))
         assert_that(timing_data["status_code"], equal_to(200))
-        assert_that(timing_data, contains_string("total_time"))
+        assert_that(timing_data, has_key("total_time"))
         
         # Should record 2 metrics
         assert_that(len(self.api_monitor.metrics), equal_to(2))
         metric_names = [m.name for m in self.api_monitor.metrics]
-        assert_that(metric_names, contains_string("api_response_time"))
-        assert_that(metric_names, contains_string("api_total_time"))
+        assert_that(metric_names, has_item("api_response_time"))
+        assert_that(metric_names, has_item("api_total_time"))
 
 
 class TestDecorators:
@@ -384,8 +384,8 @@ class TestDecorators:
         
         # Should return benchmark statistics
         assert_that(result, instance_of(dict))
-        assert_that(result, contains_string("mean"))
-        assert_that(result, contains_string("iterations"))
+        assert_that(result, has_key("mean"))
+        assert_that(result, has_key("iterations"))
         assert_that(result["iterations"], equal_to(3))
     
     def test_performance_test_decorator_within_threshold(self):

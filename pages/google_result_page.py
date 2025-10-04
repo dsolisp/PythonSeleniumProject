@@ -46,3 +46,23 @@ class GoogleResultPage(BasePage):
             return len(result_elements)
         except:
             return 0
+
+    def wait_for_results_page(self, timeout: int = 10) -> bool:
+        """Wait for results page to load."""
+        try:
+            return self.wait_for_element(
+                self.google_result_locators.SEARCH_RESULTS,
+                timeout=timeout
+            ) is not None
+        except:
+            return False
+
+    def wait_for_results_page_complete(self, timeout: int = 15) -> bool:
+        """Wait for results page to fully load with extended timeout."""
+        try:
+            return self.wait_for_element(
+                self.google_result_locators.SEARCH_RESULTS,
+                timeout=timeout
+            ) is not None
+        except:
+            return False

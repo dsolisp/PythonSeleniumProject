@@ -1,8 +1,9 @@
 from hamcrest import (
     assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
     greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
-    has_key, contains_string, has_property, is_in, is_not
-, ends_with, has_item)
+    has_key, contains_string, has_property, is_in, is_not, any_of,
+    ends_with, has_item
+)
 """
 Unit tests for library integrations (pandas, yaml, psutil, tenacity, jinja2, numpy).
 Validates that all new library features are working correctly.
@@ -55,8 +56,8 @@ class TestPandasIntegration:
         # Test statistical analysis
         assert_that(df['duration'].mean(), greater_than(0))
         assert_that(df['duration'].std(), greater_than_or_equal_to(0))
-        assert_that(df.columns, contains_string('is_outlier'))
-        assert_that(df.columns, contains_string('duration_zscore'))
+        assert_that(df.columns, has_item('is_outlier'))
+        assert_that(df.columns, has_item('duration_zscore'))
 
     def test_csv_export_functionality(self):
         """Test CSV export using pandas."""
@@ -79,7 +80,7 @@ class TestPandasIntegration:
         # Verify CSV content
         df = pd.read_csv(csv_file)
         assert_that(len(df), equal_to(1))
-        assert_that(df.columns, contains_string('test_name'))
+        assert_that(df.columns, has_item('test_name'))
         assert_that(df.iloc[0]['test_name'], equal_to('test_csv'))
 
     def test_numpy_statistical_operations(self):
@@ -106,7 +107,7 @@ class TestPandasIntegration:
         std_duration = df['duration'].std()
         
         # Verify z-score calculation
-        assert_that(df.columns, contains_string('duration_zscore'))
+        assert_that(df.columns, has_item('duration_zscore'))
         
         # The outlier (10.0) should have a high z-score
         outliers = df[df['is_outlier'] == True]
@@ -132,7 +133,7 @@ class TestYAMLIntegration:
         
         assert_that(config, instance_of(dict))
         assert_that(len(config), greater_than(0))
-        assert_that(config or 'browser_config' in config, contains_string('test_environment'))
+        assert_that(config, has_key('test_environment'))
 
     def test_yaml_data_export(self):
         """Test YAML data export functionality."""
@@ -163,7 +164,7 @@ class TestYAMLIntegration:
             loaded_data = yaml.safe_load(f)
         
         assert_that(loaded_data, is_(not_none()))
-        assert_that(loaded_data, contains_string('test_execution'))
+        assert_that(loaded_data, has_key('test_execution'))
         assert_that(loaded_data['test_execution']['total_tests'], equal_to(5))
 
     def test_yaml_configuration_structure(self):
@@ -194,15 +195,15 @@ class TestPsutilIntegration:
         memory_data = handler.monitor_memory_usage()
         
         assert_that(memory_data, instance_of(dict))
-        assert_that(memory_data, contains_string('current_memory_mb'))
-        assert_that(memory_data, contains_string('memory_percent'))
-        assert_that(memory_data, contains_string('cpu_percent'))
-        assert_that(memory_data, contains_string('timestamp'))
+        assert_that(memory_data, has_key('current_memory_mb'))
+        assert_that(memory_data, has_key('memory_percent'))
+        assert_that(memory_data, has_key('cpu_percent'))
+        assert_that(memory_data, has_key('timestamp'))
         
         # Verify data types and ranges
-        assert_that(memory_data['current_memory_mb'], instance_of((int, float)))
-        assert_that(memory_data['memory_percent'], instance_of((int, float)))
-        assert_that(memory_data['cpu_percent'], instance_of((int, float)))
+        assert_that(memory_data['current_memory_mb'], any_of(instance_of(int), instance_of(float)))
+        assert_that(memory_data['memory_percent'], any_of(instance_of(int), instance_of(float)))
+        assert_that(memory_data['cpu_percent'], any_of(instance_of(int), instance_of(float)))
         assert_that(memory_data['current_memory_mb'], greater_than(0))
         assert_that(0, less_than_or_equal_to(memory_data['memory_percent'] <= 100))
 
@@ -397,8 +398,8 @@ class TestNumpyIntegration:
         df['is_outlier'] = df['duration_zscore'] > 2
         
         # Verify calculations
-        assert_that(df.columns, contains_string('duration_zscore'))
-        assert_that(df.columns, contains_string('is_outlier'))
+        assert_that(df.columns, has_item('duration_zscore'))
+        assert_that(df.columns, has_item('is_outlier'))
         assert_that(df['is_outlier'].dtype, equal_to(bool))
         
         # The value 10.0 should be detected as an outlier

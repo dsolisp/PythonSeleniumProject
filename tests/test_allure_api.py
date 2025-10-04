@@ -250,7 +250,7 @@ class TestAllureAPI:
             created_post = response.json()
             
             # Verify the created post has an ID
-            assert_that(created_post, contains_string('id')), "Created post should have an ID"
+            assert_that(created_post, has_key('id')), "Created post should have an ID"
             self.test_logger.log_assertion(
                 "Created post has ID",
                 'id' in created_post,
@@ -385,6 +385,6 @@ class TestAllureAPI:
 
         with allure.step("Validate performance requirements"):
             assert_that(avg_response_time, less_than(max_response_time)), f"Average response time too slow: {avg_response_time:.2f}ms"
-            assert_that(all(data["status_code"], equal_to(200 for data in performance_data))), "Some requests failed"
+            assert_that(all(data["status_code"] == 200 for data in performance_data), is_(True)), "Some requests failed"
 
         self.test_logger.end_test("PASS")

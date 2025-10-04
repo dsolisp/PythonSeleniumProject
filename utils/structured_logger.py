@@ -260,6 +260,28 @@ class ExecutionLogger:
             test_name=self.test_name,
             **context
         )
+    
+    def browser_action(self, action: str, **context: Any) -> None:
+        """Log browser action with test context."""
+        self.logger.info(
+            f"Browser action: {action}",
+            event_type="browser_action",
+            action=action,
+            test_name=self.test_name,
+            **context
+        )
+    
+    def exception_caught(self, exception: Exception, context_description: str = "", **context: Any) -> None:
+        """Log exception with test context."""
+        self.logger.error(
+            f"Exception caught: {context_description}",
+            event_type="exception",
+            exception_type=type(exception).__name__,
+            exception_message=str(exception),
+            context_description=context_description,
+            test_name=self.test_name,
+            **context
+        )
 
 
 # Global logger instance for framework-wide use

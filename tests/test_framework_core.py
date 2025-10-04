@@ -90,7 +90,7 @@ def test_base_page_functionality(driver):
     assert_that(click_success, is_(True)), "Should be able to click button"
 
     screenshot_path = base_page.take_screenshot("framework_test.png")
-    assert_that(screenshot_path, is_(True)), "Should be able to take screenshot"
+    assert_that(screenshot_path, not_none()), "Should be able to take screenshot"
 
     print("✅ All BasePage functionality tests passed!")
 

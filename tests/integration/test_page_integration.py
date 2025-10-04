@@ -213,7 +213,8 @@ class TestPageObjectIntegration:
         # Test screenshot on potentially problematic page
         screenshot_path = page.take_screenshot("error_test.png")
         # Result may vary, but shouldn't raise unhandled exceptions
-        assert_that(screenshot_path is not None or screenshot_path, is_(none()))
+        # Screenshot path should be either None or a valid string
+        assert_that(screenshot_path is None or isinstance(screenshot_path, str), is_(True))
 
     def test_multiple_page_objects_integration(self, chrome_driver):
         """Test integration between multiple page objects."""

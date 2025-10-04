@@ -64,7 +64,7 @@ class TestFrameworkSmoke:
         # Should be tuples with (By.METHOD, "selector")
         assert_that(search_box, instance_of(tuple))
         assert_that(len(search_box), equal_to(2))
-        assert_that(hasattr(By, search_box[0].upper()) or search_box[0], is_in([By.ID, By.NAME, By.CLASS_NAME, By.TAG_NAME, By.XPATH, By.CSS_SELECTOR]))
+        assert_that(search_box[0], is_in([By.ID, By.NAME, By.CLASS_NAME, By.TAG_NAME, By.XPATH, By.CSS_SELECTOR]))
         assert_that(search_box[1], instance_of(str))
         assert_that(len(search_box[1]), greater_than(0))
         

@@ -48,7 +48,7 @@ class TestPerformanceBenchmarks:
         factory = WebDriverFactory()
         
         def create_and_quit_driver():
-            driver = factory.create_driver("chrome", headless=True)
+            driver = factory.create_chrome_driver(headless=True)
             driver.quit()
             return True
         
@@ -74,7 +74,7 @@ class TestPerformanceBenchmarks:
     def test_google_search_performance_benchmark(self, benchmark):
         """Benchmark Google search operation."""
         factory = WebDriverFactory()
-        driver = factory.create_driver("chrome", headless=True)
+        driver = factory.create_chrome_driver(headless=True)
         
         def perform_google_search():
             try:
@@ -114,11 +114,10 @@ class TestPerformanceBenchmarks:
         finally:
             driver.quit()
     
-    @benchmark_decorator(iterations=10, name="element_finding")
     def test_element_finding_benchmark(self, benchmark):
         """Benchmark element finding operations."""
         factory = WebDriverFactory()
-        driver = factory.create_driver("chrome", headless=True)
+        driver = factory.create_chrome_driver(headless=True)
         
         def find_elements_on_google():
             driver.get(settings.BASE_URL)
@@ -175,12 +174,14 @@ class TestPerformanceBenchmarks:
     
     def test_database_operation_benchmark(self, benchmark):
         """Benchmark database operations."""
-        from utils.sql_connection import DatabaseConnection
+        from utils.sql_connection import get_connection
+        import os
+        
+        db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'resources', 'chinook.db')
         
         def database_operations():
             try:
-                db = DatabaseConnection()
-                connection = db.get_connection()
+                connection = get_connection(db_path)
                 cursor = connection.cursor()
                 
                 # Simple query operation
@@ -208,7 +209,7 @@ class TestPerformanceBenchmarks:
     def test_page_load_with_threshold(self):
         """Test page load with performance threshold validation."""
         factory = WebDriverFactory()
-        driver = factory.create_driver("chrome", headless=True)
+        driver = factory.create_chrome_driver(headless=True)
         
         try:
             start_time = time.perf_counter()
@@ -321,7 +322,7 @@ class TestPerformanceMonitoringIntegration:
         # Check if metric was recorded
         metrics = monitor.get_metrics_summary()
         assert_that(metrics["total_metrics"], greater_than(0))
-        assert_that(metrics["metrics"], contains_string("test_function_timing"))
+        assert_that(metrics["metrics"], has_key("test_function_timing"))
         
         timing_metric = metrics["metrics"]["test_function_timing"]
         # Should be at least 100ms
@@ -330,7 +331,7 @@ class TestPerformanceMonitoringIntegration:
     def test_web_performance_monitor(self):
         """Test WebDriver performance monitoring."""
         factory = WebDriverFactory()
-        driver = factory.create_driver("chrome", headless=True)
+        driver = factory.create_chrome_driver(headless=True)
         
         try:
             # Monitor page load
@@ -359,9 +360,9 @@ class TestPerformanceMonitoringIntegration:
             session, "GET", settings.TEST_API_URL
         )
         
-        assert_that(timing_data, contains_string("response_time"))
-        assert_that(timing_data, contains_string("total_time"))
-        assert_that(timing_data, contains_string("status_code"))
+        assert_that(timing_data, has_key("response_time"))
+        assert_that(timing_data, has_key("total_time"))
+        assert_that(timing_data, has_key("status_code"))
         assert_that(timing_data["status_code"], equal_to(200))
         
         # Check metrics were recorded

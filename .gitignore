@@ -11,3 +11,7 @@ package.json
 *.exe
 /drivers
 /reports
+*.png
+*.log
+*.csv
+*.json
