@@ -1,28 +1,16 @@
 # Bandit configuration for Python test automation framework
-# Format: YAML
+# Using INI format for better compatibility
 
-# Exclude virtual environments and cache directories
-exclude_dirs:
-  - .venv
-  - venv-enhanced
-  - __pycache__
-  - .git
-  - node_modules
-  - archive
+[bandit]
+# Exclude virtual environments and cache directories  
+exclude = /tests,/.venv,/venv-enhanced,/__pycache__,/.git,/node_modules,/archive
 
 # Skipped tests (acceptable for test automation framework):
 # B101: assert_used - Standard in test frameworks
 # B105: hardcoded_password_string - Test credentials for demo site (saucedemo.com)
 # B110: try_except_pass - Acceptable for graceful degradation in tests
-# B112: try_except_continue - Acceptable in test data parsing loops
+# B112: try_except_continue - Acceptable in test data parsing loops  
 # B311: random - Using random for test data generation (not cryptographic)
 # B404: subprocess - Required for test runner functionality
 # B603: subprocess_without_shell_equals_true - Safe, controlled execution
-skips:
-  - B101
-  - B105
-  - B110
-  - B112
-  - B311
-  - B404
-  - B603
+skips = B101,B105,B110,B112,B311,B404,B603
