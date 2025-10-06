@@ -1,30 +1,39 @@
 """
-Google search page locators - centralized locator management.
+DuckDuckGo search page locators - centralized locator management.
+(Keeping class name GoogleSearchLocators for backward compatibility)
 """
 
 from selenium.webdriver.common.by import By
 
 
 class GoogleSearchLocators:
-    """All locators for Google search page in one place."""
+    """All locators for DuckDuckGo search page in one place."""
 
     # Search elements
-    SEARCH_BOX = (By.NAME, "q")  # Main search input box
-    SEARCH_BUTTON = (By.NAME, "btnK")
-    LUCKY_BUTTON = (By.NAME, "btnI")  # I'm Feeling Lucky button
-    
-    # Search suggestions
-    SUGGESTIONS_CONTAINER = (By.CSS_SELECTOR, ".aajZCb")  # Suggestions dropdown container
-    SUGGESTION_ITEMS = (By.CSS_SELECTOR, ".aajZCb li")  # Individual suggestion items
-    
-    # Page elements
-    GOOGLE_LOGO = (By.CSS_SELECTOR, "#hplogo")  # Google logo
-    LANGUAGE_SETTINGS = (By.ID, "SIvCob")  # Language settings link
+    SEARCH_BOX = (By.NAME, "q")  # Main search input box (same as Google)
+    # DuckDuckGo search button
+    SEARCH_BUTTON = (By.XPATH, "//button[@type='submit']")
+    # Same as search button
+    LUCKY_BUTTON = (By.XPATH, "//button[@type='submit']")
 
-    # Results elements (for compatibility)
-    RESULTS_CONTAINER = (By.ID, "search")
-    RESULT_STATS = (By.ID, "result-stats")
-    RESULT_TITLES = (By.CSS_SELECTOR, "div.g h3")
+    # Search suggestions
+    SUGGESTIONS_CONTAINER = (
+        By.CSS_SELECTOR,
+        ".search__autocomplete",
+    )  # DuckDuckGo suggestions
+    SUGGESTION_ITEMS = (
+        By.CSS_SELECTOR,
+        ".search__autocomplete .acp",
+    )  # Individual suggestions
+
+    # Page elements
+    GOOGLE_LOGO = (By.CSS_SELECTOR, ".header__logo-wrap")  # DuckDuckGo logo
+    LANGUAGE_SETTINGS = (By.CSS_SELECTOR, ".header__button")  # Settings button
+
+    # Results elements
+    RESULTS_CONTAINER = (By.ID, "links")  # DuckDuckGo results container
+    RESULT_STATS = (By.CSS_SELECTOR, ".js-results-wrapper")  # Results wrapper
+    RESULT_TITLES = (By.CSS_SELECTOR, "article h2")  # DuckDuckGo result titles
 
     # Screenshot locator for full search area
-    MAIN_SEARCH_INPUT_SCREENSHOT = (By.XPATH, "//textarea[@name='q']/../../../../..")
+    MAIN_SEARCH_INPUT_SCREENSHOT = (By.CSS_SELECTOR, ".search-wrap")

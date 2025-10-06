@@ -44,14 +44,14 @@ def test_visual_comparison(tc_id, driver):
         google_search_page.capture_search_input_screenshot(actual_image)
 
         assert_that(
-            os.path.exists(expected_image), 
-            is_(True), 
-            f"Expected screenshot not found: {expected_image}"
+            os.path.exists(expected_image),
+            is_(True),
+            f"Expected screenshot not found: {expected_image}",
         )
         assert_that(
-            os.path.exists(actual_image), 
-            is_(True), 
-            f"Actual screenshot not found: {actual_image}"
+            os.path.exists(actual_image),
+            is_(True),
+            f"Actual screenshot not found: {actual_image}",
         )
 
         print("🔄 Comparing images...")
@@ -62,7 +62,7 @@ def test_visual_comparison(tc_id, driver):
         if visual_difference == 0:
             print("✅ Perfect match - no visual differences detected")
         else:
-            tolerance = 50000  
+            tolerance = 50000
 
             if visual_difference <= tolerance:
                 print(
@@ -112,7 +112,7 @@ def test_screenshot_functionality():
         driver_tuple = get_driver()
 
         base_page = BasePage(driver_tuple)
-        google_search_page = GoogleSearchPage(driver_tuple)
+        GoogleSearchPage(driver_tuple)
 
         base_page.driver.get(settings.BASE_URL)
         base_page.wait_for_page_load()
@@ -120,16 +120,18 @@ def test_screenshot_functionality():
         test_screenshot_name = "test_functionality.png"
         screenshot_path = base_page.take_screenshot(test_screenshot_name)
 
-        assert_that(screenshot_path, is_(not_none()), "Screenshot method should return a path")
         assert_that(
-            os.path.exists(screenshot_path), 
-            is_(True), 
-            f"Test screenshot not created: {screenshot_path}"
+            screenshot_path, is_(not_none()), "Screenshot method should return a path"
         )
         assert_that(
-            os.path.getsize(screenshot_path), 
-            greater_than(0), 
-            "Screenshot file should not be empty"
+            os.path.exists(screenshot_path),
+            is_(True),
+            f"Test screenshot not created: {screenshot_path}",
+        )
+        assert_that(
+            os.path.getsize(screenshot_path),
+            greater_than(0),
+            "Screenshot file should not be empty",
         )
 
         print("✅ Screenshot functionality test passed")
@@ -155,9 +157,9 @@ def test_screenshot_functionality():
 def test_diff_handler_availability():
     try:
         assert_that(
-            diff_handler, 
-            has_property("compare_images"), 
-            "diff_handler should have compare_images function"
+            diff_handler,
+            has_property("compare_images"),
+            "diff_handler should have compare_images function",
         )
 
         print("✅ Diff handler module is properly imported and accessible")

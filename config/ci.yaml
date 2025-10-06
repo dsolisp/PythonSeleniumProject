@@ -15,7 +15,7 @@ browser:
 
 test:
   environment: "ci"
-  base_url: "https://www.google.com"
+  base_url: "https://duckduckgo.com"
   api_base_url: "https://jsonplaceholder.typicode.com"
   parallel_workers: 4
   retry_count: 3

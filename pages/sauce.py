@@ -6,15 +6,18 @@ from pages.base_page import BasePage
 
 class SaucePage(BasePage):
 
+    def open(self):
+        """Navigate to SauceDemo website."""
+        self.navigate_to("https://www.saucedemo.com/")
+        return True
+
     def fill_login_input(self):
         user = "standard_user"
         password = "secret_sauce"
         wait = WebDriverWait(self.driver, 10)
 
         username_input = wait.until(
-            EC.presence_of_element_located(
-                (By.XPATH, '//input[@data-test="username"]')
-            )
+            EC.presence_of_element_located((By.XPATH, '//input[@data-test="username"]'))
         )
         password_input = self.driver.find_element(
             By.XPATH, '//input[@data-test="password"]'
@@ -28,9 +31,7 @@ class SaucePage(BasePage):
 
         # Wait for login to complete by checking inventory container appears
         wait.until(
-            EC.presence_of_element_located(
-                (By.XPATH, '//div[@class="inventory_list"]')
-            )
+            EC.presence_of_element_located((By.XPATH, '//div[@class="inventory_list"]'))
         )
 
     def is_logged_in(self):
@@ -47,16 +48,17 @@ class SaucePage(BasePage):
             return False
 
     def get_logout_button(self):
-        return self.driver.find_elements(
-            By.XPATH, "//a[@id='logout_sidebar_link']"
-        )
+        return self.driver.find_elements(By.XPATH, "//a[@id='logout_sidebar_link']")
 
     def add_default_products_to_cart(self):
         wait = WebDriverWait(self.driver, 10)
 
         add_backpack_to_cart_button = wait.until(
             EC.element_to_be_clickable(
-                (By.XPATH, '//button[@data-test="add-to-cart-sauce-labs-backpack"]')
+                (
+                    By.XPATH,
+                    '//button[@data-test="add-to-cart-sauce-labs-backpack"]',
+                )
             )
         )
         add_backpack_to_cart_button.click()
@@ -88,5 +90,3 @@ class SaucePage(BasePage):
                 (By.XPATH, '//span[@data-test="shopping-cart-badge"]')
             )
         )
-
-

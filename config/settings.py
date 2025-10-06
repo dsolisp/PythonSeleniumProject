@@ -12,6 +12,7 @@ try:
 except ImportError:
     load_dotenv = None
 
+
 class Settings:
     """Simple settings class without complex dependencies."""
 
@@ -32,28 +33,41 @@ class Settings:
         )
 
         # URLs
-        self.BASE_URL = os.getenv("BASE_URL", "https://www.google.com")
+        self.BASE_URL = os.getenv("BASE_URL", "https://duckduckgo.com")
         self.API_BASE_URL = os.getenv(
             "API_BASE_URL", "https://jsonplaceholder.typicode.com"
         )
-        self.GOOGLE_SEARCH_URL = os.getenv("GOOGLE_SEARCH_URL", "https://www.google.com/search?q=test")
-        
+        self.GOOGLE_SEARCH_URL = os.getenv(
+            "GOOGLE_SEARCH_URL", "https://duckduckgo.com/?q=test"
+        )
+
         # Test URLs for different testing scenarios
         self.TEST_API_URL = os.getenv("TEST_API_URL", "https://httpbin.org/json")
         self.TEST_HTML_URL = os.getenv("TEST_HTML_URL", "https://httpbin.org/html")
         self.EXAMPLE_URL = os.getenv("EXAMPLE_URL", "https://example.com")
         self.TEST_URL = os.getenv("TEST_URL", "https://test.com")
         self.API_TEST_URL = os.getenv("API_TEST_URL", "https://api.test.com/data")
-        self.INVALID_URL = os.getenv("INVALID_URL", "https://nonexistent-domain-12345.com")
-        
+        self.INVALID_URL = os.getenv(
+            "INVALID_URL", "https://nonexistent-domain-12345.com"
+        )
+
         # Test Data - Search Terms
-        self.DEFAULT_SEARCH_TERM = os.getenv("DEFAULT_SEARCH_TERM", "Python automation testing")
+        self.DEFAULT_SEARCH_TERM = os.getenv(
+            "DEFAULT_SEARCH_TERM", "Python automation testing"
+        )
         self.SELENIUM_SEARCH_TERM = os.getenv("SELENIUM_SEARCH_TERM", "Selenium Python")
-        self.PERFORMANCE_SEARCH_TERM = os.getenv("PERFORMANCE_SEARCH_TERM", "selenium testing performance")
-        self.PLAYWRIGHT_SEARCH_TERM = os.getenv("PLAYWRIGHT_SEARCH_TERM", "Python automation testing playwright")
-        
+        self.PERFORMANCE_SEARCH_TERM = os.getenv(
+            "PERFORMANCE_SEARCH_TERM", "selenium testing performance"
+        )
+        self.PLAYWRIGHT_SEARCH_TERM = os.getenv(
+            "PLAYWRIGHT_SEARCH_TERM", "Python automation testing playwright"
+        )
+
         # Test Data - Lists
-        search_terms_str = os.getenv("SEARCH_TERMS_LIST", "Python automation,Selenium WebDriver,Test framework")
+        search_terms_str = os.getenv(
+            "SEARCH_TERMS_LIST",
+            "Python automation,Selenium WebDriver,Test framework",
+        )
         self.SEARCH_TERMS_LIST = [term.strip() for term in search_terms_str.split(",")]
 
         # Database
@@ -81,7 +95,11 @@ class Settings:
 
     def _create_directories(self):
         """Create necessary directories."""
-        for directory in [self.REPORTS_DIR, self.SCREENSHOTS_DIR, self.LOGS_DIR]:
+        for directory in [
+            self.REPORTS_DIR,
+            self.SCREENSHOTS_DIR,
+            self.LOGS_DIR,
+        ]:
             directory.mkdir(parents=True, exist_ok=True)
 
 

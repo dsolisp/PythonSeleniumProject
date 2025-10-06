@@ -18,7 +18,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
-import utils.sql_connection as sql_util
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +117,8 @@ class WebDriverFactory:
         # User agent to appear more like a real browser
         user_agent = (
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0"
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0"
         )
         options.add_argument(f"--user-agent={user_agent}")
 
@@ -158,8 +158,9 @@ class DatabaseFactory:
                 connection = sqlite3.connect(db_file)
                 logger.info(f"Database connected: {db_file}")
                 return connection
-            
-            # For default path, use sqlite3.connect directly (for test compatibility)
+
+            # For default path, use sqlite3.connect directly (for test
+            # compatibility)
             if not os.path.exists(db_file):
                 logger.warning(f"Database file not found: {db_file}")
                 return None
@@ -188,12 +189,12 @@ def get_driver(
     Factory function that creates WebDriver and Database instances.
     """
     browser_lower = browser.lower()
-    
+
     # Create driver based on browser type
     driver_kwargs = {"headless": headless}
     if window_size:
         driver_kwargs["window_size"] = window_size
-        
+
     if browser_lower == "chrome":
         driver = WebDriverFactory.create_chrome_driver(**driver_kwargs)
     elif browser_lower == "firefox":

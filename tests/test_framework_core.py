@@ -1,14 +1,16 @@
 from hamcrest import (
-    assert_that, is_, equal_to, not_none, none, greater_than, less_than, 
-    greater_than_or_equal_to, less_than_or_equal_to, has_length, instance_of, 
-    has_key, contains_string, has_property, is_in, is_not
+    assert_that,
+    is_,
+    equal_to,
+    not_none,
+    contains_string,
 )
+
 """
 Framework functionality tests without external dependencies.
 """
 
 import pytest
-from selenium.webdriver.common.by import By
 
 from pages.base_page import BasePage
 from utils.webdriver_factory import DatabaseFactory, WebDriverFactory, get_driver
@@ -29,9 +31,9 @@ def test_webdriver_factory():
     element = driver.find_element(*TestFrameworkLocators.TEST_INPUT)
     assert_that(element, is_(not_none()), "Should find test element")
     assert_that(
-        element.get_attribute("value"), 
-        equal_to("framework"), 
-        "Element should have correct value"
+        element.get_attribute("value"),
+        equal_to("framework"),
+        "Element should have correct value",
     )
 
     driver.quit()
@@ -69,21 +71,25 @@ def test_base_page_functionality(driver):
 
     title = base_page.get_title()
     assert_that(
-        title, 
-        contains_string("Framework Test Page"), 
-        f"Title should contain test page name, got: {title}"
+        title,
+        contains_string("Framework Test Page"),
+        f"Title should contain test page name, got: {title}",
     )
 
     title_element = base_page.find_element(TestFrameworkLocators.TITLE_ELEMENT)
     assert_that(title_element, is_(not_none())), "Should find title element"
 
     title_text = base_page.get_text(TestFrameworkLocators.TITLE_ELEMENT)
-    assert_that(title_text, contains_string("Test Framework")), f"Should get correct text, got: {title_text}"
+    assert_that(
+        title_text, contains_string("Test Framework")
+    ), f"Should get correct text, got: {title_text}"
 
     is_visible = base_page.is_element_visible(TestFrameworkLocators.TEST_INPUT_1)
     assert_that(is_visible, is_(True)), "Input element should be visible"
 
-    type_success = base_page.send_keys(TestFrameworkLocators.TEST_INPUT_1, "Hello Framework!")
+    type_success = base_page.send_keys(
+        TestFrameworkLocators.TEST_INPUT_1, "Hello Framework!"
+    )
     assert_that(type_success, is_(True)), "Should be able to type in input"
 
     click_success = base_page.click(TestFrameworkLocators.TEST_BUTTON_1)
@@ -112,7 +118,9 @@ def test_base_page_element_actions_integration():
         element = base_page.find_element(TestFrameworkLocators.TEST_ELEMENT_ID)
         assert_that(element, is_(not_none())), "Should find element"
 
-        success = base_page.send_keys(TestFrameworkLocators.TEST_ELEMENT_ID, "new value")
+        success = base_page.send_keys(
+            TestFrameworkLocators.TEST_ELEMENT_ID, "new value"
+        )
         assert_that(success, is_(True)), "Should be able to type"
 
         success = base_page.click(TestFrameworkLocators.CLICK_ME_BUTTON)
@@ -139,7 +147,9 @@ def test_framework_integration():
         assert_that(success, is_(True)), "Should be able to navigate"
 
         current_url = base_page.get_current_url()
-        assert_that(current_url, contains_string("data:text/html")), "Should be on test page"
+        assert_that(
+            current_url, contains_string("data:text/html")
+        ), "Should be on test page"
 
         if db:
             query_result = base_page.execute_query("SELECT 1 as test")

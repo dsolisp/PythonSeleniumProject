@@ -146,6 +146,14 @@ class GoogleSearchPage(BasePage):
         """Enter search term with enhanced error handling."""
         return self.send_keys(GoogleSearchLocators.SEARCH_BOX, search_term)
 
+    def clear_search(self) -> bool:
+        """Clear the search input field."""
+        element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
+        if element:
+            self.driver.execute_script("arguments[0].value = '';", element)
+            return True
+        return False
+
     def click_search_button(self) -> bool:
         """Click search button with enhanced features."""
         return self.click(GoogleSearchLocators.SEARCH_BUTTON)
@@ -166,7 +174,10 @@ class GoogleSearchPage(BasePage):
         try:
             element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
             if element:
-                from selenium.webdriver.common.action_chains import ActionChains
+                from selenium.webdriver.common.action_chains import (
+                    ActionChains,
+                )
+
                 actions = ActionChains(self.driver)
                 actions.move_to_element(element).click().send_keys(text).perform()
                 return True
@@ -180,7 +191,7 @@ class GoogleSearchPage(BasePage):
             from selenium.webdriver.common.by import By
             from selenium.webdriver.support.ui import WebDriverWait
             from selenium.webdriver.support import expected_conditions as EC
-            
+
             suggestions_locator = (By.CSS_SELECTOR, "ul[role='listbox']")
             WebDriverWait(self.driver, timeout).until(
                 EC.presence_of_element_located(suggestions_locator)
@@ -197,14 +208,14 @@ class GoogleSearchPage(BasePage):
                 "exists": False,
                 "is_displayed": False,
                 "is_enabled": False,
-                "tag_name": None
+                "tag_name": None,
             }
-        
+
         return {
             "exists": True,
             "is_displayed": element.is_displayed(),
             "is_enabled": element.is_enabled(),
-            "tag_name": element.tag_name
+            "tag_name": element.tag_name,
         }
 
     def get_search_input_value(self) -> str:
@@ -219,22 +230,21 @@ class GoogleSearchPage(BasePage):
         element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
         if not element:
             return {"width": 0, "height": 0, "x": 0, "y": 0}
-        
+
         size = element.size
         location = element.location
         return {
             "width": size.get("width", 0),
             "height": size.get("height", 0),
             "x": location.get("x", 0),
-            "y": location.get("y", 0)
+            "y": location.get("y", 0),
         }
 
     def wait_for_search_input_clickable(self, timeout: int = 10) -> bool:
         """Wait until search input is clickable."""
         try:
             element = self.wait_for_clickable(
-                GoogleSearchLocators.SEARCH_BOX,
-                timeout=timeout
+                GoogleSearchLocators.SEARCH_BOX, timeout=timeout
             )
             return element is not None
         except Exception:
@@ -243,10 +253,10 @@ class GoogleSearchPage(BasePage):
     def wait_for_search_input_visible(self, timeout: int = 10) -> bool:
         """Wait until search input is visible."""
         try:
-            return self.wait_for_element(
-                GoogleSearchLocators.SEARCH_BOX,
-                timeout=timeout
-            ) is not None
+            return (
+                self.wait_for_element(GoogleSearchLocators.SEARCH_BOX, timeout=timeout)
+                is not None
+            )
         except Exception:
             return False
 
@@ -261,11 +271,12 @@ class GoogleSearchPage(BasePage):
             if element:
                 # Check if element has focus using JavaScript
                 import time
+
                 start_time = time.time()
                 while time.time() - start_time < timeout:
                     has_focus = self.driver.execute_script(
                         "return document.activeElement === arguments[0]",
-                        element
+                        element,
                     )
                     if has_focus:
                         return True
@@ -278,6 +289,7 @@ class GoogleSearchPage(BasePage):
         """Wait for specific text to appear in search input."""
         try:
             import time
+
             start_time = time.time()
             while time.time() - start_time < timeout:
                 current_value = self.get_search_input_value()
@@ -291,6 +303,7 @@ class GoogleSearchPage(BasePage):
     def open_google_with_timing(self) -> float:
         """Open Google and return time taken."""
         import time
+
         start_time = time.time()
         self.open_google()
         return time.time() - start_time
@@ -298,6 +311,7 @@ class GoogleSearchPage(BasePage):
     def get_search_input_timing(self) -> float:
         """Find search input and return time taken."""
         import time
+
         start_time = time.time()
         self.find_element(GoogleSearchLocators.SEARCH_BOX)
         return time.time() - start_time
@@ -305,6 +319,7 @@ class GoogleSearchPage(BasePage):
     def enter_search_term_with_timing(self, search_term: str) -> float:
         """Enter search term and return time taken."""
         import time
+
         start_time = time.time()
         self.enter_search_term(search_term)
         return time.time() - start_time
@@ -312,9 +327,11 @@ class GoogleSearchPage(BasePage):
     def clear_and_retype_with_timing(self, search_term: str) -> float:
         """Clear input, retype text, and return time taken."""
         import time
+
         start_time = time.time()
         element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
         if element:
-            element.clear()
+            # Use JavaScript to clear the value for DuckDuckGo compatibility
+            self.driver.execute_script("arguments[0].value = '';", element)
             element.send_keys(search_term)
         return time.time() - start_time

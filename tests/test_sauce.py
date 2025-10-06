@@ -5,6 +5,7 @@ from pages.sauce import SaucePage
 def test_standard_user_adding_items_to_cart(driver):
     """Test that standard user can login and add items to cart."""
     sauce_page = SaucePage(driver[0])  # driver fixture returns (driver, db)
+    sauce_page.open()
     sauce_page.fill_login_input()
 
     # Verify login was successful
@@ -16,4 +17,3 @@ def test_standard_user_adding_items_to_cart(driver):
     # Verify cart badge shows correct count
     cart_element = sauce_page.get_cart_element()
     assert_that(cart_element.text, equal_to("3"))
-

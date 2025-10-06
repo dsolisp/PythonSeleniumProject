@@ -7,8 +7,15 @@ import time
 import pytest
 import requests
 from hamcrest import (
-    assert_that, equal_to, greater_than, less_than, has_key, 
-    instance_of, contains_string, is_in, not_none, has_length
+    assert_that,
+    equal_to,
+    greater_than,
+    less_than,
+    has_key,
+    instance_of,
+    is_in,
+    not_none,
+    has_length,
 )
 
 from config.settings import settings
@@ -31,9 +38,9 @@ def test_create_and_retrieve_post():
 
         assert_that(post_response.status_code, equal_to(201))
         assert_that(
-            post_response.headers.get("content-type"), 
-            not_none(), 
-            "Response should have content-type header"
+            post_response.headers.get("content-type"),
+            not_none(),
+            "Response should have content-type header",
         )
 
         post_json = post_response.json()
@@ -48,16 +55,18 @@ def test_create_and_retrieve_post():
 
         assert_that(get_response.status_code, equal_to(200))
         assert_that(
-            get_response.headers.get("content-type"), 
-            not_none(), 
-            "Response should have content-type header"
+            get_response.headers.get("content-type"),
+            not_none(),
+            "Response should have content-type header",
         )
 
         get_json = get_response.json()
 
         required_fields = ["id", "title", "body", "userId"]
         for field in required_fields:
-            assert_that(get_json, has_key(field), f"Response should contain '{field}' field")
+            assert_that(
+                get_json, has_key(field), f"Response should contain '{field}' field"
+            )
 
         assert_that(get_json["id"], instance_of(int), "ID should be an integer")
         assert_that(get_json["title"], instance_of(str), "Title should be a string")
@@ -66,11 +75,19 @@ def test_create_and_retrieve_post():
 
         assert_that(get_json["id"], equal_to(1))
         assert_that(get_json["userId"], greater_than(0))
-        assert_that(get_json["title"], has_length(greater_than(0)), "Title should not be empty")
-        assert_that(get_json["body"], has_length(greater_than(0)), "Body should not be empty")
+        assert_that(
+            get_json["title"], has_length(greater_than(0)), "Title should not be empty"
+        )
+        assert_that(
+            get_json["body"], has_length(greater_than(0)), "Body should not be empty"
+        )
 
         response_time = time.time() - start_time
-        assert_that(response_time, less_than(5.0), f"API response too slow: {response_time:.2f}s")
+        assert_that(
+            response_time,
+            less_than(5.0),
+            f"API response too slow: {response_time:.2f}s",
+        )
 
         print(f"✅ API test completed successfully in {response_time:.2f}s")
         print(f"Retrieved post: {get_json['title'][:50]}...")
@@ -94,9 +111,9 @@ def test_api_error_handling():
             f"{base_url}/posts", json={"invalid": "data"}, timeout=10
         )
         assert_that(
-            invalid_response.status_code, 
-            is_in([201, 400, 422]), 
-            "Should handle invalid data appropriately"
+            invalid_response.status_code,
+            is_in([201, 400, 422]),
+            "Should handle invalid data appropriately",
         )
         print("✅ Invalid data handling works correctly")
 
@@ -122,14 +139,14 @@ def test_api_performance():
         max_response_time = max(response_times)
 
         assert_that(
-            avg_response_time, 
-            less_than(2.0), 
-            f"Average response time too slow: {avg_response_time:.2f}s"
+            avg_response_time,
+            less_than(2.0),
+            f"Average response time too slow: {avg_response_time:.2f}s",
         )
         assert_that(
-            max_response_time, 
-            less_than(3.0), 
-            f"Max response time too slow: {max_response_time:.2f}s"
+            max_response_time,
+            less_than(3.0),
+            f"Max response time too slow: {max_response_time:.2f}s",
         )
 
         total_time = time.time() - start_time

@@ -134,7 +134,10 @@ def execute_query_safe(
     try:
         return execute_query(conn, query, params)
     except Exception as e:
-        logger.warning(f"Safe query execution failed, returning None: {str(e)}")
+        logger.warning(
+            f"Safe query execution failed, returning None: {
+                str(e)}"
+        )
         return None
 
 
@@ -317,7 +320,10 @@ def update_data(
 
 
 def delete_data(
-    conn: sqlite3.Connection, table: str, where_clause: str, where_params: tuple = None
+    conn: sqlite3.Connection,
+    table: str,
+    where_clause: str,
+    where_params: tuple = None,
 ) -> int:
     """
     Delete data from a table.
@@ -417,7 +423,8 @@ def validate_connection(db_file: str) -> bool:
 
             if version:
                 logger.info(
-                    f"Database connection test passed. SQLite version: {version[0]}"
+                    f"Database connection test passed. SQLite version: {
+                        version[0]}"
                 )
                 return True
             else:

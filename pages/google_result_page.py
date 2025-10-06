@@ -20,49 +20,77 @@ class GoogleResultPage(BasePage):
             *self.google_result_locators.get_result_by_index(index)
         )
 
+    def get_search_results(self):
+        """Get all search result elements."""
+        return self.driver.find_elements(*self.google_result_locators.RESULT_ITEMS)
+
+    def get_first_result(self):
+        """Get the first search result article element."""
+        return self.driver.find_element(
+            *self.google_result_locators.get_first_result_article()
+        )
+
     def is_results_displayed(self) -> bool:
         """Check if search results are displayed."""
         try:
             # Look for common result indicators using locators
             results_found = (
-                self.is_element_visible(self.google_result_locators.SEARCH_RESULTS) or
-                len(self.driver.find_elements(*self.google_result_locators.ALL_H3_ELEMENTS)) > 0 or
-                len(self.driver.find_elements(*self.google_result_locators.RESULT_ELEMENTS_DATA_VED)) > 0
+                self.is_element_visible(self.google_result_locators.SEARCH_RESULTS)
+                or len(
+                    self.driver.find_elements(
+                        *self.google_result_locators.ALL_H3_ELEMENTS
+                    )
+                )
+                > 0
+                or len(
+                    self.driver.find_elements(
+                        *self.google_result_locators.RESULT_ELEMENTS_DATA_VED
+                    )
+                )
+                > 0
             )
             return results_found
-        except:
+        except BaseException:
             return False
 
     def get_results_count(self) -> int:
         """Get the number of search results found."""
         try:
             # Try multiple strategies to count results using locators
-            h3_elements = self.driver.find_elements(*self.google_result_locators.ALL_H3_ELEMENTS)
+            h3_elements = self.driver.find_elements(
+                *self.google_result_locators.ALL_H3_ELEMENTS
+            )
             if h3_elements:
                 return len(h3_elements)
-            
+
             # Fallback to other result indicators
-            result_elements = self.driver.find_elements(*self.google_result_locators.RESULT_ELEMENTS_DATA_VED)
+            result_elements = self.driver.find_elements(
+                *self.google_result_locators.RESULT_ELEMENTS_DATA_VED
+            )
             return len(result_elements)
-        except:
+        except BaseException:
             return 0
 
     def wait_for_results_page(self, timeout: int = 10) -> bool:
         """Wait for results page to load."""
         try:
-            return self.wait_for_element(
-                self.google_result_locators.SEARCH_RESULTS,
-                timeout=timeout
-            ) is not None
-        except:
+            return (
+                self.wait_for_element(
+                    self.google_result_locators.SEARCH_RESULTS, timeout=timeout
+                )
+                is not None
+            )
+        except BaseException:
             return False
 
     def wait_for_results_page_complete(self, timeout: int = 15) -> bool:
         """Wait for results page to fully load with extended timeout."""
         try:
-            return self.wait_for_element(
-                self.google_result_locators.SEARCH_RESULTS,
-                timeout=timeout
-            ) is not None
-        except:
+            return (
+                self.wait_for_element(
+                    self.google_result_locators.SEARCH_RESULTS, timeout=timeout
+                )
+                is not None
+            )
+        except BaseException:
             return False
