@@ -12,6 +12,7 @@ Testing configuration logic and edge cases.
 
 import pytest
 import os
+import shutil
 from unittest.mock import patch
 from pathlib import Path
 from config.settings import Settings
@@ -62,20 +63,25 @@ class TestSettingsClass:
     )
     def test_settings_environment_variables(self):
         """Test Settings reads from environment variables."""
-        settings = Settings()
+        try:
+            settings = Settings()
 
-        assert_that(settings.BROWSER, equal_to("firefox"))
-        assert_that(settings.HEADLESS, is_(True))
-        assert_that(settings.TIMEOUT, equal_to(30))
-        assert_that(settings.SCREENSHOT_ON_FAILURE, is_(False))
-        assert_that(settings.BASE_URL, equal_to("https://example.com"))
-        assert_that(settings.API_BASE_URL, equal_to("https://api.example.com"))
-        assert_that(settings.DB_PATH, equal_to("/custom/db.sqlite"))
-        assert_that(settings.ENVIRONMENT, equal_to("production"))
-        assert_that(settings.DEBUG, is_(False))
-        assert_that(settings.LOG_LEVEL, equal_to("ERROR"))
-        assert_that(settings.VISUAL_THRESHOLD, equal_to(5000))
-        assert_that(settings.SAVE_DIFF_IMAGES, is_(False))
+            assert_that(settings.BROWSER, equal_to("firefox"))
+            assert_that(settings.HEADLESS, is_(True))
+            assert_that(settings.TIMEOUT, equal_to(30))
+            assert_that(settings.SCREENSHOT_ON_FAILURE, is_(False))
+            assert_that(settings.BASE_URL, equal_to("https://example.com"))
+            assert_that(settings.API_BASE_URL, equal_to("https://api.example.com"))
+            assert_that(settings.DB_PATH, equal_to("/custom/db.sqlite"))
+            assert_that(settings.ENVIRONMENT, equal_to("production"))
+            assert_that(settings.DEBUG, is_(False))
+            assert_that(settings.LOG_LEVEL, equal_to("ERROR"))
+            assert_that(settings.VISUAL_THRESHOLD, equal_to(5000))
+            assert_that(settings.SAVE_DIFF_IMAGES, is_(False))
+        finally:
+            # Cleanup test directories
+            for dir_name in ["custom_reports", "custom_screenshots", "custom_logs"]:
+                shutil.rmtree(dir_name, ignore_errors=True)
 
     @patch.dict(os.environ, {"TIMEOUT": "invalid"})
     def test_settings_invalid_timeout(self):

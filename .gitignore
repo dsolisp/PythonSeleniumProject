@@ -15,3 +15,6 @@ package.json
 *.log
 *.csv
 *.json
+custom_screenshots/
+custom_reports/
+custom_logs/
