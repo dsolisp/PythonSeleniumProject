@@ -16,9 +16,13 @@ class SearchEnginePage(BasePage):
     Provides methods for search operations and result handling.
     """
 
-    def __init__(self, driver_and_db, test_name: str = None, environment: str = "test"):
+    def __init__(
+        self, driver_and_db, test_name: str = None, environment: str = "test"
+    ):
         """Initialize Search engine page with enhanced features."""
-        super().__init__(driver_and_db, test_name=test_name, environment=environment)
+        super().__init__(
+            driver_and_db, test_name=test_name, environment=environment
+        )
         from config.settings import settings
 
         self.page_url = settings.BASE_URL
@@ -89,7 +93,9 @@ class SearchEnginePage(BasePage):
 
     def get_result_titles(self, max_count: int = 5) -> List[str]:
         """Get list of search result titles."""
-        elements = self.driver.find_elements(*SearchEngineLocators.RESULT_TITLES)
+        elements = self.driver.find_elements(
+            *SearchEngineLocators.RESULT_TITLES
+        )
         titles = []
 
         for element in elements[:max_count]:
@@ -179,7 +185,9 @@ class SearchEnginePage(BasePage):
                 )
 
                 actions = ActionChains(self.driver)
-                actions.move_to_element(element).click().send_keys(text).perform()
+                actions.move_to_element(element).click().send_keys(
+                    text
+                ).perform()
                 return True
             return False
         except Exception:
@@ -188,13 +196,13 @@ class SearchEnginePage(BasePage):
     def wait_for_suggestions(self, timeout: int = 5) -> bool:
         """Wait for search suggestions to appear."""
         try:
-            from selenium.webdriver.common.by import By
             from selenium.webdriver.support.ui import WebDriverWait
             from selenium.webdriver.support import expected_conditions as EC
 
-            suggestions_locator = (By.CSS_SELECTOR, "ul[role='listbox']")
             WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located(suggestions_locator)
+                EC.presence_of_element_located(
+                    SearchEngineLocators.SUGGESTIONS_LISTBOX
+                )
             )
             return True
         except Exception:
@@ -254,7 +262,9 @@ class SearchEnginePage(BasePage):
         """Wait until search input is visible."""
         try:
             return (
-                self.wait_for_element(SearchEngineLocators.SEARCH_BOX, timeout=timeout)
+                self.wait_for_element(
+                    SearchEngineLocators.SEARCH_BOX, timeout=timeout
+                )
                 is not None
             )
         except Exception:
@@ -285,7 +295,9 @@ class SearchEnginePage(BasePage):
         except Exception:
             return False
 
-    def wait_for_text_in_search_input(self, text: str, timeout: int = 10) -> bool:
+    def wait_for_text_in_search_input(
+        self, text: str, timeout: int = 10
+    ) -> bool:
         """Wait for specific text to appear in search input."""
         try:
             import time

@@ -12,7 +12,10 @@ class SearchEngineLocators:
     # Search elements
     SEARCH_BOX = (By.NAME, "q")  # Main search input box
     SEARCH_BUTTON = (By.XPATH, "//button[@type='submit']")  # Search button
-    LUCKY_BUTTON = (By.XPATH, "//button[@type='submit']")  # I'm Feeling Lucky button
+    LUCKY_BUTTON = (
+        By.XPATH,
+        "//button[@type='submit']",
+    )  # I'm Feeling Lucky button
 
     # Search suggestions
     SUGGESTIONS_CONTAINER = (
@@ -23,6 +26,10 @@ class SearchEngineLocators:
         By.CSS_SELECTOR,
         ".search__autocomplete .acp",
     )  # Individual suggestions
+    SUGGESTIONS_LISTBOX = (
+        By.CSS_SELECTOR,
+        "ul[role='listbox']",
+    )  # Suggestions listbox (for waiting)
 
     # Page elements
     SITE_LOGO = (By.CSS_SELECTOR, ".header__logo-wrap")  # Site logo

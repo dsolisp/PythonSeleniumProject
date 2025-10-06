@@ -1,38 +1,30 @@
 """
-Playwright Google Search page implementation.
-Modern async alternative to Selenium GoogleSearchPage with enhanced capabilities.
+Playwright Search Engine page implementation.
+Modern async alternative to Selenium SearchEnginePage.
 """
 
 from typing import Optional, List
 from playwright.async_api import Page
 
 from pages.playwright_base_page import PlaywrightBasePage
+from locators.playwright_search_engine_locators import (
+    PlaywrightSearchEngineLocators,
+)
 from config.settings import settings
 
 
 class PlaywrightSearchEnginePage(PlaywrightBasePage):
     """
-    Playwright implementation of Google Search page.
-    Provides modern async browser automation for Search engine functionality.
+    Playwright implementation of Search Engine page.
+    Provides modern async browser automation.
+    Uses centralized locators.
     """
 
-    # Page selectors (generic for multiple search engines)
-    SEARCH_INPUT = 'input[name="q"], textarea[name="q"], input#search_form_input'
-    SEARCH_BUTTON = 'input[name="btnK"], button[type="submit"], button#search_button'
-    SEARCH_SUGGESTIONS = '[role="listbox"] [role="option"], .search__autocomplete .acp'
-    # DuckDuckGo uses article elements, Google uses #search/#rso
-    RESULTS_CONTAINER = "#search, #rso, #links, .results, article[data-testid], [data-area='mainline']"
-    # DuckDuckGo result titles are in h2 within article, Google in h3
-    RESULT_LINKS = "#search a h3, #rso a h3, article h2 a, .result__a, [data-testid='result-title-a']"
-    RESULT_TITLES = "#search h3, #rso h3, article h2, .result__title, h2[data-testid='result-title']"
-    RESULT_DESCRIPTIONS = ".VwiC3b, .s3v9rd, .result__snippet, article [data-result='snippet']"
-    CAPTCHA_CONTAINER = "#captcha-form, [data-google-captcha], .captcha"
-    NO_RESULTS = 'p:has-text("did not match any documents"), .no-results, .no-results-message'
-
     def __init__(self, page: Page):
-        """Initialize Google Search page."""
+        """Initialize Search Engine page with centralized locators."""
         super().__init__(page)
         self.base_url = settings.BASE_URL
+        self.locators = PlaywrightSearchEngineLocators
 
     async def open_search_engine(self) -> bool:
         """
@@ -50,14 +42,18 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                 return False
 
             # Wait for search input to be ready
-            await self.page.wait_for_selector(self.SEARCH_INPUT, timeout=10000)
+            await self.page.wait_for_selector(
+                self.locators.SEARCH_INPUT, timeout=10000
+            )
             return True
 
         except Exception as e:
-            print(f"Failed to open Google: {e}")
+            print(f"Failed to open search engine: {e}")
             return False
 
-    async def search_for(self, search_term: str, wait_for_results: bool = True) -> bool:
+    async def search_for(
+        self, search_term: str, wait_for_results: bool = True
+    ) -> bool:
         """
         Perform a search on Google.
 
@@ -70,7 +66,9 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         """
         try:
             # Clear and type search term
-            await self.element_actions.send_keys(self.SEARCH_INPUT, search_term)
+            await self.element_actions.send_keys(
+                self.locators.SEARCH_INPUT, search_term
+            )
 
             # Submit search (Enter key is more reliable than clicking button)
             await self.page.keyboard.press("Enter")
@@ -83,17 +81,24 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                 if await self.is_captcha_present():
                     return False
 
-                # Wait for results container or any content indicating search completed
+                # Wait for results container indicating search completed
                 try:
+                    selector = (
+                        f"{self.locators.RESULTS_CONTAINER}, "
+                        f"{self.locators.NO_RESULTS}, "
+                        f"{self.locators.FALLBACK_CONTENT}"
+                    )
                     await self.page.wait_for_selector(
-                        f"{self.RESULTS_CONTAINER}, {self.NO_RESULTS}, .react-results--main, body",
+                        selector,
                         timeout=15000,
                     )
                 except Exception as e:
                     print(f"Results wait timed out: {e}")
-                    # Even if we timeout, the search may have completed
+                    # Even if timeout, search may have completed
                     # Check if URL changed to indicate search happened
-                    current_url = await self.navigation_actions.get_current_url()
+                    current_url = (
+                        await self.navigation_actions.get_current_url()
+                    )
                     if "q=" in current_url or "search" in current_url.lower():
                         return True
                     return False
@@ -112,7 +117,9 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             str: Current value in search input, None if not found
         """
         try:
-            element = await self.page.wait_for_selector(self.SEARCH_INPUT, timeout=5000)
+            element = await self.page.wait_for_selector(
+                self.locators.SEARCH_INPUT, timeout=5000
+            )
             return await element.input_value()
         except Exception:
             return None
@@ -126,9 +133,13 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         """
         try:
             # Type in search input to trigger suggestions
-            await self.page.wait_for_selector(self.SEARCH_SUGGESTIONS, timeout=5000)
+            await self.page.wait_for_selector(
+                self.locators.SEARCH_SUGGESTIONS, timeout=5000
+            )
 
-            suggestions = await self.page.query_selector_all(self.SEARCH_SUGGESTIONS)
+            suggestions = await self.page.query_selector_all(
+                self.locators.SEARCH_SUGGESTIONS
+            )
             suggestion_texts = []
 
             for suggestion in suggestions:
@@ -149,8 +160,12 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             int: Number of results found
         """
         try:
-            await self.page.wait_for_selector(self.RESULT_TITLES, timeout=10000)
-            results = await self.page.query_selector_all(self.RESULT_TITLES)
+            await self.page.wait_for_selector(
+                self.locators.RESULT_TITLES, timeout=10000
+            )
+            results = await self.page.query_selector_all(
+                self.locators.RESULT_TITLES
+            )
             return len(results)
         except Exception:
             return 0
@@ -163,8 +178,12 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             List[str]: List of result titles
         """
         try:
-            await self.page.wait_for_selector(self.RESULT_TITLES, timeout=10000)
-            title_elements = await self.page.query_selector_all(self.RESULT_TITLES)
+            await self.page.wait_for_selector(
+                self.locators.RESULT_TITLES, timeout=10000
+            )
+            title_elements = await self.page.query_selector_all(
+                self.locators.RESULT_TITLES
+            )
 
             titles = []
             for element in title_elements:
@@ -185,13 +204,19 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             List[str]: List of result URLs
         """
         try:
-            await self.page.wait_for_selector(self.RESULT_LINKS, timeout=10000)
-            link_elements = await self.page.query_selector_all(self.RESULT_LINKS)
+            await self.page.wait_for_selector(
+                self.locators.RESULT_LINKS, timeout=10000
+            )
+            link_elements = await self.page.query_selector_all(
+                self.locators.RESULT_LINKS
+            )
 
             links = []
             for element in link_elements:
                 # Get parent link element
-                link = await element.query_selector("xpath=ancestor::a")
+                link = await element.query_selector(
+                    self.locators.ANCESTOR_LINK_XPATH
+                )
                 if link:
                     href = await link.get_attribute("href")
                     if href:
@@ -211,7 +236,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         """
         try:
             first_result = await self.page.wait_for_selector(
-                f"{self.RESULT_LINKS}:first-child", timeout=10000
+                f"{self.locators.RESULT_LINKS}:first-child", timeout=10000
             )
 
             if first_result:
@@ -241,7 +266,9 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                 return True
 
             # Check for CAPTCHA elements
-            captcha_element = await self.page.query_selector(self.CAPTCHA_CONTAINER)
+            captcha_element = await self.page.query_selector(
+                self.locators.CAPTCHA_CONTAINER
+            )
             return captcha_element is not None
 
         except Exception:
@@ -256,10 +283,14 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         """
         try:
             # Check for results container
-            results_present = await self.page.query_selector(self.RESULTS_CONTAINER)
+            results_present = await self.page.query_selector(
+                self.locators.RESULTS_CONTAINER
+            )
 
             # Check for "no results" message
-            no_results = await self.page.query_selector(self.NO_RESULTS)
+            no_results = await self.page.query_selector(
+                self.locators.NO_RESULTS
+            )
 
             return results_present is not None and no_results is None
 
@@ -275,19 +306,19 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
     ) -> bool:
         """
         Perform advanced search with filters.
-        
+
         Note: DuckDuckGo has limited support for advanced operators.
         It supports:
         - site:example.com (works well)
         - filetype:pdf (limited support, may not return results)
-        
-        Best practice: Use site: filter alone or with simple search terms.
+
+        Best practice: Use site: filter alone with simple terms.
 
         Args:
             search_term: Base search term
-            site_filter: Site to search within (e.g., "github.com" - will add site: prefix)
-            file_type: File type filter (e.g., "pdf" - will add filetype: prefix)
-            date_range: Date range filter (limited support on DuckDuckGo)
+            site_filter: Site (e.g., "github.com" adds site: prefix)
+            file_type: File type (e.g., "pdf" adds filetype: prefix)
+            date_range: Date range filter (limited DuckDuckGo support)
 
         Returns:
             bool: True if search successful, False otherwise
@@ -301,7 +332,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                 # Remove site: prefix if user included it
                 site = site_filter.replace("site:", "").strip()
                 query_parts.append(f"site:{site}")
-            
+
             # Note: DuckDuckGo's filetype: support is limited
             # Combining site: + filetype: often returns no results
             # Only add filetype if no site filter is specified
@@ -309,8 +340,11 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                 filetype = file_type.replace("filetype:", "").strip()
                 query_parts.append(f"filetype:{filetype}")
             elif file_type and site_filter:
-                print(f"⚠️ Skipping filetype:{file_type} - DuckDuckGo has limited support when combined with site: filter")
-            
+                print(
+                    f"⚠️ Skipping filetype:{file_type} - "
+                    "DuckDuckGo limited support with site: filter"
+                )
+
             if date_range:
                 query_parts.append(date_range)
 
@@ -335,8 +369,12 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         """
         try:
             # Wait for either results or no-results message
+            selector = (
+                f"{self.locators.RESULTS_CONTAINER}, "
+                f"{self.locators.NO_RESULTS}"
+            )
             await self.page.wait_for_selector(
-                f"{self.RESULTS_CONTAINER}, {self.NO_RESULTS}",
+                selector,
                 timeout=timeout * 1000,
             )
 
