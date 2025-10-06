@@ -35,8 +35,7 @@ async def test_playwright_google_search_basic():
 
         # Test navigation
         success = await search_page.open_search_engine()
-        if not success:
-            pytest.skip("Could not open DuckDuckGo - network issue")
+        assert_that(success, is_(True), "Should be able to open search engine")
 
         # Verify page loaded
         title = await search_page.get_title()
@@ -50,9 +49,7 @@ async def test_playwright_google_search_basic():
         search_success = await search_page.search_for(
             search_term, wait_for_results=True
         )
-
-        if not search_success:
-            pytest.skip("Search failed - likely CAPTCHA or network issue")
+        assert_that(search_success, is_(True), "Search should succeed")
 
         # Wait for search completion
         completion_success = await search_page.wait_for_search_completion()
@@ -60,10 +57,11 @@ async def test_playwright_google_search_basic():
             completion_success, is_(True)
         ), "Search should complete within timeout"
 
-        # Verify search was performed
+        # Verify search was performed (DuckDuckGo uses ?q= parameter)
         current_url = await search_page.get_url()
         assert_that(
-            current_url.lower(), contains_string("search")
+            any(indicator in current_url.lower() for indicator in ["?q=", "/search", "&q="]),
+            is_(True)
         ), f"Should be on search results page: {current_url}"
 
         # Check for results (if not blocked by CAPTCHA)
@@ -116,8 +114,7 @@ async def test_playwright_google_search_with_suggestions():
 
         # Open Search engine
         success = await search_page.open_search_engine()
-        if not success:
-            pytest.skip("Could not open Search engine")
+        assert_that(success, is_(True), "Should be able to open search engine")
 
         # Type partial search term to trigger suggestions
         await search_page.element_actions.send_keys(
@@ -171,29 +168,28 @@ async def test_playwright_advanced_search():
 
         # Open Search engine
         success = await search_page.open_search_engine()
-        if not success:
-            pytest.skip("Could not open Search engine")
+        assert_that(success, is_(True), "Should be able to open search engine")
 
-        # Perform advanced search
+        # Perform advanced search with simpler, more realistic query
         search_success = await search_page.perform_advanced_search(
-            search_term="python testing", site_filter="github.com", file_type="py"
+            search_term="python", site_filter="github.com"
         )
+        assert_that(search_success, is_(True), "Advanced search should succeed")
 
-        if not search_success:
-            pytest.skip("Advanced search failed - likely CAPTCHA")
-
-        # Verify advanced search
+        # Verify advanced search (DuckDuckGo uses ?q= parameter)
         current_url = await search_page.get_url()
-        assert_that(current_url.lower(), contains_string("search"))
+        assert_that(
+            any(indicator in current_url.lower() for indicator in ["?q=", "/search", "&q="]),
+            is_(True)
+        ), f"Should be on search results page: {current_url}"
 
         # The URL should contain our search parameters
         url_lower = current_url.lower()
-        expected_terms = ["python", "testing", "site%3agithub.com", "filetype%3apy"]
+        # Check for python and site filter in URL
+        assert_that(url_lower, contains_string("python"))
+        print(f"✅ Advanced search URL: {current_url[:100]}...")
 
-        found_terms = [term for term in expected_terms if term in url_lower]
-        print(f"✅ Advanced search URL contains: {found_terms}")
-
-        # Check if we have results
+        # Check if we have results (should have many for "python site:github.com")
         if await search_page.has_results():
             result_count = await search_page.get_result_count()
             print(f"✅ Advanced search returned {result_count} results")
@@ -204,7 +200,9 @@ async def test_playwright_advanced_search():
                 github_links = [
                     link for link in links[:5] if "github.com" in link.lower()
                 ]
-                print(f"✅ Found {len(github_links)} GitHub links in results")
+                print(f"✅ Found {len(github_links)} GitHub links in top 5 results")
+        else:
+            print("⚠️ No results found - search engine may not support site: filter")
 
     finally:
         if factory:
@@ -236,9 +234,11 @@ async def test_playwright_multiple_browsers():
 
             # Open Search engine
             success = await search_page.open_search_engine()
-            if not success:
-                print(f"⚠️ Could not open Search engine in {browser_type}")
-                continue
+            assert_that(
+                success,
+                is_(True),
+                f"Should be able to open search engine in {browser_type}",
+            )
 
             # Verify browser-specific behavior
             user_agent = await playwright_page.page.evaluate("navigator.userAgent")
@@ -297,8 +297,7 @@ async def test_playwright_network_interception():
 
         # Navigate to Search engine (this will trigger network requests)
         success = await search_page.open_search_engine()
-        if not success:
-            pytest.skip("Could not open Search engine")
+        assert_that(success, is_(True), "Should be able to open search engine")
 
         # Verify we intercepted requests
         assert_that(
@@ -361,8 +360,9 @@ async def test_playwright_mobile_emulation():
 
         # Test mobile navigation
         success = await search_page.open_search_engine()
-        if not success:
-            pytest.skip("Could not open Search engine on mobile")
+        assert_that(
+            success, is_(True), "Should be able to open search engine on mobile"
+        )
 
         # Verify mobile layout
         viewport_size = await page.evaluate(
@@ -415,9 +415,7 @@ async def test_playwright_performance_metrics():
         navigation_start = await playwright_page.page.evaluate("performance.now()")
         success = await search_page.open_search_engine()
         navigation_end = await playwright_page.page.evaluate("performance.now()")
-
-        if not success:
-            pytest.skip("Could not open Search engine")
+        assert_that(success, is_(True), "Should be able to open search engine")
 
         navigation_time = navigation_end - navigation_start
         print(f"✅ Navigation time: {navigation_time:.2f}ms")

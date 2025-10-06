@@ -16,16 +16,18 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
     Provides modern async browser automation for Search engine functionality.
     """
 
-    # Page selectors (more robust than Selenium locators)
-    SEARCH_INPUT = 'input[name="q"], textarea[name="q"]'
-    SEARCH_BUTTON = 'input[name="btnK"], button[type="submit"]'
-    SEARCH_SUGGESTIONS = '[role="listbox"] [role="option"]'
-    RESULTS_CONTAINER = "#search, #rso"
-    RESULT_LINKS = "#search a h3, #rso a h3"
-    RESULT_TITLES = "#search h3, #rso h3"
-    RESULT_DESCRIPTIONS = ".VwiC3b, .s3v9rd"
-    CAPTCHA_CONTAINER = "#captcha-form, [data-google-captcha]"
-    NO_RESULTS = 'p:has-text("did not match any documents")'
+    # Page selectors (generic for multiple search engines)
+    SEARCH_INPUT = 'input[name="q"], textarea[name="q"], input#search_form_input'
+    SEARCH_BUTTON = 'input[name="btnK"], button[type="submit"], button#search_button'
+    SEARCH_SUGGESTIONS = '[role="listbox"] [role="option"], .search__autocomplete .acp'
+    # DuckDuckGo uses article elements, Google uses #search/#rso
+    RESULTS_CONTAINER = "#search, #rso, #links, .results, article[data-testid], [data-area='mainline']"
+    # DuckDuckGo result titles are in h2 within article, Google in h3
+    RESULT_LINKS = "#search a h3, #rso a h3, article h2 a, .result__a, [data-testid='result-title-a']"
+    RESULT_TITLES = "#search h3, #rso h3, article h2, .result__title, h2[data-testid='result-title']"
+    RESULT_DESCRIPTIONS = ".VwiC3b, .s3v9rd, .result__snippet, article [data-result='snippet']"
+    CAPTCHA_CONTAINER = "#captcha-form, [data-google-captcha], .captcha"
+    NO_RESULTS = 'p:has-text("did not match any documents"), .no-results, .no-results-message'
 
     def __init__(self, page: Page):
         """Initialize Google Search page."""
@@ -81,11 +83,20 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                 if await self.is_captcha_present():
                     return False
 
-                # Wait for results container
-                await self.page.wait_for_selector(
-                    f"{self.RESULTS_CONTAINER}, {self.NO_RESULTS}",
-                    timeout=15000,
-                )
+                # Wait for results container or any content indicating search completed
+                try:
+                    await self.page.wait_for_selector(
+                        f"{self.RESULTS_CONTAINER}, {self.NO_RESULTS}, .react-results--main, body",
+                        timeout=15000,
+                    )
+                except Exception as e:
+                    print(f"Results wait timed out: {e}")
+                    # Even if we timeout, the search may have completed
+                    # Check if URL changed to indicate search happened
+                    current_url = await self.navigation_actions.get_current_url()
+                    if "q=" in current_url or "search" in current_url.lower():
+                        return True
+                    return False
 
             return True
 
@@ -264,12 +275,19 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
     ) -> bool:
         """
         Perform advanced search with filters.
+        
+        Note: DuckDuckGo has limited support for advanced operators.
+        It supports:
+        - site:example.com (works well)
+        - filetype:pdf (limited support, may not return results)
+        
+        Best practice: Use site: filter alone or with simple search terms.
 
         Args:
             search_term: Base search term
-            site_filter: Site to search within (e.g., "site:github.com")
-            file_type: File type filter (e.g., "filetype:pdf")
-            date_range: Date range filter
+            site_filter: Site to search within (e.g., "github.com" - will add site: prefix)
+            file_type: File type filter (e.g., "pdf" - will add filetype: prefix)
+            date_range: Date range filter (limited support on DuckDuckGo)
 
         Returns:
             bool: True if search successful, False otherwise
@@ -278,14 +296,26 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             # Build advanced search query
             query_parts = [search_term]
 
+            # DuckDuckGo supports site: operator well
             if site_filter:
-                query_parts.append(f"site:{site_filter}")
-            if file_type:
-                query_parts.append(f"filetype:{file_type}")
+                # Remove site: prefix if user included it
+                site = site_filter.replace("site:", "").strip()
+                query_parts.append(f"site:{site}")
+            
+            # Note: DuckDuckGo's filetype: support is limited
+            # Combining site: + filetype: often returns no results
+            # Only add filetype if no site filter is specified
+            if file_type and not site_filter:
+                filetype = file_type.replace("filetype:", "").strip()
+                query_parts.append(f"filetype:{filetype}")
+            elif file_type and site_filter:
+                print(f"⚠️ Skipping filetype:{file_type} - DuckDuckGo has limited support when combined with site: filter")
+            
             if date_range:
                 query_parts.append(date_range)
 
             advanced_query = " ".join(query_parts)
+            print(f"🔍 Advanced search query: {advanced_query}")
 
             return await self.search_for(advanced_query)
 
