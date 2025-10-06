@@ -34,9 +34,17 @@ def run_command(command, description):
     print("=" * 60)
 
     try:
+        # Convert string command to list for safer execution (no shell=True)
+        # nosec B603 - Command constructed from trusted internal sources
+        if isinstance(command, str):
+            import shlex
+            command_list = shlex.split(command)
+        else:
+            command_list = command
+            
         result = subprocess.run(
-            command,
-            shell=True,
+            command_list,
+            shell=False,  # Security: Avoid shell injection
             check=True,
             cwd=os.getcwd(),
             capture_output=True,

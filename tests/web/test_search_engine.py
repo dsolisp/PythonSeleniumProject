@@ -166,7 +166,7 @@ def test_database_search_with_performance_monitoring(driver):
 def test_framework_api_functionality():
     from config.settings import settings
 
-    response = requests.get(f"{settings.API_BASE_URL}/posts/1")
+    response = requests.get(f"{settings.API_BASE_URL}/posts/1", timeout=10)
 
     assert_that(response.status_code, equal_to(200))
 
