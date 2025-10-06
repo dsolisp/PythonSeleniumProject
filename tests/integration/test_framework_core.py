@@ -1,9 +1,9 @@
 from hamcrest import (
     assert_that,
-    is_,
-    equal_to,
-    not_none,
     contains_string,
+    equal_to,
+    is_,
+    not_none,
 )
 
 """
@@ -12,9 +12,9 @@ Framework functionality tests without external dependencies.
 
 import pytest
 
+from locators.test_framework_locators import TestFrameworkLocators
 from pages.base_page import BasePage
 from utils.webdriver_factory import DatabaseFactory, WebDriverFactory, get_driver
-from locators.test_framework_locators import TestFrameworkLocators
 
 
 @pytest.mark.framework

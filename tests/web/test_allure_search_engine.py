@@ -1,25 +1,26 @@
 from hamcrest import (
     assert_that,
+    contains_string,
     greater_than,
     less_than,
-    contains_string,
 )
 
 """
 Google Search tests with Allure reporting and structured logging.
 """
 
-import allure
 import time
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
-from pages.search_engine_page import SearchEnginePage
-from pages.result_page import ResultPage
-from utils.webdriver_factory import WebDriverFactory
-from utils.structured_logger import get_test_logger
+import allure
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
 from config.settings import settings
+from pages.result_page import ResultPage
+from pages.search_engine_page import SearchEnginePage
+from utils.structured_logger import get_test_logger
+from utils.webdriver_factory import WebDriverFactory
 
 
 @allure.epic("Web Automation")

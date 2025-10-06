@@ -1,8 +1,8 @@
 from hamcrest import (
     assert_that,
-    is_,
     equal_to,
     instance_of,
+    is_,
 )
 
 """
@@ -10,11 +10,13 @@ Real Unit Tests for Settings Class
 Testing configuration logic and edge cases.
 """
 
-import pytest
 import os
 import shutil
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+
 from config.settings import Settings
 
 

@@ -77,7 +77,7 @@ class Settings:
         self.ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
         self.DEBUG = os.getenv("DEBUG", "true").lower() == "true"
         self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-        
+
         # Reporting configuration
         self.ENABLE_ALLURE = os.getenv("ENABLE_ALLURE", "true").lower() == "true"
 

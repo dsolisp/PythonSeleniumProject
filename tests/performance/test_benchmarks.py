@@ -1,11 +1,11 @@
 from hamcrest import (
     assert_that,
-    is_,
     equal_to,
     greater_than,
-    less_than,
     greater_than_or_equal_to,
     has_key,
+    is_,
+    less_than,
 )
 
 """
@@ -13,20 +13,21 @@ Performance benchmark tests using pytest-benchmark.
 """
 
 import time
+
 import requests
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
+from config.settings import settings
 from utils.performance_monitor import (
     PerformanceMonitor,
-    web_performance,
     api_performance,
     performance_test,
+    web_performance,
 )
-from utils.webdriver_factory import WebDriverFactory
 from utils.structured_logger import get_logger
-from config.settings import settings
+from utils.webdriver_factory import WebDriverFactory
 
 
 class TestPerformanceBenchmarks:
@@ -170,8 +171,9 @@ class TestPerformanceBenchmarks:
 
     def test_database_operation_benchmark(self, benchmark):
         """Benchmark database operations."""
-        from utils.sql_connection import get_connection
         import os
+
+        from utils.sql_connection import get_connection
 
         db_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -256,8 +258,8 @@ class TestPerformanceBenchmarks:
 
     def test_concurrent_operations_benchmark(self, benchmark):
         """Benchmark concurrent operations simulation."""
-        import threading
         import queue
+        import threading
 
         def concurrent_operations():
             results = queue.Queue()

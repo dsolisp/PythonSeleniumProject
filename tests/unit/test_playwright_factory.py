@@ -3,9 +3,10 @@ Real Unit Tests for Playwright Factory Functions
 Testing actual factory logic and configuration.
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from hamcrest import assert_that, is_, equal_to, none, not_none, instance_of
+from hamcrest import assert_that, equal_to, instance_of, is_, none, not_none
 
 from utils.playwright_factory import (
     PlaywrightFactory,
@@ -22,9 +23,7 @@ class TestPlaywrightFactory:
         """Test Chromium browser creation."""
         factory = PlaywrightFactory()
 
-        with patch(
-            "utils.playwright_factory.async_playwright"
-        ) as mock_playwright:
+        with patch("utils.playwright_factory.async_playwright") as mock_playwright:
             mock_pw = AsyncMock()
             mock_browser = AsyncMock()
             mock_playwright_instance = AsyncMock()
@@ -43,9 +42,7 @@ class TestPlaywrightFactory:
         """Test Firefox browser creation."""
         factory = PlaywrightFactory()
 
-        with patch(
-            "utils.playwright_factory.async_playwright"
-        ) as mock_playwright:
+        with patch("utils.playwright_factory.async_playwright") as mock_playwright:
             mock_pw = AsyncMock()
             mock_browser = AsyncMock()
             mock_playwright_instance = AsyncMock()
@@ -64,9 +61,7 @@ class TestPlaywrightFactory:
         """Test WebKit browser creation."""
         factory = PlaywrightFactory()
 
-        with patch(
-            "utils.playwright_factory.async_playwright"
-        ) as mock_playwright:
+        with patch("utils.playwright_factory.async_playwright") as mock_playwright:
             mock_pw = AsyncMock()
             mock_browser = AsyncMock()
             mock_playwright_instance = AsyncMock()
@@ -85,17 +80,13 @@ class TestPlaywrightFactory:
         """Test unsupported browser type raises error."""
         factory = PlaywrightFactory()
 
-        with patch(
-            "utils.playwright_factory.async_playwright"
-        ) as mock_playwright:
+        with patch("utils.playwright_factory.async_playwright") as mock_playwright:
             mock_pw = AsyncMock()
             mock_playwright_instance = AsyncMock()
             mock_playwright_instance.start = AsyncMock(return_value=mock_pw)
             mock_playwright.return_value = mock_playwright_instance
 
-            with pytest.raises(
-                ValueError, match="Unsupported browser type: safari"
-            ):
+            with pytest.raises(ValueError, match="Unsupported browser type: safari"):
                 await factory.create_browser("safari")
 
     @pytest.mark.asyncio
@@ -380,9 +371,7 @@ class TestCreatePlaywrightSession:
     @pytest.mark.asyncio
     async def test_create_playwright_session_basic(self):
         """Test basic session creation."""
-        with patch(
-            "utils.playwright_factory.async_playwright"
-        ) as mock_playwright:
+        with patch("utils.playwright_factory.async_playwright") as mock_playwright:
             mock_pw = AsyncMock()
             mock_browser = AsyncMock()
             mock_context = AsyncMock()
@@ -406,9 +395,7 @@ class TestCreatePlaywrightSession:
     @pytest.mark.asyncio
     async def test_create_playwright_session_firefox(self):
         """Test session creation with Firefox."""
-        with patch(
-            "utils.playwright_factory.async_playwright"
-        ) as mock_playwright:
+        with patch("utils.playwright_factory.async_playwright") as mock_playwright:
             mock_pw = AsyncMock()
             mock_browser = AsyncMock()
             mock_context = AsyncMock()
@@ -432,9 +419,7 @@ class TestCreatePlaywrightSession:
     @pytest.mark.asyncio
     async def test_create_playwright_session_returns_tuple(self):
         """Test session creation returns proper tuple."""
-        with patch(
-            "utils.playwright_factory.async_playwright"
-        ) as mock_playwright:
+        with patch("utils.playwright_factory.async_playwright") as mock_playwright:
             mock_pw = AsyncMock()
             mock_browser = AsyncMock()
             mock_context = AsyncMock()

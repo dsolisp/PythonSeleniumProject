@@ -1,7 +1,8 @@
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from pages.base_page import BasePage
+from selenium.webdriver.support.ui import WebDriverWait
+
 from locators.sauce_locators import SauceLocators
+from pages.base_page import BasePage
 
 
 class SaucePage(BasePage):
@@ -19,26 +20,20 @@ class SaucePage(BasePage):
         username_input = wait.until(
             EC.presence_of_element_located(SauceLocators.USERNAME_INPUT)
         )
-        password_input = self.driver.find_element(
-            *SauceLocators.PASSWORD_INPUT
-        )
+        password_input = self.driver.find_element(*SauceLocators.PASSWORD_INPUT)
         login_button = self.driver.find_element(*SauceLocators.LOGIN_BUTTON)
         username_input.send_keys(user)
         password_input.send_keys(password)
         login_button.click()
 
         # Wait for login to complete by checking inventory container appears
-        wait.until(
-            EC.presence_of_element_located(SauceLocators.INVENTORY_LIST)
-        )
+        wait.until(EC.presence_of_element_located(SauceLocators.INVENTORY_LIST))
 
     def is_logged_in(self):
         """Check if user is logged in by verifying inventory page loaded."""
         try:
             wait = WebDriverWait(self.driver, 10)
-            wait.until(
-                EC.presence_of_element_located(SauceLocators.INVENTORY_LIST)
-            )
+            wait.until(EC.presence_of_element_located(SauceLocators.INVENTORY_LIST))
             return True
         except Exception:
             return False
@@ -66,6 +61,4 @@ class SaucePage(BasePage):
 
     def get_cart_element(self):
         wait = WebDriverWait(self.driver, 10)
-        return wait.until(
-            EC.presence_of_element_located(SauceLocators.CART_BADGE)
-        )
+        return wait.until(EC.presence_of_element_located(SauceLocators.CART_BADGE))

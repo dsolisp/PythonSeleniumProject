@@ -1,7 +1,7 @@
 from hamcrest import (
     assert_that,
-    is_,
     equal_to,
+    is_,
     none,
 )
 
@@ -10,13 +10,15 @@ Real Unit Tests for WebDriver Factory Functions
 Testing actual factory logic and configuration.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from utils.webdriver_factory import (
-    WebDriverFactory,
     DatabaseFactory,
-    get_driver,
+    WebDriverFactory,
     cleanup_driver_and_database,
+    get_driver,
 )
 
 

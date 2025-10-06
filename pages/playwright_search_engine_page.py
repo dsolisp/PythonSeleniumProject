@@ -3,14 +3,15 @@ Playwright Search Engine page implementation.
 Modern async alternative to Selenium SearchEnginePage.
 """
 
-from typing import Optional, List
+from typing import List, Optional
+
 from playwright.async_api import Page
 
-from pages.playwright_base_page import PlaywrightBasePage
+from config.settings import settings
 from locators.playwright_search_engine_locators import (
     PlaywrightSearchEngineLocators,
 )
-from config.settings import settings
+from pages.playwright_base_page import PlaywrightBasePage
 
 
 class PlaywrightSearchEnginePage(PlaywrightBasePage):
@@ -42,18 +43,14 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                 return False
 
             # Wait for search input to be ready
-            await self.page.wait_for_selector(
-                self.locators.SEARCH_INPUT, timeout=10000
-            )
+            await self.page.wait_for_selector(self.locators.SEARCH_INPUT, timeout=10000)
             return True
 
         except Exception as e:
             print(f"Failed to open search engine: {e}")
             return False
 
-    async def search_for(
-        self, search_term: str, wait_for_results: bool = True
-    ) -> bool:
+    async def search_for(self, search_term: str, wait_for_results: bool = True) -> bool:
         """
         Perform a search on Google.
 
@@ -96,9 +93,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                     print(f"Results wait timed out: {e}")
                     # Even if timeout, search may have completed
                     # Check if URL changed to indicate search happened
-                    current_url = (
-                        await self.navigation_actions.get_current_url()
-                    )
+                    current_url = await self.navigation_actions.get_current_url()
                     if "q=" in current_url or "search" in current_url.lower():
                         return True
                     return False
@@ -163,9 +158,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             await self.page.wait_for_selector(
                 self.locators.RESULT_TITLES, timeout=10000
             )
-            results = await self.page.query_selector_all(
-                self.locators.RESULT_TITLES
-            )
+            results = await self.page.query_selector_all(self.locators.RESULT_TITLES)
             return len(results)
         except Exception:
             return 0
@@ -204,9 +197,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             List[str]: List of result URLs
         """
         try:
-            await self.page.wait_for_selector(
-                self.locators.RESULT_LINKS, timeout=10000
-            )
+            await self.page.wait_for_selector(self.locators.RESULT_LINKS, timeout=10000)
             link_elements = await self.page.query_selector_all(
                 self.locators.RESULT_LINKS
             )
@@ -214,9 +205,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             links = []
             for element in link_elements:
                 # Get parent link element
-                link = await element.query_selector(
-                    self.locators.ANCESTOR_LINK_XPATH
-                )
+                link = await element.query_selector(self.locators.ANCESTOR_LINK_XPATH)
                 if link:
                     href = await link.get_attribute("href")
                     if href:
@@ -288,9 +277,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             )
 
             # Check for "no results" message
-            no_results = await self.page.query_selector(
-                self.locators.NO_RESULTS
-            )
+            no_results = await self.page.query_selector(self.locators.NO_RESULTS)
 
             return results_present is not None and no_results is None
 
@@ -370,8 +357,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         try:
             # Wait for either results or no-results message
             selector = (
-                f"{self.locators.RESULTS_CONTAINER}, "
-                f"{self.locators.NO_RESULTS}"
+                f"{self.locators.RESULTS_CONTAINER}, " f"{self.locators.NO_RESULTS}"
             )
             await self.page.wait_for_selector(
                 selector,

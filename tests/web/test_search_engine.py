@@ -3,15 +3,16 @@ Search engine tests demonstrating page object model patterns.
 """
 
 import time
+
 import pytest
-from hamcrest import assert_that, contains_string, equal_to, greater_than, is_not, none
 import requests
+from hamcrest import assert_that, contains_string, equal_to, greater_than, is_not, none
 
 import utils.sql_connection as sql_util
-from pages.base_page import BasePage
-from pages.search_engine_page import SearchEnginePage
-from pages.result_page import ResultPage
 from config.settings import settings
+from pages.base_page import BasePage
+from pages.result_page import ResultPage
+from pages.search_engine_page import SearchEnginePage
 
 
 @pytest.mark.smoke

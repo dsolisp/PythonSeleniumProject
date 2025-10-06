@@ -3,18 +3,19 @@
 import pytest
 from hamcrest import (
     assert_that,
-    is_,
     equal_to,
-    not_none,
-    instance_of,
     has_property,
+    instance_of,
+    is_,
+    not_none,
 )
+
 from utils.structured_logger import (
-    StructuredLogger,
     ExecutionLogger,
+    StructuredLogger,
+    framework_logger,
     get_logger,
     get_test_logger,
-    framework_logger,
 )
 
 
@@ -143,7 +144,7 @@ class TestBackwardsCompatibility:
 
     def test_legacy_logging_functions_exist(self):
         """Test that legacy logging functions exist for backwards compatibility."""
-        from utils.structured_logger import log_info, log_error, log_warning
+        from utils.structured_logger import log_error, log_info, log_warning
 
         assert_that(callable(log_info), is_(True))
         assert_that(callable(log_error), is_(True))
@@ -151,7 +152,7 @@ class TestBackwardsCompatibility:
 
     def test_legacy_logging_functions_callable(self):
         """Test that legacy logging functions can be called."""
-        from utils.structured_logger import log_info, log_error, log_warning
+        from utils.structured_logger import log_error, log_info, log_warning
 
         try:
             log_info("Test info message", context="test")

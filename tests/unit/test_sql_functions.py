@@ -1,7 +1,7 @@
 from hamcrest import (
     assert_that,
-    is_,
     equal_to,
+    is_,
     none,
 )
 
@@ -10,23 +10,25 @@ Real Unit Tests for SQL Connection Functions
 Testing actual function logic with proper mocks and edge cases.
 """
 
-import pytest
 import sqlite3
 from unittest.mock import Mock, patch
+
+import pytest
+
 from utils.sql_connection import (
-    get_connection,
+    close_connection,
+    delete_data,
     execute_query,
     execute_query_safe,
-    fetch_one,
     fetch_all,
     fetch_many,
-    insert_data,
-    update_data,
-    delete_data,
+    fetch_one,
+    get_connection,
     get_table_info,
     get_table_names,
+    insert_data,
+    update_data,
     validate_connection,
-    close_connection,
 )
 
 

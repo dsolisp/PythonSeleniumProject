@@ -1,14 +1,14 @@
 from hamcrest import (
     assert_that,
-    is_,
+    contains_string,
     equal_to,
-    not_none,
-    none,
     greater_than,
     greater_than_or_equal_to,
-    contains_string,
     has_property,
+    is_,
     is_in,
+    none,
+    not_none,
 )
 
 """
@@ -25,17 +25,17 @@ import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
-from pages.base_page import BasePage
-from pages.search_engine_page import SearchEnginePage
-from pages.result_page import ResultPage
+from config.settings import settings
 from locators.search_engine_locators import SearchEngineLocators
 from locators.test_framework_locators import TestFrameworkLocators
-from utils.webdriver_factory import get_driver
+from pages.base_page import BasePage
+from pages.result_page import ResultPage
+from pages.search_engine_page import SearchEnginePage
 from utils.sql_connection import (
-    get_connection,
     execute_query,
+    get_connection,
 )
-from config.settings import settings
+from utils.webdriver_factory import get_driver
 
 
 class TestPageObjectIntegration:

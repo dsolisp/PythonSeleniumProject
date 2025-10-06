@@ -5,12 +5,12 @@ Visual regression tests with image comparison capabilities.
 import os
 
 import pytest
-from hamcrest import assert_that, less_than, is_, has_property, not_none, greater_than
+from hamcrest import assert_that, greater_than, has_property, is_, less_than, not_none
 
 import utils.diff_handler as diff_handler
+from config.settings import settings
 from pages.base_page import BasePage
 from pages.search_engine_page import SearchEnginePage
-from config.settings import settings
 
 
 @pytest.mark.visual

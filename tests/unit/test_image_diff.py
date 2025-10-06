@@ -8,8 +8,10 @@ Real Unit Tests for Image Diff Handler
 Testing actual image comparison logic.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from utils.diff_handler import compare_images
 
 

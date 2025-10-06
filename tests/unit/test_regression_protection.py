@@ -1,12 +1,13 @@
 """Regression protection tests to ensure framework stability."""
 
-import pytest
 import os
+
+import pytest
 from hamcrest import (
     assert_that,
-    is_,
     contains_string,
     has_property,
+    is_,
 )
 
 

@@ -1,4 +1,5 @@
-from hamcrest import assert_that, is_, equal_to
+from hamcrest import assert_that, equal_to, is_
+
 from pages.sauce import SaucePage
 
 

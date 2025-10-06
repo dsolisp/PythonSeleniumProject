@@ -2,16 +2,17 @@
 Locust load testing configuration for API and web performance testing.
 """
 
-from locust import HttpUser, task, between, events
-import time
 import random
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+import time
 
+from locust import HttpUser, between, events, task
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from config.settings import settings
 from utils.structured_logger import get_logger
 from utils.webdriver_factory import WebDriverFactory
-from config.settings import settings
 
 
 class APILoadTestUser(HttpUser):

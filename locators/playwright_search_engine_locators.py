@@ -16,20 +16,14 @@ class PlaywrightSearchEngineLocators:
     # Search input and interaction elements
     # DuckDuckGo: input#search_form_input
     # Google: input[name="q"], textarea[name="q"]
-    SEARCH_INPUT = (
-        'input[name="q"], textarea[name="q"], input#search_form_input'
-    )
+    SEARCH_INPUT = 'input[name="q"], textarea[name="q"], input#search_form_input'
 
-    SEARCH_BUTTON = (
-        'input[name="btnK"], button[type="submit"], button#search_button'
-    )
+    SEARCH_BUTTON = 'input[name="btnK"], button[type="submit"], button#search_button'
 
     # Search suggestions dropdown
     # DuckDuckGo: .search__autocomplete .acp
     # Google: [role="listbox"] [role="option"]
-    SEARCH_SUGGESTIONS = (
-        '[role="listbox"] [role="option"], .search__autocomplete .acp'
-    )
+    SEARCH_SUGGESTIONS = '[role="listbox"] [role="option"], .search__autocomplete .acp'
 
     # Results container - main results area
     # DuckDuckGo: article[data-testid], [data-area='mainline']
@@ -59,8 +53,7 @@ class PlaywrightSearchEngineLocators:
     # DuckDuckGo: article [data-result='snippet']
     # Google: .VwiC3b, .s3v9rd
     RESULT_DESCRIPTIONS = (
-        ".VwiC3b, .s3v9rd, .result__snippet, "
-        "article [data-result='snippet']"
+        ".VwiC3b, .s3v9rd, .result__snippet, " "article [data-result='snippet']"
     )
 
     # CAPTCHA detection
@@ -68,8 +61,7 @@ class PlaywrightSearchEngineLocators:
 
     # No results message
     NO_RESULTS = (
-        'p:has-text("did not match any documents"), '
-        ".no-results, .no-results-message"
+        'p:has-text("did not match any documents"), ' ".no-results, .no-results-message"
     )
 
     # Fallback selectors for search completion detection

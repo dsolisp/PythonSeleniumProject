@@ -3,14 +3,15 @@ Playwright factory for modern browser automation.
 Provides async browser automation capabilities alongside existing Selenium support.
 """
 
-from typing import Optional, Any
+from typing import Any, Optional
 
 from playwright.async_api import (
-    async_playwright,
     Browser,
     BrowserContext,
     Page,
+    async_playwright,
 )
+
 from config.settings import settings
 
 

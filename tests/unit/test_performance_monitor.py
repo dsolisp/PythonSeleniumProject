@@ -1,32 +1,33 @@
 from hamcrest import (
     assert_that,
-    is_,
+    contains_string,
     equal_to,
-    not_none,
-    none,
     greater_than,
     greater_than_or_equal_to,
-    instance_of,
-    has_key,
     has_item,
-    contains_string,
+    has_key,
+    instance_of,
+    is_,
+    none,
+    not_none,
 )
 
 """
 Unit tests for performance monitoring utilities.
 """
 
-import pytest
-import time
 import threading
-from unittest.mock import Mock, patch
+import time
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
 
 from utils.performance_monitor import (
-    PerformanceMonitor,
-    WebDriverPerformanceMonitor,
     APIPerformanceMonitor,
     PerformanceMetric,
+    PerformanceMonitor,
+    WebDriverPerformanceMonitor,
     benchmark_decorator,
     performance_test,
 )

@@ -3,14 +3,15 @@ Test Data Manager for comprehensive data-driven testing.
 Supports multiple data formats and environments for robust test automation.
 """
 
-import json
 import csv
-import yaml
+import json
 import random
-from pathlib import Path
-from typing import Dict, List, Any, Union
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Union
+
+import yaml
 
 
 @dataclass
@@ -471,10 +472,7 @@ class DataManager:
             "url": lambda: f"https://example{random.randint(1, 100)}.com",
             "user_agent": lambda: random.choice(
                 [
-                    (
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                        "AppleWebKit/537.36"
-                    ),
+                    ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36"),
                     (
                         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                         "AppleWebKit/537.36"

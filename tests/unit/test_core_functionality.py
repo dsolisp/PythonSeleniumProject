@@ -1,11 +1,11 @@
 from hamcrest import (
     assert_that,
-    is_,
     equal_to,
-    not_none,
     greater_than,
-    instance_of,
     has_property,
+    instance_of,
+    is_,
+    not_none,
 )
 
 """
@@ -66,8 +66,8 @@ class TestPageObjects:
     def test_page_object_inheritance(self):
         """Test page objects inherit from BasePage correctly."""
         from pages.base_page import BasePage
-        from pages.search_engine_page import SearchEnginePage
         from pages.result_page import ResultPage
+        from pages.search_engine_page import SearchEnginePage
 
         # Test inheritance structure
         assert_that(issubclass(SearchEnginePage, BasePage), is_(True))
@@ -75,8 +75,8 @@ class TestPageObjects:
 
     def test_page_object_initialization(self):
         """Test page objects can be initialized with mock driver."""
-        from pages.search_engine_page import SearchEnginePage
         from pages.result_page import ResultPage
+        from pages.search_engine_page import SearchEnginePage
 
         mock_driver = Mock()
 

@@ -7,18 +7,18 @@ and test data integration.
 
 import time
 from datetime import datetime
-from typing import Any, List, Optional, Tuple, Dict, Callable
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from selenium.common.exceptions import (
+    ElementClickInterceptedException,
     NoSuchElementException,
+    StaleElementReferenceException,
     TimeoutException,
     WebDriverException,
-    StaleElementReferenceException,
-    ElementClickInterceptedException,
 )
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 # Import advanced features
 try:

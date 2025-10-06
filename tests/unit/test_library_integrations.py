@@ -1,18 +1,18 @@
 from hamcrest import (
+    any_of,
     assert_that,
-    is_,
+    contains_string,
+    ends_with,
     equal_to,
-    not_none,
     greater_than,
     greater_than_or_equal_to,
-    less_than_or_equal_to,
-    instance_of,
-    has_key,
-    contains_string,
-    has_property,
-    any_of,
-    ends_with,
     has_item,
+    has_key,
+    has_property,
+    instance_of,
+    is_,
+    less_than_or_equal_to,
+    not_none,
 )
 
 """
@@ -20,10 +20,11 @@ Unit tests for library integrations (pandas, yaml, psutil, tenacity, jinja2, num
 Validates that all new library features are working correctly.
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
 from datetime import datetime
+
+import pytest
 
 
 class TestPandasIntegration:
@@ -35,8 +36,9 @@ class TestPandasIntegration:
 
     def test_pandas_dataframe_creation(self):
         """Test that pandas DataFrames are created correctly."""
-        from utils.test_reporter import AdvancedTestReporter, Result
         import pandas as pd
+
+        from utils.test_reporter import AdvancedTestReporter, Result
 
         reporter = AdvancedTestReporter(self.temp_dir)
         reporter.start_test_suite("pandas_test", "test", "chrome")
@@ -77,8 +79,9 @@ class TestPandasIntegration:
 
     def test_csv_export_functionality(self):
         """Test CSV export using pandas."""
-        from utils.test_reporter import AdvancedTestReporter, Result
         import pandas as pd
+
+        from utils.test_reporter import AdvancedTestReporter, Result
 
         reporter = AdvancedTestReporter(self.temp_dir)
         reporter.start_test_suite("csv_test", "test", "chrome")
@@ -101,8 +104,9 @@ class TestPandasIntegration:
 
     def test_numpy_statistical_operations(self):
         """Test numpy integration for statistical calculations."""
-        from utils.test_reporter import AdvancedTestReporter, Result
         import pandas as pd
+
+        from utils.test_reporter import AdvancedTestReporter, Result
 
         reporter = AdvancedTestReporter(self.temp_dir)
         reporter.start_test_suite("numpy_test", "test", "chrome")
@@ -150,8 +154,9 @@ class TestYAMLIntegration:
 
     def test_yaml_data_export(self):
         """Test YAML data export functionality."""
-        from utils.test_data_manager import DataManager
         import yaml
+
+        from utils.test_data_manager import DataManager
 
         manager = DataManager(self.temp_dir)
 
@@ -404,8 +409,8 @@ class TestNumpyIntegration:
 
     def test_numpy_with_pandas_integration(self):
         """Test numpy operations within pandas context."""
-        import pandas as pd
         import numpy as np
+        import pandas as pd
 
         # Create DataFrame
         df = pd.DataFrame(
@@ -438,12 +443,12 @@ class TestLibraryIntegrationSmokeTest:
     def test_all_libraries_importable(self):
         """Test that all integrated libraries can be imported."""
         try:
-            import pandas
+            import jinja2
             import numpy
-            import yaml
+            import pandas
             import psutil
             import tenacity
-            import jinja2
+            import yaml
 
             # Basic functionality test
             assert_that(pandas, has_property("DataFrame"))
@@ -458,9 +463,9 @@ class TestLibraryIntegrationSmokeTest:
 
     def test_framework_components_with_libraries(self):
         """Test that framework components use libraries correctly."""
-        from utils.test_reporter import AdvancedTestReporter
-        from utils.test_data_manager import DataManager
         from utils.error_handler import SmartErrorHandler
+        from utils.test_data_manager import DataManager
+        from utils.test_reporter import AdvancedTestReporter
 
         # Test that components can be instantiated
         temp_dir = tempfile.mkdtemp()

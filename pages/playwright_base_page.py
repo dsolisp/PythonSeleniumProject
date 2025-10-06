@@ -4,8 +4,9 @@ Compatible interface with existing Selenium BasePage but with async capabilities
 """
 
 from pathlib import Path
-from typing import Optional, Any, List
-from playwright.async_api import Page, ElementHandle
+from typing import Any, List, Optional
+
+from playwright.async_api import ElementHandle, Page
 
 from config.settings import settings
 from utils.playwright_factory import PlaywrightPage

@@ -5,25 +5,25 @@ retry strategies. Integrates tenacity and retry libraries for robust
 error handling.
 """
 
-import time
-import traceback
 import functools
 import logging
-from datetime import datetime
-from typing import Dict, List, Any, Optional, Callable
+import time
+import traceback
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
 # Retry libraries for robust error handling
 try:
+    from retry import retry
     from tenacity import (
         Retrying,
+        retry_if_exception_type,
         stop_after_attempt,
         wait_exponential,
-        retry_if_exception_type,
     )
-    from retry import retry
 
     RETRY_AVAILABLE = True
 except ImportError:
@@ -33,8 +33,8 @@ except ImportError:
 
 # Memory and performance monitoring
 try:
-    import psutil
     import memory_profiler
+    import psutil
 
     PROFILING_AVAILABLE = True
 except ImportError:
@@ -43,10 +43,10 @@ except ImportError:
     memory_profiler = None
 
 from selenium.common.exceptions import (
-    TimeoutException,
-    NoSuchElementException,
     ElementNotInteractableException,
+    NoSuchElementException,
     StaleElementReferenceException,
+    TimeoutException,
 )
 from selenium.webdriver.support.ui import WebDriverWait
 

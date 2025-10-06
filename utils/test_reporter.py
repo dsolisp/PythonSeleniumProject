@@ -5,17 +5,17 @@ Integrates pandas for data analysis and numpy for statistical computations.
 """
 
 import json
+import statistics
+from collections import Counter
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass, asdict
-from collections import Counter
-import statistics
+from typing import Any, Dict, List, Optional, Union
 
 # Data analysis libraries
 try:
-    import pandas as pd
     import numpy as np
+    import pandas as pd
 
     ANALYTICS_AVAILABLE = True
 except ImportError:

@@ -6,12 +6,12 @@ These tests verify that the framework is in a working state.
 import pytest
 from hamcrest import (
     assert_that,
-    is_,
+    contains_string,
     equal_to,
     greater_than,
-    instance_of,
-    contains_string,
     has_property,
+    instance_of,
+    is_,
     is_in,
 )
 
@@ -50,8 +50,9 @@ class TestFrameworkSmoke:
 
     def test_locators_have_valid_format(self):
         """Test that locators follow the expected format."""
-        from locators.search_engine_locators import SearchEngineLocators
         from selenium.webdriver.common.by import By
+
+        from locators.search_engine_locators import SearchEngineLocators
 
         # Check a few key locators
         search_box = SearchEngineLocators.SEARCH_BOX

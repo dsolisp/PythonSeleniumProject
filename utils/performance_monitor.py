@@ -2,13 +2,14 @@
 Performance monitoring utilities with benchmarking and load testing capabilities.
 """
 
-import time
 import statistics
-import psutil
-from typing import Dict, List, Callable, Any
-from functools import wraps
+import time
 from dataclasses import dataclass
 from datetime import datetime
+from functools import wraps
+from typing import Any, Callable, Dict, List
+
+import psutil
 
 from utils.structured_logger import get_logger
 

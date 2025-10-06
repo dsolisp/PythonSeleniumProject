@@ -1,22 +1,23 @@
 from hamcrest import (
     assert_that,
-    is_,
+    contains_string,
     equal_to,
     greater_than,
+    is_,
     less_than,
-    contains_string,
 )
 
 """
 Playwright Search engine tests demonstrating modern browser automation.
 """
 
-import pytest
 import asyncio
 
+import pytest
+
 from config.settings import settings
-from utils.playwright_factory import create_playwright_session, PlaywrightFactory
 from pages.playwright_search_engine_page import PlaywrightSearchEnginePage
+from utils.playwright_factory import PlaywrightFactory, create_playwright_session
 
 
 @pytest.mark.playwright
@@ -60,8 +61,11 @@ async def test_playwright_google_search_basic():
         # Verify search was performed (DuckDuckGo uses ?q= parameter)
         current_url = await search_page.get_url()
         assert_that(
-            any(indicator in current_url.lower() for indicator in ["?q=", "/search", "&q="]),
-            is_(True)
+            any(
+                indicator in current_url.lower()
+                for indicator in ["?q=", "/search", "&q="]
+            ),
+            is_(True),
         ), f"Should be on search results page: {current_url}"
 
         # Check for results (if not blocked by CAPTCHA)
@@ -179,8 +183,11 @@ async def test_playwright_advanced_search():
         # Verify advanced search (DuckDuckGo uses ?q= parameter)
         current_url = await search_page.get_url()
         assert_that(
-            any(indicator in current_url.lower() for indicator in ["?q=", "/search", "&q="]),
-            is_(True)
+            any(
+                indicator in current_url.lower()
+                for indicator in ["?q=", "/search", "&q="]
+            ),
+            is_(True),
         ), f"Should be on search results page: {current_url}"
 
         # The URL should contain our search parameters
