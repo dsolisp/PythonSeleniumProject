@@ -1478,13 +1478,20 @@ def test_framework_components_with_libraries():
   - DataFrame creation and processing for test results
   - Statistical analysis and performance metrics
   - CSV export for external analysis tools
-  - Integration: `utils/test_reporter.py`
+  - Integration: `utils/test_reporter.py`, `utils/ml_test_analyzer.py`
 
 - **🔢 Numpy (2.3.3)**: Numerical computing and mathematical operations
   - Z-score calculations for outlier detection
   - Statistical computations and array operations
   - Mathematical functions for performance analysis
   - Integration: Embedded within pandas operations
+
+- **🤖 Scikit-learn (1.7.2)** ✨ NEW: Machine Learning for test intelligence
+  - Random Forest models for failure prediction
+  - Flaky test detection using ML algorithms
+  - Performance anomaly detection
+  - Intelligent test selection and optimization
+  - Integration: `utils/ml_test_analyzer.py`
 
 ### Configuration & Data Management
 - **📄 PyYAML (6.0.3)**: YAML configuration file management
