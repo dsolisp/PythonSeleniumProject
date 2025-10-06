@@ -9,7 +9,7 @@ from hamcrest import assert_that, less_than, is_, has_property, not_none, greate
 
 import utils.diff_handler as diff_handler
 from pages.base_page import BasePage
-from pages.google_search_page import GoogleSearchPage
+from pages.search_engine_page import SearchEnginePage
 from config.settings import settings
 
 
@@ -17,7 +17,7 @@ from config.settings import settings
 @pytest.mark.parametrize("tc_id", ["tc_1234"])
 def test_visual_comparison(tc_id, driver):
     base_page = BasePage(driver)
-    google_search_page = GoogleSearchPage(driver)
+    search_page = SearchEnginePage(driver)
 
     print(f"🔍 Running visual comparison test for: {tc_id}")
 
@@ -33,15 +33,15 @@ def test_visual_comparison(tc_id, driver):
             base_page.wait_for_page_load()
 
         print(f"📸 Capturing expected screenshot: {expected_image}")
-        google_search_page.capture_search_input_screenshot(expected_image)
+        search_page.capture_search_input_screenshot(expected_image)
 
-        element = google_search_page.get_search_input()
+        element = search_page.get_search_input()
         if element:
             element.send_keys("Visual Test Query")
             print("✍️ Added text to search input")
 
         print(f"📸 Capturing actual screenshot: {actual_image}")
-        google_search_page.capture_search_input_screenshot(actual_image)
+        search_page.capture_search_input_screenshot(actual_image)
 
         assert_that(
             os.path.exists(expected_image),
@@ -112,7 +112,7 @@ def test_screenshot_functionality():
         driver_tuple = get_driver()
 
         base_page = BasePage(driver_tuple)
-        GoogleSearchPage(driver_tuple)
+        SearchEnginePage(driver_tuple)
 
         base_page.driver.get(settings.BASE_URL)
         base_page.wait_for_page_load()

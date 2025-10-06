@@ -1,21 +1,18 @@
 """
-DuckDuckGo search results page locators - centralized locator management.
-(Keeping class name GoogleResultLocators for backward compatibility)
+Search engine results page locators - centralized locator management.
+Generic locators that work with DuckDuckGo and other search engines.
 """
 
 from selenium.webdriver.common.by import By
 
 
-class GoogleResultLocators:
-    """All locators for DuckDuckGo search results page in one place."""
+class ResultPageLocators:
+    """All locators for search engine results page in one place."""
 
     # Results container and lists
-    # DuckDuckGo main results container
-    RESULTS_CONTAINER = (By.ID, "react-layout")
-    # Individual result items
-    RESULT_ITEMS = (By.CSS_SELECTOR, "article[data-testid='result']")
-    # Result titles (h2 in DuckDuckGo)
-    RESULT_TITLES = (By.CSS_SELECTOR, "article h2")
+    RESULTS_CONTAINER = (By.ID, "react-layout")  # Main results container
+    RESULT_ITEMS = (By.CSS_SELECTOR, "article[data-testid='result']")  # Result items
+    RESULT_TITLES = (By.CSS_SELECTOR, "article h2")  # Result titles
     RESULT_LINKS = (By.CSS_SELECTOR, "article h2 a")  # Result links
     RESULT_DESCRIPTIONS = (
         By.CSS_SELECTOR,
@@ -43,8 +40,7 @@ class GoogleResultLocators:
 
     # Alternative result selectors for broader compatibility
     SEARCH_RESULTS = (By.ID, "react-layout")  # Main results container
-    # All H2 elements (DuckDuckGo uses h2)
-    ALL_H3_ELEMENTS = (By.XPATH, "//h2")
+    ALL_H3_ELEMENTS = (By.XPATH, "//h2")  # All H2 heading elements
     RESULT_ELEMENTS_DATA_VED = (
         By.CSS_SELECTOR,
         "[data-testid='result']",

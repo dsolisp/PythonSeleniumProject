@@ -50,12 +50,12 @@ class TestFrameworkSmoke:
 
     def test_locators_have_valid_format(self):
         """Test that locators follow the expected format."""
-        from locators.google_search_locators import GoogleSearchLocators
+        from locators.search_engine_locators import SearchEngineLocators
         from selenium.webdriver.common.by import By
 
         # Check a few key locators
-        search_box = GoogleSearchLocators.SEARCH_BOX
-        search_button = GoogleSearchLocators.SEARCH_BUTTON
+        search_box = SearchEngineLocators.SEARCH_BOX
+        search_button = SearchEngineLocators.SEARCH_BUTTON
 
         # Should be tuples with (By.METHOD, "selector")
         assert_that(search_box, instance_of(tuple))

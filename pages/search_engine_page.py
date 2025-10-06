@@ -1,58 +1,58 @@
 """
-Google search page implementation using the page object pattern.
+Search engine page implementation using the page object pattern.
 """
 
 from typing import Dict, List
 
 from selenium.webdriver.common.keys import Keys
 
-from locators.google_search_locators import GoogleSearchLocators
+from locators.search_engine_locators import SearchEngineLocators
 from pages.base_page import BasePage
 
 
-class GoogleSearchPage(BasePage):
+class SearchEnginePage(BasePage):
     """
-    Google search page implementation.
+    Search engine page implementation.
     Provides methods for search operations and result handling.
     """
 
     def __init__(self, driver_and_db, test_name: str = None, environment: str = "test"):
-        """Initialize Google search page with enhanced features."""
+        """Initialize Search engine page with enhanced features."""
         super().__init__(driver_and_db, test_name=test_name, environment=environment)
         from config.settings import settings
 
         self.page_url = settings.BASE_URL
 
     def open(self) -> bool:
-        """Open Google homepage (alias for open_google)."""
-        return self.open_google()
+        """Open Search engine homepage (alias for open_search_engine)."""
+        return self.open_search_engine()
 
     def search(self, search_term: str) -> bool:
         """Perform search without navigating (assumes already on Google)."""
         # Just search, don't navigate
-        if not self.send_keys(GoogleSearchLocators.SEARCH_BOX, search_term):
+        if not self.send_keys(SearchEngineLocators.SEARCH_BOX, search_term):
             return False
 
         # Submit search using ENTER key
-        element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
+        element = self.find_element(SearchEngineLocators.SEARCH_BOX)
         if element:
             element.send_keys(Keys.RETURN)
             return True
         return False
 
-    def open_google(self) -> bool:
-        """Navigate to Google and verify page loaded."""
+    def open_search_engine(self) -> bool:
+        """Navigate to search engine and verify page loaded."""
         if self.navigate_to(self.page_url):
             try:
                 return self.wait_for_element(
-                    GoogleSearchLocators.SEARCH_BOX, timeout=10
+                    SearchEngineLocators.SEARCH_BOX, timeout=10
                 )
             except Exception:
                 return False
         return False
 
     def navigate_to_google(self) -> bool:
-        """Navigate to Google homepage."""
+        """Navigate to Search engine homepage."""
         from config.settings import settings
 
         return self.navigate_to(settings.BASE_URL)
@@ -64,32 +64,32 @@ class GoogleSearchPage(BasePage):
             return False
 
         # Clear and type search term
-        if not self.send_keys(GoogleSearchLocators.SEARCH_BOX, search_term):
+        if not self.send_keys(SearchEngineLocators.SEARCH_BOX, search_term):
             return False
 
         # Submit search
         if use_enter:
-            element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
+            element = self.find_element(SearchEngineLocators.SEARCH_BOX)
             if element:
                 element.send_keys(Keys.RETURN)
                 return True
             return False
         else:
-            return self.click(GoogleSearchLocators.SEARCH_BUTTON)
+            return self.click(SearchEngineLocators.SEARCH_BUTTON)
 
     def has_results(self) -> bool:
         """Check if search results are visible."""
         return self.is_element_visible(
-            GoogleSearchLocators.RESULTS_CONTAINER, timeout=10
+            SearchEngineLocators.RESULTS_CONTAINER, timeout=10
         )
 
     def get_results_stats(self) -> str:
         """Get search results statistics text."""
-        return self.get_text(GoogleSearchLocators.RESULT_STATS)
+        return self.get_text(SearchEngineLocators.RESULT_STATS)
 
     def get_result_titles(self, max_count: int = 5) -> List[str]:
         """Get list of search result titles."""
-        elements = self.driver.find_elements(*GoogleSearchLocators.RESULT_TITLES)
+        elements = self.driver.find_elements(*SearchEngineLocators.RESULT_TITLES)
         titles = []
 
         for element in elements[:max_count]:
@@ -116,7 +116,7 @@ class GoogleSearchPage(BasePage):
 
         try:
             # Open Google
-            if not self.open_google():
+            if not self.open_search_engine():
                 return result
 
             # Perform search
@@ -140,15 +140,15 @@ class GoogleSearchPage(BasePage):
 
     def get_search_input(self):
         """Get the search input element."""
-        return self.find_element(GoogleSearchLocators.SEARCH_BOX)
+        return self.find_element(SearchEngineLocators.SEARCH_BOX)
 
     def enter_search_term(self, search_term: str) -> bool:
         """Enter search term with enhanced error handling."""
-        return self.send_keys(GoogleSearchLocators.SEARCH_BOX, search_term)
+        return self.send_keys(SearchEngineLocators.SEARCH_BOX, search_term)
 
     def clear_search(self) -> bool:
         """Clear the search input field."""
-        element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
+        element = self.find_element(SearchEngineLocators.SEARCH_BOX)
         if element:
             self.driver.execute_script("arguments[0].value = '';", element)
             return True
@@ -156,23 +156,23 @@ class GoogleSearchPage(BasePage):
 
     def click_search_button(self) -> bool:
         """Click search button with enhanced features."""
-        return self.click(GoogleSearchLocators.SEARCH_BUTTON)
+        return self.click(SearchEngineLocators.SEARCH_BUTTON)
 
     def capture_search_input_screenshot(self, filename: str) -> str:
         """Capture screenshot of search input area."""
-        element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
+        element = self.find_element(SearchEngineLocators.SEARCH_BOX)
         if element:
             return self.take_screenshot(filename)
         return ""
 
     def click_search_input_advanced(self) -> bool:
         """Click on search input using advanced method."""
-        return self.click(GoogleSearchLocators.SEARCH_BOX)
+        return self.click(SearchEngineLocators.SEARCH_BOX)
 
     def type_with_action_chains(self, text: str) -> bool:
         """Type text using ActionChains."""
         try:
-            element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
+            element = self.find_element(SearchEngineLocators.SEARCH_BOX)
             if element:
                 from selenium.webdriver.common.action_chains import (
                     ActionChains,
@@ -202,7 +202,7 @@ class GoogleSearchPage(BasePage):
 
     def get_search_input_health(self) -> dict:
         """Get health information about the search input element."""
-        element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
+        element = self.find_element(SearchEngineLocators.SEARCH_BOX)
         if not element:
             return {
                 "exists": False,
@@ -220,14 +220,14 @@ class GoogleSearchPage(BasePage):
 
     def get_search_input_value(self) -> str:
         """Get the current value of the search input."""
-        element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
+        element = self.find_element(SearchEngineLocators.SEARCH_BOX)
         if element:
             return element.get_attribute("value") or ""
         return ""
 
     def get_search_input_dimensions(self) -> dict:
         """Get dimensions and position of search input."""
-        element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
+        element = self.find_element(SearchEngineLocators.SEARCH_BOX)
         if not element:
             return {"width": 0, "height": 0, "x": 0, "y": 0}
 
@@ -244,7 +244,7 @@ class GoogleSearchPage(BasePage):
         """Wait until search input is clickable."""
         try:
             element = self.wait_for_clickable(
-                GoogleSearchLocators.SEARCH_BOX, timeout=timeout
+                SearchEngineLocators.SEARCH_BOX, timeout=timeout
             )
             return element is not None
         except Exception:
@@ -254,7 +254,7 @@ class GoogleSearchPage(BasePage):
         """Wait until search input is visible."""
         try:
             return (
-                self.wait_for_element(GoogleSearchLocators.SEARCH_BOX, timeout=timeout)
+                self.wait_for_element(SearchEngineLocators.SEARCH_BOX, timeout=timeout)
                 is not None
             )
         except Exception:
@@ -262,12 +262,12 @@ class GoogleSearchPage(BasePage):
 
     def click_search_input(self) -> bool:
         """Click on the search input element."""
-        return self.click(GoogleSearchLocators.SEARCH_BOX)
+        return self.click(SearchEngineLocators.SEARCH_BOX)
 
     def wait_for_search_input_focus(self, timeout: int = 5) -> bool:
         """Wait for search input to gain focus."""
         try:
-            element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
+            element = self.find_element(SearchEngineLocators.SEARCH_BOX)
             if element:
                 # Check if element has focus using JavaScript
                 import time
@@ -300,12 +300,12 @@ class GoogleSearchPage(BasePage):
         except Exception:
             return False
 
-    def open_google_with_timing(self) -> float:
-        """Open Google and return time taken."""
+    def open_search_engine_with_timing(self) -> float:
+        """Open search engine and return time taken."""
         import time
 
         start_time = time.time()
-        self.open_google()
+        self.open_search_engine()
         return time.time() - start_time
 
     def get_search_input_timing(self) -> float:
@@ -313,7 +313,7 @@ class GoogleSearchPage(BasePage):
         import time
 
         start_time = time.time()
-        self.find_element(GoogleSearchLocators.SEARCH_BOX)
+        self.find_element(SearchEngineLocators.SEARCH_BOX)
         return time.time() - start_time
 
     def enter_search_term_with_timing(self, search_term: str) -> float:
@@ -329,7 +329,7 @@ class GoogleSearchPage(BasePage):
         import time
 
         start_time = time.time()
-        element = self.find_element(GoogleSearchLocators.SEARCH_BOX)
+        element = self.find_element(SearchEngineLocators.SEARCH_BOX)
         if element:
             # Use JavaScript to clear the value for DuckDuckGo compatibility
             self.driver.execute_script("arguments[0].value = '';", element)

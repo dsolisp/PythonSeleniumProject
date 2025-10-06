@@ -1,5 +1,5 @@
 """
-Google search tests demonstrating page object model patterns.
+Search engine tests demonstrating page object model patterns.
 """
 
 import time
@@ -9,57 +9,57 @@ import requests
 
 import utils.sql_connection as sql_util
 from pages.base_page import BasePage
-from pages.google_search_page import GoogleSearchPage
-from pages.google_result_page import GoogleResultPage
+from pages.search_engine_page import SearchEnginePage
+from pages.result_page import ResultPage
 from config.settings import settings
 
 
 @pytest.mark.smoke
 def test_simple_google_search(driver):
-    google_search_page = GoogleSearchPage(driver)
-    google_result_page = GoogleResultPage(driver)
+    search_page = SearchEnginePage(driver)
+    result_page = ResultPage(driver)
     base_page = BasePage(driver)
     search_term = settings.DEFAULT_SEARCH_TERM
 
-    google_search_page.open_google()
-    google_search_page.enter_search_term(search_term)
-    google_search_page.click_search_button()
+    search_page.open_search_engine()
+    search_page.enter_search_term(search_term)
+    search_page.click_search_button()
 
-    google_result_page.wait_for_results_page()
+    result_page.wait_for_results_page()
 
-    results_displayed = google_result_page.is_results_displayed()
+    results_displayed = result_page.is_results_displayed()
 
     if results_displayed:
         assert_that(results_displayed, equal_to(True))
         assert_that(base_page.get_title(), contains_string("Python"))
-        results_count = google_result_page.get_results_count()
+        results_count = result_page.get_results_count()
         assert_that(results_count, greater_than(0))
     else:
         current_url = base_page.get_current_url()
         assert_that(current_url, contains_string("search"))
         print(
             "⚠️ Results page detected but results may be blocked - "
-            "this is expected with Google"
+            "this is expected with search engine"
         )
 
 
 @pytest.mark.database
 def test_sql_google_search(driver):
-    google_search_page = GoogleSearchPage(driver)
-    google_result_page = GoogleResultPage(driver)
+    search_page = SearchEnginePage(driver)
+    result_page = ResultPage(driver)
     base_page = BasePage(driver)
 
-    google_search_page.open_google()
+    search_page.open_search_engine()
 
     name = get_track_name_from_db(driver[1])
     assert_that(name, is_not(none()))
 
-    google_search_page.enter_search_term(name)
-    google_search_page.click_search_button()
+    search_page.enter_search_term(name)
+    search_page.click_search_button()
 
-    google_result_page.wait_for_results_page()
+    result_page.wait_for_results_page()
 
-    results_displayed = google_result_page.is_results_displayed()
+    results_displayed = result_page.is_results_displayed()
 
     if results_displayed:
         assert_that(results_displayed, equal_to(True))
@@ -79,32 +79,32 @@ def test_sql_google_search(driver):
 
 @pytest.mark.smoke
 def test_google_search_with_action_chains(driver):
-    google_search_page = GoogleSearchPage(driver)
-    google_result_page = GoogleResultPage(driver)
+    search_page = SearchEnginePage(driver)
+    result_page = ResultPage(driver)
     base_page = BasePage(driver)
     search_term = settings.DEFAULT_SEARCH_TERM
 
-    google_search_page.open_google()
+    search_page.open_search_engine()
 
-    google_search_page.click_search_input_advanced()
-    google_search_page.type_with_action_chains(search_term)
+    search_page.click_search_input_advanced()
+    search_page.type_with_action_chains(search_term)
 
-    suggestions_appeared = google_search_page.wait_for_suggestions()
+    suggestions_appeared = search_page.wait_for_suggestions()
     if suggestions_appeared:
         print("✅ Search suggestions detected")
     else:
         print("ℹ️ No search suggestions appeared")
 
-    google_search_page.click_search_button()
+    search_page.click_search_button()
 
-    google_result_page.wait_for_results_page_complete()
+    result_page.wait_for_results_page_complete()
 
-    results_displayed = google_result_page.is_results_displayed()
+    results_displayed = result_page.is_results_displayed()
 
     if results_displayed:
         assert_that(results_displayed, equal_to(True))
         assert_that(base_page.get_title(), contains_string("Python"))
-        results_count = google_result_page.get_results_count()
+        results_count = result_page.get_results_count()
         assert_that(results_count, greater_than(0))
     else:
         current_url = base_page.get_current_url()
@@ -116,12 +116,12 @@ def test_google_search_with_action_chains(driver):
 
 @pytest.mark.database
 def test_database_search_with_performance_monitoring(driver):
-    google_search_page = GoogleSearchPage(driver)
-    google_result_page = GoogleResultPage(driver)
+    search_page = SearchEnginePage(driver)
+    result_page = ResultPage(driver)
     base_page = BasePage(driver)
 
     start_time = time.time()
-    google_search_page.open_google()
+    search_page.open_search_engine()
     page_open_time = time.time() - start_time
 
     start_time = time.time()
@@ -131,21 +131,21 @@ def test_database_search_with_performance_monitoring(driver):
     assert_that(search_term, is_not(none()))
 
     start_time = time.time()
-    google_search_page.enter_search_term(search_term)
-    google_search_page.click_search_button()
+    search_page.enter_search_term(search_term)
+    search_page.click_search_button()
     search_execution_time = time.time() - start_time
 
-    google_result_page.wait_for_results_page()
+    result_page.wait_for_results_page()
 
     assert_that(page_open_time, greater_than(0.0))
     assert_that(db_query_time, greater_than(0.0))
     assert_that(search_execution_time, greater_than(0.0))
 
-    results_displayed = google_result_page.is_results_displayed()
+    results_displayed = result_page.is_results_displayed()
 
     if results_displayed:
         assert_that(results_displayed, equal_to(True))
-        results_count = google_result_page.get_results_count()
+        results_count = result_page.get_results_count()
         assert_that(results_count, greater_than(0))
     else:
         current_url = base_page.get_current_url()
@@ -179,21 +179,21 @@ def test_framework_api_functionality():
 
 @pytest.mark.advanced
 def test_element_health_monitoring(driver):
-    google_search_page = GoogleSearchPage(driver)
-    google_search_page.open_google()
+    search_page = SearchEnginePage(driver)
+    search_page.open_search_engine()
 
-    element_health = google_search_page.get_search_input_health()
+    element_health = search_page.get_search_input_health()
 
     assert_that(element_health["exists"], equal_to(True))
     assert_that(element_health["is_displayed"], equal_to(True))
     assert_that(element_health["is_enabled"], equal_to(True))
     assert_that(element_health["tag_name"], equal_to("input"))
 
-    google_search_page.enter_search_term("health test")
-    input_value = google_search_page.get_search_input_value()
+    search_page.enter_search_term("health test")
+    input_value = search_page.get_search_input_value()
     assert_that(input_value, equal_to("health test"))
 
-    element_dimensions = google_search_page.get_search_input_dimensions()
+    element_dimensions = search_page.get_search_input_dimensions()
     assert_that(element_dimensions["width"], greater_than(0))
     assert_that(element_dimensions["height"], greater_than(0))
     assert_that(element_dimensions["x"] >= 0, equal_to(True))
@@ -202,46 +202,42 @@ def test_element_health_monitoring(driver):
 
 @pytest.mark.advanced
 def test_webdriver_wait_conditions(driver):
-    google_search_page = GoogleSearchPage(driver)
-    google_search_page.open_google()
+    search_page = SearchEnginePage(driver)
+    search_page.open_search_engine()
 
-    is_clickable = google_search_page.wait_for_search_input_clickable()
+    is_clickable = search_page.wait_for_search_input_clickable()
     assert_that(is_clickable, equal_to(True))
 
-    is_visible = google_search_page.wait_for_search_input_visible()
+    is_visible = search_page.wait_for_search_input_visible()
     assert_that(is_visible, equal_to(True))
 
-    google_search_page.click_search_input()
-    has_focus = google_search_page.wait_for_search_input_focus()
+    search_page.click_search_input()
+    has_focus = search_page.wait_for_search_input_focus()
     assert_that(has_focus, equal_to(True))
 
-    google_search_page.enter_search_term("selenium")
-    text_appeared = google_search_page.wait_for_text_in_search_input("selenium")
+    search_page.enter_search_term("selenium")
+    text_appeared = search_page.wait_for_text_in_search_input("selenium")
     assert_that(text_appeared, equal_to(True))
 
-    final_value = google_search_page.get_search_input_value()
+    final_value = search_page.get_search_input_value()
     assert_that(final_value, equal_to("selenium"))
 
 
 @pytest.mark.performance
 def test_page_interaction_timing(driver):
-    google_search_page = GoogleSearchPage(driver)
+    search_page = SearchEnginePage(driver)
 
-    page_load_time = google_search_page.open_google_with_timing()
-    element_find_time = google_search_page.get_search_input_timing()
-    typing_time = google_search_page.enter_search_term_with_timing(
-        "performance testing"
-    )
-    clear_retype_time = google_search_page.clear_and_retype_with_timing(
-        "selenium performance"
-    )
+    page_load_time = search_page.open_search_engine_with_timing()
+    element_find_time = search_page.get_search_input_timing()
+    typing_time = search_page.enter_search_term_with_timing("performance testing")
+    clear_retype_time = search_page.clear_and_retype_with_timing("selenium performance")
 
     assert_that(page_load_time, greater_than(0.0))
     assert_that(element_find_time, greater_than(0.0))
     assert_that(typing_time, greater_than(0.0))
     assert_that(clear_retype_time, greater_than(0.0))
 
-    final_value = google_search_page.get_search_input_value()
+    final_value = search_page.get_search_input_value()
     assert_that(final_value, equal_to("selenium performance"))
 
     print(

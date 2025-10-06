@@ -38,25 +38,25 @@ class TestLocators:
 
     def test_google_search_locators_structure(self):
         """Test that Google search locators have correct tuple structure."""
-        from locators.google_search_locators import GoogleSearchLocators
+        from locators.search_engine_locators import SearchEngineLocators
 
         # Test key locators exist and are properly structured
-        assert_that(GoogleSearchLocators, has_property("SEARCH_BOX"))
-        assert_that(GoogleSearchLocators, has_property("SEARCH_BUTTON"))
+        assert_that(SearchEngineLocators, has_property("SEARCH_BOX"))
+        assert_that(SearchEngineLocators, has_property("SEARCH_BUTTON"))
 
         # Test locators are tuples with correct length
-        assert_that(GoogleSearchLocators.SEARCH_BOX, instance_of(tuple))
-        assert_that(len(GoogleSearchLocators.SEARCH_BOX), equal_to(2))
-        assert_that(GoogleSearchLocators.SEARCH_BOX[1], instance_of(str))
-        assert_that(len(GoogleSearchLocators.SEARCH_BOX[1]), greater_than(0))
+        assert_that(SearchEngineLocators.SEARCH_BOX, instance_of(tuple))
+        assert_that(len(SearchEngineLocators.SEARCH_BOX), equal_to(2))
+        assert_that(SearchEngineLocators.SEARCH_BOX[1], instance_of(str))
+        assert_that(len(SearchEngineLocators.SEARCH_BOX[1]), greater_than(0))
 
     def test_google_result_locators_structure(self):
         """Test that Google result locators have correct structure."""
-        from locators.google_result_locators import GoogleResultLocators
+        from locators.result_page_locators import ResultPageLocators
 
-        assert_that(GoogleResultLocators, has_property("RESULTS_CONTAINER"))
-        assert_that(GoogleResultLocators.RESULTS_CONTAINER, instance_of(tuple))
-        assert_that(len(GoogleResultLocators.RESULTS_CONTAINER), equal_to(2))
+        assert_that(ResultPageLocators, has_property("RESULTS_CONTAINER"))
+        assert_that(ResultPageLocators.RESULTS_CONTAINER, instance_of(tuple))
+        assert_that(len(ResultPageLocators.RESULTS_CONTAINER), equal_to(2))
 
 
 # Test Page Object Structure
@@ -66,22 +66,22 @@ class TestPageObjects:
     def test_page_object_inheritance(self):
         """Test page objects inherit from BasePage correctly."""
         from pages.base_page import BasePage
-        from pages.google_search_page import GoogleSearchPage
-        from pages.google_result_page import GoogleResultPage
+        from pages.search_engine_page import SearchEnginePage
+        from pages.result_page import ResultPage
 
         # Test inheritance structure
-        assert_that(issubclass(GoogleSearchPage, BasePage), is_(True))
-        assert_that(issubclass(GoogleResultPage, BasePage), is_(True))
+        assert_that(issubclass(SearchEnginePage, BasePage), is_(True))
+        assert_that(issubclass(ResultPage, BasePage), is_(True))
 
     def test_page_object_initialization(self):
         """Test page objects can be initialized with mock driver."""
-        from pages.google_search_page import GoogleSearchPage
-        from pages.google_result_page import GoogleResultPage
+        from pages.search_engine_page import SearchEnginePage
+        from pages.result_page import ResultPage
 
         mock_driver = Mock()
 
-        search_page = GoogleSearchPage(mock_driver)
-        result_page = GoogleResultPage(mock_driver)
+        search_page = SearchEnginePage(mock_driver)
+        result_page = ResultPage(mock_driver)
 
         assert_that(search_page, is_(not_none()))
         assert_that(result_page, is_(not_none()))

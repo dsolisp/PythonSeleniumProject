@@ -15,8 +15,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from pages.google_search_page import GoogleSearchPage
-from pages.google_result_page import GoogleResultPage
+from pages.search_engine_page import SearchEnginePage
+from pages.result_page import ResultPage
 from utils.webdriver_factory import WebDriverFactory
 from utils.structured_logger import get_test_logger
 from config.settings import settings
@@ -68,7 +68,7 @@ class TestAllureGoogleSearch:
             )
 
         with allure.step("Navigate to Google homepage"):
-            search_page = GoogleSearchPage(self.driver)
+            search_page = SearchEnginePage(self.driver)
             search_page.open()
             self.test_logger.browser_action("navigate", url=settings.BASE_URL)
 
@@ -86,7 +86,7 @@ class TestAllureGoogleSearch:
             )
 
         with allure.step("Wait for search results"):
-            result_page = GoogleResultPage(self.driver)
+            result_page = ResultPage(self.driver)
             WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located(
                     (By.CSS_SELECTOR, "article[data-testid='result']")
@@ -150,7 +150,7 @@ class TestAllureGoogleSearch:
         with allure.step("Setup browser and navigate to DuckDuckGo"):
             factory = WebDriverFactory()
             self.driver = factory.create_chrome_driver()
-            search_page = GoogleSearchPage(self.driver)
+            search_page = SearchEnginePage(self.driver)
             search_page.open()
             self.test_logger.log_step("Browser setup", "navigate_to_duckduckgo")
 
@@ -167,7 +167,7 @@ class TestAllureGoogleSearch:
                     "search", element="search_input", value=term
                 )
 
-                result_page = GoogleResultPage(self.driver)
+                result_page = ResultPage(self.driver)
                 WebDriverWait(self.driver, 10).until(
                     EC.presence_of_element_located(
                         (By.CSS_SELECTOR, "article[data-testid='result']")
@@ -204,7 +204,7 @@ class TestAllureGoogleSearch:
         with allure.step("Initialize performance measurement"):
             factory = WebDriverFactory()
             self.driver = factory.create_chrome_driver()
-            search_page = GoogleSearchPage(self.driver)
+            search_page = SearchEnginePage(self.driver)
 
             start_time = time.time()
             search_page.open()
@@ -226,7 +226,7 @@ class TestAllureGoogleSearch:
             start_time = time.time()
             search_page.search(search_term)
 
-            GoogleResultPage(self.driver)
+            ResultPage(self.driver)
             WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located(
                     (By.CSS_SELECTOR, "article[data-testid='result']")
@@ -275,7 +275,7 @@ class TestAllureGoogleSearch:
         with allure.step("Setup and navigate to DuckDuckGo"):
             factory = WebDriverFactory()
             self.driver = factory.create_chrome_driver()
-            search_page = GoogleSearchPage(self.driver)
+            search_page = SearchEnginePage(self.driver)
             search_page.open()
 
         with allure.step("Attempt search with empty query"):

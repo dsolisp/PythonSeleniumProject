@@ -26,9 +26,9 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 from pages.base_page import BasePage
-from pages.google_search_page import GoogleSearchPage
-from pages.google_result_page import GoogleResultPage
-from locators.google_search_locators import GoogleSearchLocators
+from pages.search_engine_page import SearchEnginePage
+from pages.result_page import ResultPage
+from locators.search_engine_locators import SearchEngineLocators
 from locators.test_framework_locators import TestFrameworkLocators
 from utils.webdriver_factory import get_driver
 from utils.sql_connection import (
@@ -105,8 +105,8 @@ class TestPageObjectIntegration:
 
     def test_page_object_inheritance(self, chrome_driver):
         """Test that page objects properly inherit from BasePage."""
-        search_page = GoogleSearchPage(chrome_driver)
-        result_page = GoogleResultPage(chrome_driver)
+        search_page = SearchEnginePage(chrome_driver)
+        result_page = ResultPage(chrome_driver)
 
         # Test that both pages have access to core methods
         assert_that(search_page, has_property("find_element"))
@@ -203,7 +203,7 @@ class TestPageObjectIntegration:
         page.navigate_to(settings.BASE_URL)
 
         # Test finding elements using locators
-        search_elements = page.find_elements(GoogleSearchLocators.SEARCH_BOX)
+        search_elements = page.find_elements(SearchEngineLocators.SEARCH_BOX)
 
         # Google should have at least one search box (Allow for 0 in case of changes)
         assert_that(len(search_elements), greater_than_or_equal_to(0))
@@ -233,8 +233,8 @@ class TestPageObjectIntegration:
 
     def test_multiple_page_objects_integration(self, chrome_driver):
         """Test integration between multiple page objects."""
-        search_page = GoogleSearchPage(chrome_driver)
-        result_page = GoogleResultPage(chrome_driver)
+        search_page = SearchEnginePage(chrome_driver)
+        result_page = ResultPage(chrome_driver)
 
         # Both should be able to navigate
         search_page.navigate_to(settings.BASE_URL)
@@ -362,7 +362,7 @@ class TestEndToEndWorkflow:
         chrome_driver = webdriver.Chrome(options=options)
 
         try:
-            search_page = GoogleSearchPage((chrome_driver, conn))
+            search_page = SearchEnginePage((chrome_driver, conn))
 
             # Record test start
             start_query = "INSERT INTO test_results (test_name, result) VALUES (?, ?)"

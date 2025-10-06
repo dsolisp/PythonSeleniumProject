@@ -8,7 +8,7 @@ from hamcrest import (
 )
 
 """
-Playwright Google search tests demonstrating modern browser automation.
+Playwright Search engine tests demonstrating modern browser automation.
 """
 
 import pytest
@@ -16,7 +16,7 @@ import asyncio
 
 from config.settings import settings
 from utils.playwright_factory import create_playwright_session, PlaywrightFactory
-from pages.playwright_google_search_page import PlaywrightGoogleSearchPage
+from pages.playwright_search_engine_page import PlaywrightSearchEnginePage
 
 
 @pytest.mark.playwright
@@ -30,24 +30,24 @@ async def test_playwright_google_search_basic():
             browser_type="chromium", headless=settings.HEADLESS
         )
 
-        # Create Google search page
-        google_page = PlaywrightGoogleSearchPage(playwright_page.page)
+        # Create Search engine page
+        search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
         # Test navigation
-        success = await google_page.open_google()
+        success = await search_page.open_search_engine()
         if not success:
             pytest.skip("Could not open DuckDuckGo - network issue")
 
         # Verify page loaded
-        title = await google_page.get_title()
+        title = await search_page.get_title()
         assert_that(title, contains_string("DuckDuckGo"))
 
         # Perform search
-        # Basic Google search test
+        # Basic Search engine test
         search_term = settings.PLAYWRIGHT_SEARCH_TERM
 
-        # Navigate to Google
-        search_success = await google_page.search_for(
+        # Navigate to Search engine
+        search_success = await search_page.search_for(
             search_term, wait_for_results=True
         )
 
@@ -55,24 +55,24 @@ async def test_playwright_google_search_basic():
             pytest.skip("Search failed - likely CAPTCHA or network issue")
 
         # Wait for search completion
-        completion_success = await google_page.wait_for_search_completion()
+        completion_success = await search_page.wait_for_search_completion()
         assert_that(
             completion_success, is_(True)
         ), "Search should complete within timeout"
 
         # Verify search was performed
-        current_url = await google_page.get_url()
+        current_url = await search_page.get_url()
         assert_that(
             current_url.lower(), contains_string("search")
         ), f"Should be on search results page: {current_url}"
 
         # Check for results (if not blocked by CAPTCHA)
-        if await google_page.has_results():
-            result_count = await google_page.get_result_count()
+        if await search_page.has_results():
+            result_count = await search_page.get_result_count()
             assert_that(result_count, greater_than(0)), "Should have search results"
 
             # Get result titles
-            titles = await google_page.get_result_titles()
+            titles = await search_page.get_result_titles()
             assert_that(len(titles), greater_than(0)), "Should have result titles"
 
             # Verify search term relevance (basic check)
@@ -102,7 +102,7 @@ async def test_playwright_google_search_basic():
 @pytest.mark.asyncio
 async def test_playwright_google_search_with_suggestions():
     """
-    Test Google search suggestions using Playwright.
+    Test Search engine suggestions using Playwright.
     Demonstrates advanced element interactions.
     """
     factory, playwright_page = None, None
@@ -112,23 +112,23 @@ async def test_playwright_google_search_with_suggestions():
             browser_type="chromium", headless=settings.HEADLESS
         )
 
-        google_page = PlaywrightGoogleSearchPage(playwright_page.page)
+        search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
-        # Open Google
-        success = await google_page.open_google()
+        # Open Search engine
+        success = await search_page.open_search_engine()
         if not success:
-            pytest.skip("Could not open Google")
+            pytest.skip("Could not open Search engine")
 
         # Type partial search term to trigger suggestions
-        await google_page.element_actions.send_keys(
-            google_page.SEARCH_INPUT, "playwright browser", clear=True
+        await search_page.element_actions.send_keys(
+            search_page.SEARCH_INPUT, "playwright browser", clear=True
         )
 
         # Wait a moment for suggestions to appear
         await asyncio.sleep(1)
 
         # Try to get suggestions (may not always appear due to anti-bot measures)
-        suggestions = await google_page.get_search_suggestions()
+        suggestions = await search_page.get_search_suggestions()
 
         if suggestions:
             assert_that(
@@ -144,8 +144,8 @@ async def test_playwright_google_search_with_suggestions():
         await playwright_page.page.keyboard.press("Enter")
 
         # Verify search completed
-        await google_page.wait_for_search_completion()
-        current_url = await google_page.get_url()
+        await search_page.wait_for_search_completion()
+        current_url = await search_page.get_url()
         assert_that(current_url.lower(), contains_string("duckduckgo.com"))
 
     finally:
@@ -157,7 +157,7 @@ async def test_playwright_google_search_with_suggestions():
 @pytest.mark.asyncio
 async def test_playwright_advanced_search():
     """
-    Test advanced Google search with filters using Playwright.
+    Test advanced Search engine with filters using Playwright.
     Demonstrates advanced search capabilities.
     """
     factory, playwright_page = None, None
@@ -167,15 +167,15 @@ async def test_playwright_advanced_search():
             browser_type="chromium", headless=settings.HEADLESS
         )
 
-        google_page = PlaywrightGoogleSearchPage(playwright_page.page)
+        search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
-        # Open Google
-        success = await google_page.open_google()
+        # Open Search engine
+        success = await search_page.open_search_engine()
         if not success:
-            pytest.skip("Could not open Google")
+            pytest.skip("Could not open Search engine")
 
         # Perform advanced search
-        search_success = await google_page.perform_advanced_search(
+        search_success = await search_page.perform_advanced_search(
             search_term="python testing", site_filter="github.com", file_type="py"
         )
 
@@ -183,7 +183,7 @@ async def test_playwright_advanced_search():
             pytest.skip("Advanced search failed - likely CAPTCHA")
 
         # Verify advanced search
-        current_url = await google_page.get_url()
+        current_url = await search_page.get_url()
         assert_that(current_url.lower(), contains_string("search"))
 
         # The URL should contain our search parameters
@@ -194,12 +194,12 @@ async def test_playwright_advanced_search():
         print(f"✅ Advanced search URL contains: {found_terms}")
 
         # Check if we have results
-        if await google_page.has_results():
-            result_count = await google_page.get_result_count()
+        if await search_page.has_results():
+            result_count = await search_page.get_result_count()
             print(f"✅ Advanced search returned {result_count} results")
 
             # Get some result links to verify they're from GitHub
-            links = await google_page.get_result_links()
+            links = await search_page.get_result_links()
             if links:
                 github_links = [
                     link for link in links[:5] if "github.com" in link.lower()
@@ -232,12 +232,12 @@ async def test_playwright_multiple_browsers():
                 browser_type=browser_type, headless=settings.HEADLESS
             )
 
-            google_page = PlaywrightGoogleSearchPage(playwright_page.page)
+            search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
-            # Open Google
-            success = await google_page.open_google()
+            # Open Search engine
+            success = await search_page.open_search_engine()
             if not success:
-                print(f"⚠️ Could not open Google in {browser_type}")
+                print(f"⚠️ Could not open Search engine in {browser_type}")
                 continue
 
             # Verify browser-specific behavior
@@ -245,12 +245,12 @@ async def test_playwright_multiple_browsers():
             print(f"User-Agent: {user_agent[:100]}...")
 
             # Perform basic search
-            search_success = await google_page.search_for(
+            search_success = await search_page.search_for(
                 "playwright browser automation"
             )
 
-            if search_success and await google_page.has_results():
-                result_count = await google_page.get_result_count()
+            if search_success and await search_page.has_results():
+                result_count = await search_page.get_result_count()
                 print(f"✅ {browser_type}: Found {result_count} results")
             else:
                 print(f"⚠️ {browser_type}: Search blocked or no results")
@@ -293,12 +293,12 @@ async def test_playwright_network_interception():
         # Enable request interception
         await playwright_page.page.route("**/*", handle_request)
 
-        google_page = PlaywrightGoogleSearchPage(playwright_page.page)
+        search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
-        # Navigate to Google (this will trigger network requests)
-        success = await google_page.open_google()
+        # Navigate to Search engine (this will trigger network requests)
+        success = await search_page.open_search_engine()
         if not success:
-            pytest.skip("Could not open Google")
+            pytest.skip("Could not open Search engine")
 
         # Verify we intercepted requests
         assert_that(
@@ -311,7 +311,7 @@ async def test_playwright_network_interception():
         ]
         assert_that(
             len(google_requests), greater_than(0)
-        ), "Should have Google-related requests"
+        ), "Should have Search engine-related requests"
 
         # Check for different resource types
         resource_types = set(req["resource_type"] for req in intercepted_requests)
@@ -335,7 +335,7 @@ async def test_playwright_network_interception():
 @pytest.mark.asyncio
 async def test_playwright_mobile_emulation():
     """
-    Test Google search with mobile device emulation.
+    Test Search engine with mobile device emulation.
     Demonstrates responsive testing capabilities.
     """
     factory = None
@@ -357,12 +357,12 @@ async def test_playwright_mobile_emulation():
         )
 
         page = await factory.create_page(context)
-        google_page = PlaywrightGoogleSearchPage(page)
+        search_page = PlaywrightSearchEnginePage(page)
 
         # Test mobile navigation
-        success = await google_page.open_google()
+        success = await search_page.open_search_engine()
         if not success:
-            pytest.skip("Could not open Google on mobile")
+            pytest.skip("Could not open Search engine on mobile")
 
         # Verify mobile layout
         viewport_size = await page.evaluate(
@@ -376,10 +376,10 @@ async def test_playwright_mobile_emulation():
         ), "Should have mobile viewport height"
 
         # Test mobile search
-        search_success = await google_page.search_for("mobile testing playwright")
+        search_success = await search_page.search_for("mobile testing playwright")
 
-        if search_success and await google_page.has_results():
-            result_count = await google_page.get_result_count()
+        if search_success and await search_page.has_results():
+            result_count = await search_page.get_result_count()
             print(f"✅ Mobile: Found {result_count} results")
         else:
             print("⚠️ Mobile search blocked or no results")
@@ -406,25 +406,25 @@ async def test_playwright_performance_metrics():
             browser_type="chromium", headless=settings.HEADLESS
         )
 
-        google_page = PlaywrightGoogleSearchPage(playwright_page.page)
+        search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
         # Start performance monitoring
         await playwright_page.page.evaluate("performance.mark('test-start')")
 
         # Navigate and measure
         navigation_start = await playwright_page.page.evaluate("performance.now()")
-        success = await google_page.open_google()
+        success = await search_page.open_search_engine()
         navigation_end = await playwright_page.page.evaluate("performance.now()")
 
         if not success:
-            pytest.skip("Could not open Google")
+            pytest.skip("Could not open Search engine")
 
         navigation_time = navigation_end - navigation_start
         print(f"✅ Navigation time: {navigation_time:.2f}ms")
 
         # Measure search performance
         search_start = await playwright_page.page.evaluate("performance.now()")
-        search_success = await google_page.search_for("performance testing")
+        search_success = await search_page.search_for("performance testing")
         search_end = await playwright_page.page.evaluate("performance.now()")
 
         if search_success:

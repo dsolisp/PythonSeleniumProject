@@ -10,10 +10,10 @@ from pages.playwright_base_page import PlaywrightBasePage
 from config.settings import settings
 
 
-class PlaywrightGoogleSearchPage(PlaywrightBasePage):
+class PlaywrightSearchEnginePage(PlaywrightBasePage):
     """
     Playwright implementation of Google Search page.
-    Provides modern async browser automation for Google search functionality.
+    Provides modern async browser automation for Search engine functionality.
     """
 
     # Page selectors (more robust than Selenium locators)
@@ -32,9 +32,9 @@ class PlaywrightGoogleSearchPage(PlaywrightBasePage):
         super().__init__(page)
         self.base_url = settings.BASE_URL
 
-    async def open_google(self) -> bool:
+    async def open_search_engine(self) -> bool:
         """
-        Navigate to Google homepage.
+        Navigate to Search engine homepage.
 
         Returns:
             bool: True if successful, False if CAPTCHA or error occurred

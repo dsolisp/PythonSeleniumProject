@@ -1,33 +1,31 @@
-from locators.google_result_locators import GoogleResultLocators
+from locators.result_page_locators import ResultPageLocators
 from pages.base_page import BasePage
 
 
-class GoogleResultPage(BasePage):
+class ResultPage(BasePage):
     def __init__(self, driver_and_db, test_name: str = None, environment: str = "test"):
-        """Initialize Google result page with enhanced features."""
+        """Initialize search engine result page with enhanced features."""
         super().__init__(driver_and_db, test_name=test_name, environment=environment)
-        self.google_result_locators = GoogleResultLocators()
+        self.result_locators = ResultPageLocators()
 
     # Locators
 
     def get_result_by_name(self, name):
-        return self.driver.find_element(
-            *self.google_result_locators.get_result_by_name(name)
-        )
+        return self.driver.find_element(*self.result_locators.get_result_by_name(name))
 
     def get_result_by_index(self, index):
         return self.driver.find_element(
-            *self.google_result_locators.get_result_by_index(index)
+            *self.result_locators.get_result_by_index(index)
         )
 
     def get_search_results(self):
         """Get all search result elements."""
-        return self.driver.find_elements(*self.google_result_locators.RESULT_ITEMS)
+        return self.driver.find_elements(*self.result_locators.RESULT_ITEMS)
 
     def get_first_result(self):
         """Get the first search result article element."""
         return self.driver.find_element(
-            *self.google_result_locators.get_first_result_article()
+            *self.result_locators.get_first_result_article()
         )
 
     def is_results_displayed(self) -> bool:
@@ -35,16 +33,12 @@ class GoogleResultPage(BasePage):
         try:
             # Look for common result indicators using locators
             results_found = (
-                self.is_element_visible(self.google_result_locators.SEARCH_RESULTS)
-                or len(
-                    self.driver.find_elements(
-                        *self.google_result_locators.ALL_H3_ELEMENTS
-                    )
-                )
+                self.is_element_visible(self.result_locators.SEARCH_RESULTS)
+                or len(self.driver.find_elements(*self.result_locators.ALL_H3_ELEMENTS))
                 > 0
                 or len(
                     self.driver.find_elements(
-                        *self.google_result_locators.RESULT_ELEMENTS_DATA_VED
+                        *self.result_locators.RESULT_ELEMENTS_DATA_VED
                     )
                 )
                 > 0
@@ -58,14 +52,14 @@ class GoogleResultPage(BasePage):
         try:
             # Try multiple strategies to count results using locators
             h3_elements = self.driver.find_elements(
-                *self.google_result_locators.ALL_H3_ELEMENTS
+                *self.result_locators.ALL_H3_ELEMENTS
             )
             if h3_elements:
                 return len(h3_elements)
 
             # Fallback to other result indicators
             result_elements = self.driver.find_elements(
-                *self.google_result_locators.RESULT_ELEMENTS_DATA_VED
+                *self.result_locators.RESULT_ELEMENTS_DATA_VED
             )
             return len(result_elements)
         except BaseException:
@@ -76,7 +70,7 @@ class GoogleResultPage(BasePage):
         try:
             return (
                 self.wait_for_element(
-                    self.google_result_locators.SEARCH_RESULTS, timeout=timeout
+                    self.result_locators.SEARCH_RESULTS, timeout=timeout
                 )
                 is not None
             )
@@ -88,7 +82,7 @@ class GoogleResultPage(BasePage):
         try:
             return (
                 self.wait_for_element(
-                    self.google_result_locators.SEARCH_RESULTS, timeout=timeout
+                    self.result_locators.SEARCH_RESULTS, timeout=timeout
                 )
                 is not None
             )
