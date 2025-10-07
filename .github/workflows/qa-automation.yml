@@ -188,6 +188,7 @@ jobs:
           --cov-report=html:reports/coverage/html \
           --cov-report=xml:reports/coverage/coverage.xml \
           --cov-report=term-missing \
+          --cov-fail-under=40 \
           --html=reports/html/unit-tests.html \
           --json-report --json-report-file=reports/json/unit-tests.json
     
@@ -241,9 +242,10 @@ jobs:
       run: |
         pytest tests/web/ tests/api/ -v --tb=short \
           --cov=pages --cov=utils \
-          --cov-report=html:reports/coverage/html \
-          --cov-report=xml:reports/coverage/coverage.xml \
+          --cov-report=html:reports/coverage/e2e-html \
+          --cov-report=xml:reports/coverage/e2e-coverage.xml \
           --cov-report=term-missing \
+          --cov-fail-under=60 \
           --html=reports/html/e2e-tests-${{ matrix.test-suite }}.html \
           --json-report --json-report-file=reports/json/e2e-tests-${{ matrix.test-suite }}.json \
           -m "${{ matrix.test-suite }}"
@@ -441,10 +443,48 @@ jobs:
         name: performance-test-results
         path: reports/
 
+  # Check combined coverage from all test jobs
+  combined-coverage:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, e2e-tests]
+    if: always()
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install coverage tools
+      run: |
+        pip install coverage
+    
+    - name: Download coverage artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-test-reports-*'
+        merge-multiple: true
+    
+    - name: Combine coverage reports
+      run: |
+        # Find and combine all .coverage files
+        coverage combine reports/coverage/.coverage* 2>/dev/null || echo "No coverage data to combine"
+        coverage report --fail-under=80 || echo "Combined coverage below 80% - this is informational"
+        coverage html -d reports/combined-coverage
+      continue-on-error: true
+    
+    - name: Upload combined coverage
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: combined-coverage-report
+        path: reports/combined-coverage/
+
   # Aggregate all test reports
   generate-reports:
     runs-on: ubuntu-latest
-    needs: [unit-tests, e2e-tests, grid-integration-tests, visual-tests]
+    needs: [unit-tests, e2e-tests, grid-integration-tests, visual-tests, combined-coverage]
     if: always()
     steps:
     - uses: actions/checkout@v4
