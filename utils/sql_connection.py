@@ -13,6 +13,33 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def _validate_table_name(table: str) -> str:
+    """
+    Validate table name to prevent SQL injection.
+    Only allows alphanumeric characters and underscores.
+
+    Args:
+        table (str): Table name to validate
+
+    Returns:
+        str: Validated table name
+
+    Raises:
+        ValueError: If table name contains invalid characters
+    """
+    if not table:
+        raise ValueError("Table name cannot be empty")
+
+    # Only allow alphanumeric and underscores (no spaces, quotes, or special chars)
+    if not table.replace("_", "").isalnum():
+        raise ValueError(
+            f"Invalid table name '{table}'. Only alphanumeric characters and "
+            "underscores are allowed."
+        )
+
+    return table
+
+
 def get_connection(db_file: str) -> sqlite3.Connection:
     """
     Establish a connection to the SQLite database file with configuration.
@@ -364,8 +391,13 @@ def get_table_info(conn: sqlite3.Connection, table: str) -> List[sqlite3.Row]:
         List[sqlite3.Row]: Table schema information
     """
     try:
-        query = f"PRAGMA table_info({table})"
+        # Validate table name to prevent SQL injection
+        validated_table = _validate_table_name(table)
+        query = f"PRAGMA table_info({validated_table})"
         return execute_and_fetch_all(conn, query)
+    except ValueError as e:
+        logger.error(f"Invalid table name: {str(e)}")
+        return []
     except Exception as e:
         logger.error(f"Failed to get table info for {table}: {str(e)}")
         return []

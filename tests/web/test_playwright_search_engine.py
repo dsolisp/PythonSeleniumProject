@@ -2,6 +2,9 @@
 Playwright Search engine tests demonstrating modern browser automation.
 """
 
+import asyncio
+
+import pytest
 from hamcrest import (
     assert_that,
     contains_string,
@@ -10,10 +13,6 @@ from hamcrest import (
     is_,
     less_than,
 )
-
-import asyncio
-
-import pytest
 
 from config.settings import settings
 from pages.playwright_search_engine_page import PlaywrightSearchEnginePage
