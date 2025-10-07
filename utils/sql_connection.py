@@ -290,8 +290,8 @@ def insert_data(
 
         columns = ", ".join(data.keys())
         placeholders = ", ".join(["?" for _ in data])
-        # Safe: table name validated, values parameterized
-        query = f"INSERT INTO {validated_table} ({columns}) VALUES ({placeholders})"
+        # Safe: table name validated via _validate_table_name(), values parameterized
+        query = f"INSERT INTO {validated_table} ({columns}) VALUES ({placeholders})"  # nosec B608
 
         cursor = execute_query(conn, query, tuple(data.values()))
         conn.commit()
@@ -334,8 +334,8 @@ def update_data(
         validated_table = _validate_table_name(table)
 
         set_clause = ", ".join([f"{col} = ?" for col in data.keys()])
-        # Safe: table name validated, values parameterized
-        query = f"UPDATE {validated_table} SET {set_clause} WHERE {where_clause}"
+        # Safe: table name validated via _validate_table_name(), values parameterized
+        query = f"UPDATE {validated_table} SET {set_clause} WHERE {where_clause}"  # nosec B608
 
         params = list(data.values())
         if where_params:
@@ -379,8 +379,8 @@ def delete_data(
         # Validate table name to prevent SQL injection
         validated_table = _validate_table_name(table)
 
-        # Safe: table name validated, where_params are parameterized
-        query = f"DELETE FROM {validated_table} WHERE {where_clause}"
+        # Safe: table name validated via _validate_table_name(), where_params are parameterized
+        query = f"DELETE FROM {validated_table} WHERE {where_clause}"  # nosec B608
         cursor = execute_query(conn, query, where_params)
         conn.commit()
 
