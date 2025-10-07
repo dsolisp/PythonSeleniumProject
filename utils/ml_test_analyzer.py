@@ -374,8 +374,7 @@ class MLTestAnalyzer:
             X = pd.DataFrame([features])
             proba = self.model.predict_proba(X)[0]
 
-            # Handle case where model only learned one class (all pass or all
-            # fail)
+            # Handle case where model only learned one class (all pass or all fail)
             if len(proba) == 1:
                 prob = 0.0 if self.model.classes_[0] == 0 else 1.0
             else:
