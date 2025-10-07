@@ -7,6 +7,7 @@ import os
 import shutil
 import sqlite3
 import tempfile
+import uuid
 from typing import Optional, Tuple
 
 from selenium import webdriver
@@ -36,7 +37,9 @@ class WebDriverFactory:
         options = ChromeOptions()
 
         # Create a unique temporary user data directory to avoid conflicts
-        temp_user_data_dir = tempfile.mkdtemp(prefix="chrome_profile_")
+        # Use UUID to ensure uniqueness even in parallel test execution
+        unique_id = str(uuid.uuid4())
+        temp_user_data_dir = tempfile.mkdtemp(prefix=f"chrome_profile_{unique_id}_")
         options.add_argument(f"--user-data-dir={temp_user_data_dir}")
 
         # Anti-detection options to avoid Google CAPTCHA
