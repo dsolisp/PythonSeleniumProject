@@ -357,7 +357,7 @@ def get_test_logger(test_name: str) -> ExecutionLogger:
         test_name (str): Name of the test being executed
 
     Returns:
-        TestExecutionLogger: Test-specific logger
+        ExecutionLogger: Test-specific logger
     """
     return ExecutionLogger(test_name)
 
