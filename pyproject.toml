@@ -13,3 +13,27 @@ line_length = 88
 [tool.flake8]
 max-line-length = 88
 extend-ignore = ["E203", "W503"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+# Allow implicit optional for now (can be tightened later)
+no_implicit_optional = false
+
+# Disable specific checks that are too strict for now
+disable_error_code = ["assignment", "attr-defined", "misc", "index", "union-attr"]
+
+# Exclude patterns
+exclude = [
+    "venv",
+    "venv-enhanced", 
+    ".venv",
+    "__pycache__",
+    ".git",
+    "build",
+    "dist"
+]
