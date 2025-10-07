@@ -285,10 +285,13 @@ def insert_data(
         int or None: Row ID of inserted record
     """
     try:
+        # Validate table name to prevent SQL injection
+        validated_table = _validate_table_name(table)
+
         columns = ", ".join(data.keys())
         placeholders = ", ".join(["?" for _ in data])
-        # Safe: table name from trusted source, values parameterized
-        query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"  # nosec B608
+        # Safe: table name validated, values parameterized
+        query = f"INSERT INTO {validated_table} ({columns}) VALUES ({placeholders})"
 
         cursor = execute_query(conn, query, tuple(data.values()))
         conn.commit()
@@ -297,6 +300,9 @@ def insert_data(
         logger.info(f"Inserted data into {table}, row ID: {row_id}")
         return row_id
 
+    except ValueError as e:
+        logger.error(f"Invalid table name: {str(e)}")
+        return None
     except Exception as e:
         logger.error(f"Failed to insert data into {table}: {str(e)}")
         conn.rollback()
@@ -324,9 +330,12 @@ def update_data(
         int: Number of affected rows
     """
     try:
+        # Validate table name to prevent SQL injection
+        validated_table = _validate_table_name(table)
+
         set_clause = ", ".join([f"{col} = ?" for col in data.keys()])
-        # Safe: table name from trusted source, values parameterized
-        query = f"UPDATE {table} SET {set_clause} WHERE {where_clause}"  # nosec B608
+        # Safe: table name validated, values parameterized
+        query = f"UPDATE {validated_table} SET {set_clause} WHERE {where_clause}"
 
         params = list(data.values())
         if where_params:
@@ -339,6 +348,9 @@ def update_data(
         logger.info(f"Updated {affected_rows} rows in {table}")
         return affected_rows
 
+    except ValueError as e:
+        logger.error(f"Invalid table name: {str(e)}")
+        return 0
     except Exception as e:
         logger.error(f"Failed to update data in {table}: {str(e)}")
         conn.rollback()
@@ -364,8 +376,11 @@ def delete_data(
         int: Number of deleted rows
     """
     try:
-        # Safe: table name from trusted source, where_params are parameterized
-        query = f"DELETE FROM {table} WHERE {where_clause}"  # nosec B608
+        # Validate table name to prevent SQL injection
+        validated_table = _validate_table_name(table)
+
+        # Safe: table name validated, where_params are parameterized
+        query = f"DELETE FROM {validated_table} WHERE {where_clause}"
         cursor = execute_query(conn, query, where_params)
         conn.commit()
 
@@ -373,6 +388,9 @@ def delete_data(
         logger.info(f"Deleted {deleted_rows} rows from {table}")
         return deleted_rows
 
+    except ValueError as e:
+        logger.error(f"Invalid table name: {str(e)}")
+        return 0
     except Exception as e:
         logger.error(f"Failed to delete data from {table}: {str(e)}")
         conn.rollback()

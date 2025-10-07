@@ -9,6 +9,7 @@ Analyzes historical test results to:
 """
 
 import json
+import logging
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -17,8 +18,13 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
+from utils.structured_logger import get_logger
+
 # Suppress sklearn warnings for cleaner output
 warnings.filterwarnings("ignore")
+
+# Initialize logger
+logger = get_logger("MLTestAnalyzer")
 
 try:
     from sklearn.ensemble import RandomForestClassifier
@@ -28,8 +34,11 @@ try:
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
-    print("⚠️  scikit-learn not installed. ML features disabled.")
-    print("   Install with: pip install scikit-learn")
+    logger.warning(
+        "scikit-learn not installed - ML features disabled",
+        package="scikit-learn",
+        install_command="pip install scikit-learn",
+    )
 
 
 class MLTestAnalyzer:
