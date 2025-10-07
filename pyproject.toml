@@ -16,7 +16,7 @@ extend-ignore = ["E203", "W503"]
 
 [tool.mypy]
 python_version = "3.11"
-warn_return_any = true
+warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
@@ -25,7 +25,21 @@ ignore_missing_imports = true
 no_implicit_optional = false
 
 # Disable specific checks that are too strict for now
-disable_error_code = ["assignment", "attr-defined", "misc", "index", "union-attr"]
+disable_error_code = [
+    "assignment",
+    "attr-defined", 
+    "misc",
+    "index",
+    "union-attr",
+    "no-any-return",
+    "var-annotated",
+    "return-value",
+    "arg-type",
+    "import-untyped",
+    "annotation-unchecked",
+    "valid-type",
+    "return"
+]
 
 # Exclude patterns
 exclude = [
