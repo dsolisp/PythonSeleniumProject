@@ -15,6 +15,22 @@ from pages.result_page import ResultPage
 from pages.search_engine_page import SearchEnginePage
 
 
+def require_database_connection(driver):
+    """
+    Helper function to ensure driver fixture provides database connection.
+
+    Args:
+        driver: Driver fixture that should be a tuple (driver, db_connection)
+
+    Raises:
+        pytest.skip: If driver is not a tuple with database connection
+    """
+    if not (isinstance(driver, (tuple, list)) and len(driver) > 1):
+        pytest.skip(
+            "Database connection not available - driver fixture must return (driver, db)"
+        )
+
+
 @pytest.mark.smoke
 def test_simple_google_search(driver):
     search_page = SearchEnginePage(driver)
@@ -46,17 +62,13 @@ def test_simple_google_search(driver):
 
 @pytest.mark.database
 def test_sql_google_search(driver):
+    require_database_connection(driver)
+
     search_page = SearchEnginePage(driver)
     result_page = ResultPage(driver)
     base_page = BasePage(driver)
 
     search_page.open_search_engine()
-
-    # Defensive: Ensure driver is a tuple with database connection
-    if not (isinstance(driver, (tuple, list)) and len(driver) > 1):
-        pytest.skip(
-            "Database connection not available - driver fixture must return (driver, db)"
-        )
 
     name = get_track_name_from_db(driver[1])
     assert_that(name, is_not(none()))
@@ -136,6 +148,8 @@ def test_google_search_with_action_chains(driver):
 
 @pytest.mark.database
 def test_database_search_with_performance_monitoring(driver):
+    require_database_connection(driver)
+
     search_page = SearchEnginePage(driver)
     result_page = ResultPage(driver)
     base_page = BasePage(driver)
@@ -143,12 +157,6 @@ def test_database_search_with_performance_monitoring(driver):
     start_time = time.time()
     search_page.open_search_engine()
     page_open_time = time.time() - start_time
-
-    # Defensive: Ensure driver is a tuple with database connection
-    if not (isinstance(driver, (tuple, list)) and len(driver) > 1):
-        pytest.skip(
-            "Database connection not available - driver fixture must return (driver, db)"
-        )
 
     start_time = time.time()
     search_term = get_track_name_from_db(driver[1])

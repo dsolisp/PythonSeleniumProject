@@ -40,6 +40,33 @@ def _validate_table_name(table: str) -> str:
     return table
 
 
+def _validate_column_name(column: str) -> str:
+    """
+    Validate column name to prevent SQL injection.
+    Only allows alphanumeric characters and underscores.
+
+    Args:
+        column (str): Column name to validate
+
+    Returns:
+        str: Validated column name
+
+    Raises:
+        ValueError: If column name contains invalid characters
+    """
+    if not column:
+        raise ValueError("Column name cannot be empty")
+
+    # Only allow alphanumeric and underscores (no spaces, quotes, or special chars)
+    if not column.replace("_", "").isalnum():
+        raise ValueError(
+            f"Invalid column name '{column}'. Only alphanumeric characters and "
+            "underscores are allowed."
+        )
+
+    return column
+
+
 def get_connection(db_file: str) -> sqlite3.Connection:
     """
     Establish a connection to the SQLite database file with configuration.
@@ -288,9 +315,11 @@ def insert_data(
         # Validate table name to prevent SQL injection
         validated_table = _validate_table_name(table)
 
-        columns = ", ".join(data.keys())
+        # Validate all column names to prevent SQL injection
+        validated_columns = [_validate_column_name(col) for col in data.keys()]
+        columns = ", ".join(validated_columns)
         placeholders = ", ".join(["?" for _ in data])
-        # Safe: table name validated via _validate_table_name(), values parameterized
+        # Safe: table/column names validated, values parameterized
         query = f"INSERT INTO {validated_table} ({columns}) VALUES ({placeholders})"  # nosec B608
 
         cursor = execute_query(conn, query, tuple(data.values()))
@@ -301,7 +330,7 @@ def insert_data(
         return row_id
 
     except ValueError as e:
-        logger.error(f"Invalid table name: {str(e)}")
+        logger.error(f"Invalid table or column name: {str(e)}")
         return None
     except Exception as e:
         logger.error(f"Failed to insert data into {table}: {str(e)}")
@@ -333,8 +362,10 @@ def update_data(
         # Validate table name to prevent SQL injection
         validated_table = _validate_table_name(table)
 
-        set_clause = ", ".join([f"{col} = ?" for col in data.keys()])
-        # Safe: table name validated via _validate_table_name(), values parameterized
+        # Validate all column names to prevent SQL injection
+        validated_columns = [_validate_column_name(col) for col in data.keys()]
+        set_clause = ", ".join([f"{col} = ?" for col in validated_columns])
+        # Safe: table/column names validated, values parameterized
         query = f"UPDATE {validated_table} SET {set_clause} WHERE {where_clause}"  # nosec B608
 
         params = list(data.values())
@@ -349,7 +380,7 @@ def update_data(
         return affected_rows
 
     except ValueError as e:
-        logger.error(f"Invalid table name: {str(e)}")
+        logger.error(f"Invalid table or column name: {str(e)}")
         return 0
     except Exception as e:
         logger.error(f"Failed to update data in {table}: {str(e)}")

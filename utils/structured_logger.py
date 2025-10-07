@@ -8,6 +8,11 @@ from typing import Any
 
 import structlog
 
+# Logger configuration constants
+DEFAULT_LOGGER_NAME = "TestFramework"
+DEFAULT_LOG_LEVEL = "INFO"
+FRAMEWORK_CORE_LOGGER_NAME = "FrameworkCore"
+
 
 class StructuredLogger:
     """
@@ -20,7 +25,7 @@ class StructuredLogger:
     - Integration with existing Python logging
     """
 
-    def __init__(self, name: str = "TestFramework", level: str = "INFO"):
+    def __init__(self, name: str = DEFAULT_LOGGER_NAME, level: str = DEFAULT_LOG_LEVEL):
         """
         Initialize structured logger with configuration.
 
@@ -332,10 +337,12 @@ class ExecutionLogger:
 
 
 # Global logger instance for framework-wide use
-framework_logger = StructuredLogger("FrameworkCore")
+framework_logger = StructuredLogger(FRAMEWORK_CORE_LOGGER_NAME)
 
 
-def get_logger(name: str = "TestFramework", level: str = "INFO") -> StructuredLogger:
+def get_logger(
+    name: str = DEFAULT_LOGGER_NAME, level: str = DEFAULT_LOG_LEVEL
+) -> StructuredLogger:
     """
     Factory function to create structured logger instances.
 

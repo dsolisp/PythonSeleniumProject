@@ -474,9 +474,9 @@ class MLTestAnalyzer:
             # Test statistics
             stats = self.get_test_statistics()
             report_lines.append("🏆 Test Reliability Ranking:")
-            for idx, test in stats.head(10).iterrows():
+            for i, (_, test) in enumerate(stats.head(10).iterrows(), start=1):
                 report_lines.append(
-                    f"   {idx + 1}. {test['test_name']}: "
+                    f"   {i}. {test['test_name']}: "
                     f"{test['pass_rate']:.1%} pass rate, "
                     f"{test['avg_duration']:.2f}s avg"
                 )
