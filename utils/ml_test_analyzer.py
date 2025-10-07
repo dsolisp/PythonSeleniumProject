@@ -457,14 +457,10 @@ class MLTestAnalyzer:
             # Performance trends
             perf = self.analyze_performance_trends()
             report_lines.append("📈 Performance Summary:")
-            report_lines.append(
-                f"   Average duration: {
-                    perf['avg_duration']:.2f}s"
-            )
-            report_lines.append(
-                f"   Median duration: {
-                    perf['median_duration']:.2f}s"
-            )
+            avg_dur = perf["avg_duration"]
+            med_dur = perf["median_duration"]
+            report_lines.append(f"   Average duration: {avg_dur:.2f}s")
+            report_lines.append(f"   Median duration: {med_dur:.2f}s")
             report_lines.append("")
 
             # Test statistics

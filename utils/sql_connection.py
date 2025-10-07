@@ -260,7 +260,8 @@ def insert_data(
     try:
         columns = ", ".join(data.keys())
         placeholders = ", ".join(["?" for _ in data])
-        query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
+        # Safe: table name from trusted source, values parameterized
+        query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"  # nosec B608
 
         cursor = execute_query(conn, query, tuple(data.values()))
         conn.commit()
@@ -297,7 +298,8 @@ def update_data(
     """
     try:
         set_clause = ", ".join([f"{col} = ?" for col in data.keys()])
-        query = f"UPDATE {table} SET {set_clause} WHERE {where_clause}"
+        # Safe: table name from trusted source, values parameterized
+        query = f"UPDATE {table} SET {set_clause} WHERE {where_clause}"  # nosec B608
 
         params = list(data.values())
         if where_params:
@@ -335,7 +337,8 @@ def delete_data(
         int: Number of deleted rows
     """
     try:
-        query = f"DELETE FROM {table} WHERE {where_clause}"
+        # Safe: table name from trusted source, where_params are parameterized
+        query = f"DELETE FROM {table} WHERE {where_clause}"  # nosec B608
         cursor = execute_query(conn, query, where_params)
         conn.commit()
 

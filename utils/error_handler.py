@@ -527,10 +527,8 @@ class SmartErrorHandler:
         # Classify the error
         classification = self.classifier.classify_error(error, error_context)
 
-        self.logger.error(
-            f"Error classified as: {
-                classification['classification']['category']}"
-        )
+        error_category = classification["classification"]["category"]
+        self.logger.error(f"Error classified as: {error_category}")
         self.logger.error(f"Error message: {str(error)}")
 
         # Determine recovery strategy
@@ -591,10 +589,8 @@ class SmartErrorHandler:
             return str(file_path)
 
         except Exception as e:
-            self.logger.warning(
-                f"Failed to capture error screenshot: {
-                    str(e)}"
-            )
+            error_msg = str(e)
+            self.logger.warning(f"Failed to capture error screenshot: {error_msg}")
             return None
 
     def monitor_memory_usage(self) -> Dict[str, Any]:
@@ -765,18 +761,14 @@ def with_error_recovery(
             with attempt:
                 try:
                     result = operation(*args, **kwargs)
-                    self.logger.info(
-                        f"Operation succeeded on attempt {
-                            attempt.retry_state.attempt_number}"
-                    )
+                    attempt_num = attempt.retry_state.attempt_number
+                    self.logger.info(f"Operation succeeded on attempt {attempt_num}")
                     return result
                 except Exception as e:
-                    self.logger.warning(
-                        f"Attempt {
-                            attempt.retry_state.attempt_number} failed: {
-                            str(e)}"
-                    )
-                    if attempt.retry_state.attempt_number == max_attempts:
+                    attempt_num = attempt.retry_state.attempt_number
+                    error_msg = str(e)
+                    self.logger.warning(f"Attempt {attempt_num} failed: {error_msg}")
+                    if attempt_num == max_attempts:
                         self.logger.error(f"All {max_attempts} attempts failed")
                     raise
 
