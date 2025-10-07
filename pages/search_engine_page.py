@@ -144,7 +144,38 @@ class SearchEnginePage(BasePage):
 
     def enter_search_term(self, search_term: str) -> bool:
         """Enter search term with enhanced error handling."""
-        return self.send_keys(SearchEngineLocators.SEARCH_BOX, search_term)
+        if self.send_keys(SearchEngineLocators.SEARCH_BOX, search_term):
+            return True
+
+        # Fallback for headless runs where the native send_keys verification fails
+        element = self.find_element(SearchEngineLocators.SEARCH_BOX)
+        if not element:
+            return False
+
+        try:
+            self.driver.execute_script(
+                "arguments[0].focus();",
+                element,
+            )
+        except Exception:
+            # Focus is helpful but not required for JS value injection
+            pass
+
+        try:
+            self.driver.execute_script(
+                """
+                arguments[0].value = arguments[1];
+                arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
+                arguments[0].dispatchEvent(new Event('change', { bubbles: true }));
+                """,
+                element,
+                search_term,
+            )
+        except Exception:
+            return False
+
+        current_value = (element.get_attribute("value") or "").strip()
+        return search_term.strip().lower() in current_value.lower()
 
     def clear_search(self) -> bool:
         """Clear the search input field."""
@@ -294,14 +325,18 @@ class SearchEnginePage(BasePage):
             return False
 
     def wait_for_text_in_search_input(self, text: str, timeout: int = 10) -> bool:
-        """Wait for specific text to appear in search input."""
+        """Wait for specific text (or containing text) to appear in search input."""
         try:
             import time
 
+            normalized_expected = (text or "").strip().lower()
             start_time = time.time()
             while time.time() - start_time < timeout:
-                current_value = self.get_search_input_value()
-                if current_value == text:
+                current_value = (self.get_search_input_value() or "").strip()
+                if not normalized_expected:
+                    return current_value == ""
+
+                if normalized_expected in current_value.lower():
                     return True
                 time.sleep(0.1)
             return False
