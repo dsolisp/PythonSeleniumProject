@@ -69,7 +69,8 @@ class TestLogger:
         emoji = "✅" if status == "PASSED" else "❌"
         self.info(
             f"{emoji} TEST COMPLETED: {test_name} | Status: {status} | Duration: {
-                duration:.2f}s")
+                duration:.2f}s"
+        )
 
     def step(self, description: str):
         self.info(f"  📋 STEP: {description}")

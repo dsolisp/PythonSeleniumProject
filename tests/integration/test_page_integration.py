@@ -96,7 +96,8 @@ class TestPageObjectIntegration:
 
         # Verify data was inserted
         fetched_record = base_page.execute_query(
-            "SELECT * FROM test_results WHERE test_name = ?", ("integration_test",))
+            "SELECT * FROM test_results WHERE test_name = ?", ("integration_test",)
+        )
         assert_that(fetched_record, is_(not_none()))
         assert_that(len(fetched_record), greater_than(0))
 
@@ -228,8 +229,8 @@ class TestPageObjectIntegration:
         # Result may vary, but shouldn't raise unhandled exceptions
         # Screenshot path should be either None or a valid string
         assert_that(
-            screenshot_path is None or isinstance(
-                screenshot_path, str), is_(True))
+            screenshot_path is None or isinstance(screenshot_path, str), is_(True)
+        )
 
     def test_multiple_page_objects_integration(self, chrome_driver):
         """Test integration between multiple page objects."""
@@ -246,12 +247,8 @@ class TestPageObjectIntegration:
 
         # Both operations should work - titles may vary based on Google's
         # current layout
-        assert_that(
-            search_title is not None and len(search_title),
-            greater_than(0))
-        assert_that(
-            result_title is not None and len(result_title),
-            greater_than(0))
+        assert_that(search_title is not None and len(search_title), greater_than(0))
+        assert_that(result_title is not None and len(result_title), greater_than(0))
         # Accept various Google page titles (Google, google.com, or
         # test-related)
         search_valid = any(
@@ -373,8 +370,7 @@ class TestEndToEndWorkflow:
 
             # Record test start
             start_query = "INSERT INTO test_results (test_name, result) VALUES (?, ?)"
-            search_page.execute_query(
-                start_query, ("end_to_end_workflow", "started"))
+            search_page.execute_query(start_query, ("end_to_end_workflow", "started"))
 
             # Navigate to search page
             search_page.navigate_to(settings.BASE_URL)

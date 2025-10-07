@@ -50,10 +50,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             print(f"Failed to open search engine: {e}")
             return False
 
-    async def search_for(
-            self,
-            search_term: str,
-            wait_for_results: bool = True) -> bool:
+    async def search_for(self, search_term: str, wait_for_results: bool = True) -> bool:
         """
         Perform a search on Google.
 

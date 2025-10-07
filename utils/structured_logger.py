@@ -263,11 +263,7 @@ class ExecutionLogger:
             **context,
         )
 
-    def log_assertion(
-            self,
-            assertion: str,
-            result: bool,
-            **context: Any) -> None:
+    def log_assertion(self, assertion: str, result: bool, **context: Any) -> None:
         """Log assertion with test context."""
         self.logger.assertion_result(
             assertion=assertion,
@@ -339,8 +335,7 @@ class ExecutionLogger:
 framework_logger = StructuredLogger("FrameworkCore")
 
 
-def get_logger(name: str = "TestFramework",
-               level: str = "INFO") -> StructuredLogger:
+def get_logger(name: str = "TestFramework", level: str = "INFO") -> StructuredLogger:
     """
     Factory function to create structured logger instances.
 

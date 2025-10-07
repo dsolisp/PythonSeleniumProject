@@ -42,14 +42,11 @@ class Settings:
         )
 
         # Test URLs for different testing scenarios
-        self.TEST_API_URL = os.getenv(
-            "TEST_API_URL", "https://httpbin.org/json")
-        self.TEST_HTML_URL = os.getenv(
-            "TEST_HTML_URL", "https://httpbin.org/html")
+        self.TEST_API_URL = os.getenv("TEST_API_URL", "https://httpbin.org/json")
+        self.TEST_HTML_URL = os.getenv("TEST_HTML_URL", "https://httpbin.org/html")
         self.EXAMPLE_URL = os.getenv("EXAMPLE_URL", "https://example.com")
         self.TEST_URL = os.getenv("TEST_URL", "https://test.com")
-        self.API_TEST_URL = os.getenv(
-            "API_TEST_URL", "https://api.test.com/data")
+        self.API_TEST_URL = os.getenv("API_TEST_URL", "https://api.test.com/data")
         self.INVALID_URL = os.getenv(
             "INVALID_URL", "https://nonexistent-domain-12345.com"
         )
@@ -58,8 +55,7 @@ class Settings:
         self.DEFAULT_SEARCH_TERM = os.getenv(
             "DEFAULT_SEARCH_TERM", "Python automation testing"
         )
-        self.SELENIUM_SEARCH_TERM = os.getenv(
-            "SELENIUM_SEARCH_TERM", "Selenium Python")
+        self.SELENIUM_SEARCH_TERM = os.getenv("SELENIUM_SEARCH_TERM", "Selenium Python")
         self.PERFORMANCE_SEARCH_TERM = os.getenv(
             "PERFORMANCE_SEARCH_TERM", "selenium testing performance"
         )
@@ -72,8 +68,7 @@ class Settings:
             "SEARCH_TERMS_LIST",
             "Python automation,Selenium WebDriver,Test framework",
         )
-        self.SEARCH_TERMS_LIST = [term.strip()
-                                  for term in search_terms_str.split(",")]
+        self.SEARCH_TERMS_LIST = [term.strip() for term in search_terms_str.split(",")]
 
         # Database
         self.DB_PATH = os.getenv("DB_PATH", "resources/chinook.db")
@@ -84,18 +79,15 @@ class Settings:
         self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
         # Reporting configuration
-        self.ENABLE_ALLURE = os.getenv(
-            "ENABLE_ALLURE", "true").lower() == "true"
+        self.ENABLE_ALLURE = os.getenv("ENABLE_ALLURE", "true").lower() == "true"
 
         # Visual testing
         self.VISUAL_THRESHOLD = int(os.getenv("VISUAL_THRESHOLD", "1000"))
-        self.SAVE_DIFF_IMAGES = os.getenv(
-            "SAVE_DIFF_IMAGES", "true").lower() == "true"
+        self.SAVE_DIFF_IMAGES = os.getenv("SAVE_DIFF_IMAGES", "true").lower() == "true"
 
         # Paths
         self.PROJECT_ROOT = Path(__file__).parent.parent
-        self.REPORTS_DIR = self.PROJECT_ROOT / \
-            os.getenv("REPORTS_DIR", "reports")
+        self.REPORTS_DIR = self.PROJECT_ROOT / os.getenv("REPORTS_DIR", "reports")
         self.SCREENSHOTS_DIR = self.PROJECT_ROOT / os.getenv(
             "SCREENSHOTS_DIR", "screenshots"
         )

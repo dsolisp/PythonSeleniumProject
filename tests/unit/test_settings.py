@@ -33,8 +33,9 @@ class TestSettingsClass:
         assert_that(settings.TIMEOUT, equal_to(10))
         assert_that(settings.SCREENSHOT_ON_FAILURE, is_(True))
         assert_that(settings.BASE_URL, equal_to("https://duckduckgo.com"))
-        assert_that(settings.API_BASE_URL, equal_to(
-            "https://jsonplaceholder.typicode.com"))
+        assert_that(
+            settings.API_BASE_URL, equal_to("https://jsonplaceholder.typicode.com")
+        )
         assert_that(settings.DB_PATH, equal_to("resources/chinook.db"))
         assert_that(settings.ENVIRONMENT, equal_to("local"))
         assert_that(settings.DEBUG, is_(True))
@@ -72,9 +73,7 @@ class TestSettingsClass:
             assert_that(settings.TIMEOUT, equal_to(30))
             assert_that(settings.SCREENSHOT_ON_FAILURE, is_(False))
             assert_that(settings.BASE_URL, equal_to("https://example.com"))
-            assert_that(
-                settings.API_BASE_URL,
-                equal_to("https://api.example.com"))
+            assert_that(settings.API_BASE_URL, equal_to("https://api.example.com"))
             assert_that(settings.DB_PATH, equal_to("/custom/db.sqlite"))
             assert_that(settings.ENVIRONMENT, equal_to("production"))
             assert_that(settings.DEBUG, is_(False))
@@ -83,10 +82,7 @@ class TestSettingsClass:
             assert_that(settings.SAVE_DIFF_IMAGES, is_(False))
         finally:
             # Cleanup test directories
-            for dir_name in [
-                "custom_reports",
-                "custom_screenshots",
-                    "custom_logs"]:
+            for dir_name in ["custom_reports", "custom_screenshots", "custom_logs"]:
                 shutil.rmtree(dir_name, ignore_errors=True)
 
     @patch.dict(os.environ, {"TIMEOUT": "invalid"})
@@ -168,21 +164,11 @@ class TestSettingsClass:
         """Test Settings calculates correct directory paths."""
         settings = Settings()
 
+        assert_that(settings.REPORTS_DIR, equal_to(settings.PROJECT_ROOT / "reports"))
         assert_that(
-            settings.REPORTS_DIR,
-            equal_to(
-                settings.PROJECT_ROOT /
-                "reports"))
-        assert_that(
-            settings.SCREENSHOTS_DIR,
-            equal_to(
-                settings.PROJECT_ROOT /
-                "screenshots"))
-        assert_that(
-            settings.LOGS_DIR,
-            equal_to(
-                settings.PROJECT_ROOT /
-                "logs"))
+            settings.SCREENSHOTS_DIR, equal_to(settings.PROJECT_ROOT / "screenshots")
+        )
+        assert_that(settings.LOGS_DIR, equal_to(settings.PROJECT_ROOT / "logs"))
 
     @patch.dict(os.environ, {"REPORTS_DIR": "test_reports"})
     def test_settings_custom_directory_paths(self):
@@ -190,10 +176,8 @@ class TestSettingsClass:
         settings = Settings()
 
         assert_that(
-            settings.REPORTS_DIR,
-            equal_to(
-                settings.PROJECT_ROOT /
-                "test_reports"))
+            settings.REPORTS_DIR, equal_to(settings.PROJECT_ROOT / "test_reports")
+        )
 
     def test_settings_pathlib_objects(self):
         """Test Settings directory attributes are Path objects."""
@@ -227,8 +211,7 @@ class TestSettingsEdgeCases:
         settings = Settings()
         assert_that(settings.VISUAL_THRESHOLD, equal_to(0))
 
-    @patch.dict(os.environ, {"BASE_URL": "",
-                "API_BASE_URL": "", "DB_PATH": ""})
+    @patch.dict(os.environ, {"BASE_URL": "", "API_BASE_URL": "", "DB_PATH": ""})
     def test_settings_empty_string_values(self):
         """Test Settings handles empty string values."""
         settings = Settings()

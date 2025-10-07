@@ -65,8 +65,9 @@ def test_sql_google_search(driver):
     if results_displayed:
         assert_that(results_displayed, equal_to(True))
         title = base_page.get_title()
-        search_performed = ("search" in title.lower() or name.split()[
-            0].lower() in title.lower())
+        search_performed = (
+            "search" in title.lower() or name.split()[0].lower() in title.lower()
+        )
         assert_that(search_performed, equal_to(True))
     else:
         current_url = base_page.get_current_url()
@@ -229,10 +230,8 @@ def test_page_interaction_timing(driver):
 
     page_load_time = search_page.open_search_engine_with_timing()
     element_find_time = search_page.get_search_input_timing()
-    typing_time = search_page.enter_search_term_with_timing(
-        "performance testing")
-    clear_retype_time = search_page.clear_and_retype_with_timing(
-        "selenium performance")
+    typing_time = search_page.enter_search_term_with_timing("performance testing")
+    clear_retype_time = search_page.clear_and_retype_with_timing("selenium performance")
 
     assert_that(page_load_time, greater_than(0.0))
     assert_that(element_find_time, greater_than(0.0))

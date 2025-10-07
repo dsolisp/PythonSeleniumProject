@@ -175,8 +175,7 @@ class ErrorClassifier:
             },
         }
 
-    def classify_error(self, error: Exception,
-                       context: ErrorContext) -> Dict[str, Any]:
+    def classify_error(self, error: Exception, context: ErrorContext) -> Dict[str, Any]:
         """
         Classify error and return detailed information.
 
@@ -285,11 +284,9 @@ class RecoveryManager:
 
         try:
             if recovery_action.strategy == RecoveryStrategy.RETRY:
-                success = self._retry_recovery(
-                    driver, error_context, recovery_action)
+                success = self._retry_recovery(driver, error_context, recovery_action)
             elif recovery_action.strategy == RecoveryStrategy.REFRESH:
-                success = self._refresh_recovery(
-                    driver, error_context, recovery_action)
+                success = self._refresh_recovery(driver, error_context, recovery_action)
             elif recovery_action.strategy == RecoveryStrategy.NAVIGATE:
                 success = self._navigate_recovery(
                     driver, error_context, recovery_action
@@ -345,7 +342,8 @@ class RecoveryManager:
                     f"Retry attempt {
                         attempt +
                         1} failed: {
-                        str(e)}")
+                        str(e)}"
+                )
                 continue
 
         return False
@@ -414,8 +412,7 @@ class RecoveryManager:
         """Execute driver restart recovery strategy."""
         try:
             if not self.driver_factory:
-                self.logger.error(
-                    "No driver factory available for restart recovery")
+                self.logger.error("No driver factory available for restart recovery")
                 return False
 
             # Close current driver
@@ -446,8 +443,7 @@ class RecoveryManager:
             return {"message": "No recovery attempts recorded"}
 
         total_attempts = len(self.recovery_history)
-        successful_attempts = sum(
-            1 for r in self.recovery_history if r["success"])
+        successful_attempts = sum(1 for r in self.recovery_history if r["success"])
 
         strategy_stats = {}
         for record in self.recovery_history:
@@ -589,8 +585,7 @@ class SmartErrorHandler:
             browser_logs=browser_logs,
         )
 
-    def _capture_error_screenshot(
-            self, driver, test_name: str) -> Optional[str]:
+    def _capture_error_screenshot(self, driver, test_name: str) -> Optional[str]:
         """Capture screenshot when error occurs."""
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -787,8 +782,7 @@ def with_error_recovery(
                             str(e)}"
                     )
                     if attempt.retry_state.attempt_number == max_attempts:
-                        self.logger.error(
-                            f"All {max_attempts} attempts failed")
+                        self.logger.error(f"All {max_attempts} attempts failed")
                     raise
 
     def _basic_retry(

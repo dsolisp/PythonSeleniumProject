@@ -104,8 +104,7 @@ class TestDatabaseFactory:
 
     @patch("utils.webdriver_factory.os.path.exists")
     @patch("utils.webdriver_factory.sqlite3.connect")
-    def test_create_database_connection_default_path(
-            self, mock_connect, mock_exists):
+    def test_create_database_connection_default_path(self, mock_connect, mock_exists):
         """Test database connection with default path."""
         mock_exists.return_value = True
         mock_conn = Mock()
@@ -114,8 +113,9 @@ class TestDatabaseFactory:
         result = DatabaseFactory.create_database_connection()
 
         assert_that(result, equal_to(mock_conn))
-        assert_that(mock_conn.row_factory, equal_to(
-            mock_connect.return_value.row_factory))
+        assert_that(
+            mock_conn.row_factory, equal_to(mock_connect.return_value.row_factory)
+        )
 
     @patch("utils.webdriver_factory.os.path.exists")
     def test_create_database_connection_file_not_found(self, mock_exists):
@@ -194,8 +194,7 @@ class TestGetDriverFunction:
 
         assert_that(driver, equal_to(mock_driver))
         assert_that(database, equal_to(mock_database))
-        mock_edge.assert_called_once_with(
-            headless=False, window_size=(800, 600))
+        mock_edge.assert_called_once_with(headless=False, window_size=(800, 600))
 
     def test_get_driver_unsupported_browser(self):
         """Test get_driver raises error for unsupported browser."""
@@ -205,8 +204,7 @@ class TestGetDriverFunction:
     @patch("utils.webdriver_factory.os.getenv")
     @patch("utils.webdriver_factory.WebDriverFactory.create_chrome_driver")
     @patch("utils.webdriver_factory.DatabaseFactory.create_database_connection")
-    def test_get_driver_implicit_wait_from_env(
-            self, mock_db, mock_chrome, mock_getenv):
+    def test_get_driver_implicit_wait_from_env(self, mock_db, mock_chrome, mock_getenv):
         """Test get_driver uses implicit wait from environment."""
         mock_driver = Mock()
         mock_chrome.return_value = mock_driver

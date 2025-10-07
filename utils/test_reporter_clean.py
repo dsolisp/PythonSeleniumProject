@@ -72,8 +72,7 @@ class TestReporter:
     def add_test_result(self, result: TestResult) -> None:
         """Add a test result to the reporter."""
         self.test_results.append(result)
-        self.logger.debug(
-            f"Added test result: {result.name} - {result.status}")
+        self.logger.debug(f"Added test result: {result.name} - {result.status}")
 
     def start_test_suite(self, suite_name: str) -> None:
         """Start a new test suite."""
@@ -144,16 +143,13 @@ class TestReporter:
         if not self.test_results:
             return 0.0
 
-        passed_count = sum(
-            1 for r in self.test_results if r.status == "passed")
+        passed_count = sum(1 for r in self.test_results if r.status == "passed")
         return passed_count / len(self.test_results)
 
     def _generate_html_content(self) -> str:
         """Generate HTML content for the report."""
-        passed_count = sum(
-            1 for r in self.test_results if r.status == "passed")
-        failed_count = sum(
-            1 for r in self.test_results if r.status == "failed")
+        passed_count = sum(1 for r in self.test_results if r.status == "passed")
+        failed_count = sum(1 for r in self.test_results if r.status == "failed")
         success_rate = self._calculate_success_rate()
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -245,8 +241,7 @@ class TestReporter:
             status_class = f"status-{result.status}"
             error_msg = (
                 result.error_message[:50] + "..."
-                if result.error_message
-                and len(result.error_message) > 50
+                if result.error_message and len(result.error_message) > 50
                 else (result.error_message or "")
             )
 

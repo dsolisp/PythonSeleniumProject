@@ -61,11 +61,7 @@ class PlaywrightElementActions:
         """Hover over an element."""
         await self.page.hover(selector)
 
-    async def send_keys(
-            self,
-            selector: str,
-            text: str,
-            clear: bool = True) -> None:
+    async def send_keys(self, selector: str, text: str, clear: bool = True) -> None:
         """Send keys to an input element."""
         if clear:
             await self.page.fill(selector, text)

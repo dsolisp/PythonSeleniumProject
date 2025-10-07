@@ -71,13 +71,11 @@ async def test_playwright_google_search_basic():
         # Check for results (if not blocked by CAPTCHA)
         if await search_page.has_results():
             result_count = await search_page.get_result_count()
-            assert_that(result_count, greater_than(
-                0)), "Should have search results"
+            assert_that(result_count, greater_than(0)), "Should have search results"
 
             # Get result titles
             titles = await search_page.get_result_titles()
-            assert_that(len(titles), greater_than(
-                0)), "Should have result titles"
+            assert_that(len(titles), greater_than(0)), "Should have result titles"
 
             # Verify search term relevance (basic check)
             titles_text = " ".join(titles).lower()
@@ -181,10 +179,7 @@ async def test_playwright_advanced_search():
         search_success = await search_page.perform_advanced_search(
             search_term="python", site_filter="github.com"
         )
-        assert_that(
-            search_success,
-            is_(True),
-            "Advanced search should succeed")
+        assert_that(search_success, is_(True), "Advanced search should succeed")
 
         # Verify advanced search (DuckDuckGo uses ?q= parameter)
         current_url = await search_page.get_url()
@@ -216,7 +211,8 @@ async def test_playwright_advanced_search():
                 ]
                 print(
                     f"✅ Found {
-                        len(github_links)} GitHub links in top 5 results")
+                        len(github_links)} GitHub links in top 5 results"
+                )
         else:
             print("⚠️ No results found - search engine may not support site: filter")
 
@@ -329,14 +325,14 @@ async def test_playwright_network_interception():
         ), "Should have Search engine-related requests"
 
         # Check for different resource types
-        resource_types = set(req["resource_type"]
-                             for req in intercepted_requests)
+        resource_types = set(req["resource_type"] for req in intercepted_requests)
         print(f"✅ Intercepted {len(intercepted_requests)} requests")
         print(f"Resource types: {sorted(resource_types)}")
 
         # Verify we got the main document
         document_requests = [
-            req for req in intercepted_requests if req["resource_type"] == "document"]
+            req for req in intercepted_requests if req["resource_type"] == "document"
+        ]
         assert_that(
             len(document_requests), greater_than(0)
         ), "Should have document requests"
@@ -377,9 +373,8 @@ async def test_playwright_mobile_emulation():
         # Test mobile navigation
         success = await search_page.open_search_engine()
         assert_that(
-            success,
-            is_(True),
-            "Should be able to open search engine on mobile")
+            success, is_(True), "Should be able to open search engine on mobile"
+        )
 
         # Verify mobile layout
         viewport_size = await page.evaluate(

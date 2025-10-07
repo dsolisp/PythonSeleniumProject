@@ -110,8 +110,7 @@ class TestTestDataManager:
 
         admin_accounts = self.data_manager.get_user_accounts("admin")
         assert_that(len(admin_accounts), equal_to(2))
-        assert_that(
-            all(acc["role"] == "admin" for acc in admin_accounts), is_(True))
+        assert_that(all(acc["role"] == "admin" for acc in admin_accounts), is_(True))
 
         standard_accounts = self.data_manager.get_user_accounts("standard")
         assert_that(len(standard_accounts), equal_to(1))
@@ -143,20 +142,24 @@ class TestTestDataManager:
     def test_validate_data_schema(self):
         """Test data schema validation."""
         # Valid search scenario
-        valid_scenario = {
-            "name": "test_search",
-            "search_term": "python testing"}
-        assert_that(self.data_manager.validate_data_schema(
-            valid_scenario, "search_scenario"), is_(True), )
+        valid_scenario = {"name": "test_search", "search_term": "python testing"}
+        assert_that(
+            self.data_manager.validate_data_schema(valid_scenario, "search_scenario"),
+            is_(True),
+        )
 
         # Invalid search scenario (missing required field)
         invalid_scenario = {"search_term": "python testing"}  # Missing 'name'
-        assert_that(self.data_manager.validate_data_schema(
-            invalid_scenario, "search_scenario"), is_(False), )
+        assert_that(
+            self.data_manager.validate_data_schema(invalid_scenario, "search_scenario"),
+            is_(False),
+        )
 
         # Unknown schema
-        assert_that(self.data_manager.validate_data_schema(
-            valid_scenario, "unknown_schema"), is_(False), )
+        assert_that(
+            self.data_manager.validate_data_schema(valid_scenario, "unknown_schema"),
+            is_(False),
+        )
 
     def test_cleanup_old_results(self):
         """Test cleanup of old result files."""
@@ -272,9 +275,7 @@ class TestAdvancedTestReporter:
         assert_that(report_data, has_key("suite_summary"))
         assert_that(report_data, has_key("metrics"))
         assert_that(report_data, has_key("test_results"))
-        assert_that(
-            report_data["suite_summary"]["suite_name"],
-            equal_to("JSON_Test"))
+        assert_that(report_data["suite_summary"]["suite_name"], equal_to("JSON_Test"))
         assert_that(len(report_data["test_results"]), equal_to(1))
 
     def test_generate_html_report(self):
@@ -364,11 +365,10 @@ class TestErrorClassifier:
         classification = self.classifier.classify_error(error, context)
 
         assert_that(classification["error_type"], equal_to("TimeoutException"))
-        assert_that(classification["classification"]
-                    ["category"], equal_to("timeout"))
+        assert_that(classification["classification"]["category"], equal_to("timeout"))
         assert_that(
-            classification["classification"]["severity"].value,
-            equal_to("medium"))
+            classification["classification"]["severity"].value, equal_to("medium")
+        )
 
     def test_classify_element_not_found_error(self):
         """Test classification of element not found errors."""
@@ -385,15 +385,13 @@ class TestErrorClassifier:
 
         classification = self.classifier.classify_error(error, context)
 
+        assert_that(classification["error_type"], equal_to("NoSuchElementException"))
         assert_that(
-            classification["error_type"],
-            equal_to("NoSuchElementException"))
+            classification["classification"]["category"], equal_to("element_not_found")
+        )
         assert_that(
-            classification["classification"]["category"],
-            equal_to("element_not_found"))
-        assert_that(
-            classification["classification"]["severity"].value,
-            equal_to("high"))
+            classification["classification"]["severity"].value, equal_to("high")
+        )
 
     def test_classify_unknown_error(self):
         """Test classification of unknown errors."""
@@ -409,8 +407,7 @@ class TestErrorClassifier:
         classification = self.classifier.classify_error(error, context)
 
         assert_that(classification["error_type"], equal_to("ValueError"))
-        assert_that(classification["classification"]
-                    ["category"], equal_to("unknown"))
+        assert_that(classification["classification"]["category"], equal_to("unknown"))
         assert_that(classification["confidence"], equal_to(0.3))
 
 
@@ -425,8 +422,7 @@ class TestRecoveryManager:
     def test_get_recovery_statistics_empty(self):
         """Test getting recovery statistics when no recoveries recorded."""
         stats = self.recovery_manager.get_recovery_statistics()
-        assert_that(stats["message"], equal_to(
-            "No recovery attempts recorded"))
+        assert_that(stats["message"], equal_to("No recovery attempts recorded"))
 
     def test_retry_recovery_success(self):
         """Test successful retry recovery."""
@@ -457,9 +453,7 @@ class TestRecoveryManager:
 
         assert_that(result, is_(True))
         assert_that(len(self.recovery_manager.recovery_history), equal_to(1))
-        assert_that(
-            self.recovery_manager.recovery_history[0]["success"],
-            is_(True))
+        assert_that(self.recovery_manager.recovery_history[0]["success"], is_(True))
 
     def test_retry_recovery_failure(self):
         """Test failed retry recovery."""
@@ -490,9 +484,7 @@ class TestRecoveryManager:
 
         assert_that(result, is_(False))
         assert_that(len(self.recovery_manager.recovery_history), equal_to(1))
-        assert_that(
-            self.recovery_manager.recovery_history[0]["success"],
-            is_(False))
+        assert_that(self.recovery_manager.recovery_history[0]["success"], is_(False))
 
     @patch("selenium.webdriver.support.ui.WebDriverWait")
     def test_refresh_recovery(self, mock_wait):
@@ -528,8 +520,7 @@ class TestRecoveryManager:
         # Verify refresh was called
         mock_driver.refresh.assert_called_once()
         # Verify document ready state was checked
-        mock_driver.execute_script.assert_called_with(
-            "return document.readyState")
+        mock_driver.execute_script.assert_called_with("return document.readyState")
         assert_that(result, is_(True))
 
     def test_get_recovery_statistics_with_data(self):
@@ -598,10 +589,8 @@ class TestSmartErrorHandler:
             mock_recovery.return_value = True
 
             # Use a recognizable error type for the classifier
-            error = Exception(
-                "TimeoutException: Element not found after timeout")
-            result = self.error_handler.handle_error(
-                error, mock_driver, "test_name")
+            error = Exception("TimeoutException: Element not found after timeout")
+            result = self.error_handler.handle_error(error, mock_driver, "test_name")
 
             assert_that(result, is_(True))
             mock_recovery.assert_called_once()
@@ -621,10 +610,8 @@ class TestSmartErrorHandler:
             mock_recovery.return_value = False
 
             # Use a recognizable error type for the classifier
-            error = Exception(
-                "NoSuchElementException: Unable to locate element")
-            result = self.error_handler.handle_error(
-                error, mock_driver, "test_name")
+            error = Exception("NoSuchElementException: Unable to locate element")
+            result = self.error_handler.handle_error(error, mock_driver, "test_name")
 
             assert_that(result, is_(False))
             mock_recovery.assert_called_once()
@@ -649,8 +636,7 @@ class TestSmartErrorHandler:
 
         mock_driver.save_screenshot = mock_save_screenshot
 
-        result = self.error_handler._capture_error_screenshot(
-            mock_driver, "test_name")
+        result = self.error_handler._capture_error_screenshot(mock_driver, "test_name")
 
         assert_that(result, is_(not_none()))
         assert_that(result, contains_string("error_test_name_"))
@@ -659,11 +645,9 @@ class TestSmartErrorHandler:
     def test_capture_error_screenshot_failure(self):
         """Test screenshot capture failure."""
         mock_driver = Mock()
-        mock_driver.save_screenshot.side_effect = Exception(
-            "Screenshot failed")
+        mock_driver.save_screenshot.side_effect = Exception("Screenshot failed")
 
-        result = self.error_handler._capture_error_screenshot(
-            mock_driver, "test_name")
+        result = self.error_handler._capture_error_screenshot(mock_driver, "test_name")
 
         assert_that(result, is_(none()))
 

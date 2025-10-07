@@ -3,11 +3,7 @@ from pages.base_page import BasePage
 
 
 class ResultPage(BasePage):
-    def __init__(
-            self,
-            driver_and_db,
-            test_name: str = None,
-            environment: str = "test"):
+    def __init__(self, driver_and_db, test_name: str = None, environment: str = "test"):
         """Initialize search engine result page with enhanced features."""
         super().__init__(driver_and_db, test_name=test_name, environment=environment)
         self.result_locators = ResultPageLocators()
@@ -15,8 +11,7 @@ class ResultPage(BasePage):
     # Locators
 
     def get_result_by_name(self, name):
-        return self.driver.find_element(
-            *self.result_locators.get_result_by_name(name))
+        return self.driver.find_element(*self.result_locators.get_result_by_name(name))
 
     def get_result_by_index(self, index):
         return self.driver.find_element(
@@ -38,14 +33,16 @@ class ResultPage(BasePage):
         try:
             # Look for common result indicators using locators
             results_found = (
-                self.is_element_visible(
-                    self.result_locators.SEARCH_RESULTS) or len(
+                self.is_element_visible(self.result_locators.SEARCH_RESULTS)
+                or len(self.driver.find_elements(*self.result_locators.ALL_H3_ELEMENTS))
+                > 0
+                or len(
                     self.driver.find_elements(
-                        *
-                        self.result_locators.ALL_H3_ELEMENTS)) > 0 or len(
-                    self.driver.find_elements(
-                        *
-                        self.result_locators.RESULT_ELEMENTS_DATA_VED)) > 0)
+                        *self.result_locators.RESULT_ELEMENTS_DATA_VED
+                    )
+                )
+                > 0
+            )
             return results_found
         except BaseException:
             return False

@@ -120,8 +120,9 @@ def test_screenshot_functionality():
         test_screenshot_name = "test_functionality.png"
         screenshot_path = base_page.take_screenshot(test_screenshot_name)
 
-        assert_that(screenshot_path, is_(not_none()),
-                    "Screenshot method should return a path")
+        assert_that(
+            screenshot_path, is_(not_none()), "Screenshot method should return a path"
+        )
         assert_that(
             os.path.exists(screenshot_path),
             is_(True),

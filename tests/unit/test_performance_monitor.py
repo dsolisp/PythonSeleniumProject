@@ -58,10 +58,8 @@ class TestPerformanceMetric:
     def test_performance_metric_without_context(self):
         """Test creating performance metric without context."""
         metric = PerformanceMetric(
-            name="simple_metric",
-            value=100.0,
-            unit="s",
-            timestamp=datetime.now())
+            name="simple_metric", value=100.0, unit="s", timestamp=datetime.now()
+        )
 
         assert_that(metric.name, equal_to("simple_metric"))
         assert_that(metric.value, equal_to(100.0))
@@ -92,8 +90,7 @@ class TestPerformanceMonitor:
 
     def test_record_metric(self):
         """Test recording performance metrics."""
-        self.monitor.record_metric(
-            "test_timing", 123.45, "ms", operation="test")
+        self.monitor.record_metric("test_timing", 123.45, "ms", operation="test")
 
         assert_that(len(self.monitor.metrics), equal_to(1))
         metric = self.monitor.metrics[0]
@@ -173,8 +170,8 @@ class TestPerformanceMonitor:
         assert_that(result, equal_to("done"))
         assert_that(len(self.monitor.metrics), equal_to(1))
         assert_that(
-            self.monitor.metrics[0].name,
-            equal_to("sample_function_execution_time"))
+            self.monitor.metrics[0].name, equal_to("sample_function_execution_time")
+        )
 
     @patch("psutil.Process")
     def test_measure_memory_usage(self, mock_process_class):
@@ -207,8 +204,7 @@ class TestPerformanceMonitor:
         """Test CPU usage measurement."""
         mock_cpu_percent.return_value = 25.5
 
-        cpu_usage = self.monitor.measure_cpu_usage(
-            interval=0.1, name="test_cpu")
+        cpu_usage = self.monitor.measure_cpu_usage(interval=0.1, name="test_cpu")
 
         assert_that(cpu_usage, equal_to(25.5))
         mock_cpu_percent.assert_called_once_with(interval=0.1)
@@ -225,8 +221,7 @@ class TestPerformanceMonitor:
             time.sleep(delay)
             return "completed"
 
-        stats = self.monitor.benchmark_function(
-            test_func, iterations=3, delay=0.01)
+        stats = self.monitor.benchmark_function(test_func, iterations=3, delay=0.01)
 
         assert_that(stats, has_key("mean"))
         assert_that(stats, has_key("median"))
@@ -296,9 +291,7 @@ class TestWebDriverPerformanceMonitor:
         assert_that(self.web_monitor.name, equal_to("WebDriver"))
         assert_that(self.web_monitor.thresholds, has_key("page_load_time"))
         assert_that(self.web_monitor.thresholds, has_key("element_find_time"))
-        assert_that(
-            self.web_monitor.thresholds,
-            has_key("click_operation_time"))
+        assert_that(self.web_monitor.thresholds, has_key("click_operation_time"))
         assert_that(self.web_monitor.thresholds, has_key("form_fill_time"))
 
     def test_monitor_page_load(self):
@@ -306,8 +299,7 @@ class TestWebDriverPerformanceMonitor:
         # Mock driver
         mock_driver = Mock()
 
-        load_time = self.web_monitor.monitor_page_load(
-            mock_driver, "https://test.com")
+        load_time = self.web_monitor.monitor_page_load(mock_driver, "https://test.com")
 
         mock_driver.get.assert_called_once_with("https://test.com")
         assert_that(load_time, greater_than(0))
@@ -326,8 +318,7 @@ class TestWebDriverPerformanceMonitor:
 
         from selenium.webdriver.common.by import By
 
-        find_time = self.web_monitor.monitor_element_find(
-            mock_driver, By.ID, "test-id")
+        find_time = self.web_monitor.monitor_element_find(mock_driver, By.ID, "test-id")
 
         mock_driver.find_element.assert_called_once_with(By.ID, "test-id")
         assert_that(find_time, greater_than(0))
@@ -349,9 +340,7 @@ class TestAPIPerformanceMonitor:
         """Test API monitor initialization with default thresholds."""
         assert_that(self.api_monitor.name, equal_to("API"))
         assert_that(self.api_monitor.thresholds, has_key("api_response_time"))
-        assert_that(
-            self.api_monitor.thresholds,
-            has_key("api_first_byte_time"))
+        assert_that(self.api_monitor.thresholds, has_key("api_first_byte_time"))
         assert_that(self.api_monitor.thresholds, has_key("api_total_time"))
 
     def test_monitor_api_request(self):

@@ -140,8 +140,7 @@ class AdvancedTestReporter:
     def add_test_result(self, result: Result) -> None:
         """Add a test result to the current suite."""
         if not self.current_suite:
-            raise ValueError(
-                "No active test suite. Call start_test_suite() first.")
+            raise ValueError("No active test suite. Call start_test_suite() first.")
 
         self.test_results.append(result)
         self.current_suite.total_tests += 1
@@ -340,16 +339,13 @@ class AdvancedTestReporter:
         Returns:
             Dictionary containing failure pattern analysis
         """
-        failed_tests = [
-            r for r in self.test_results if r.status in [
-                "FAILED", "ERROR"]]
+        failed_tests = [r for r in self.test_results if r.status in ["FAILED", "ERROR"]]
 
         if not failed_tests:
             return {"message": "No failures to analyze"}
 
         # Analyze error patterns
-        error_messages = [
-            t.error_message for t in failed_tests if t.error_message]
+        error_messages = [t.error_message for t in failed_tests if t.error_message]
         error_patterns = Counter()
 
         for error in error_messages:
@@ -375,17 +371,14 @@ class AdvancedTestReporter:
 
     def _analyze_failures(self) -> Dict[str, Any]:
         """Analyze failure patterns in current results."""
-        failed_tests = [
-            r for r in self.test_results if r.status in [
-                "FAILED", "ERROR"]]
+        failed_tests = [r for r in self.test_results if r.status in ["FAILED", "ERROR"]]
 
         if not failed_tests:
             return {"total_failures": 0}
 
         return {
             "total_failures": len(failed_tests),
-            "failed_test_names": [
-                t.test_name for t in failed_tests],
+            "failed_test_names": [t.test_name for t in failed_tests],
             "common_errors": self._extract_common_errors(failed_tests),
             "failure_distribution": self._get_failure_distribution(failed_tests),
         }
@@ -410,8 +403,7 @@ class AdvancedTestReporter:
 
     def _extract_common_errors(self, failed_tests: List[Result]) -> List[str]:
         """Extract common error patterns from failed tests."""
-        error_messages = [
-            t.error_message for t in failed_tests if t.error_message]
+        error_messages = [t.error_message for t in failed_tests if t.error_message]
 
         # Simple pattern extraction
         common_patterns = []
@@ -425,13 +417,11 @@ class AdvancedTestReporter:
 
         return list(set(common_patterns))
 
-    def _get_failure_distribution(
-            self, failed_tests: List[Result]) -> Dict[str, int]:
+    def _get_failure_distribution(self, failed_tests: List[Result]) -> Dict[str, int]:
         """Get distribution of failures by test name."""
         return dict(Counter([t.test_name for t in failed_tests]))
 
-    def _get_performance_distribution(
-            self, durations: List[float]) -> Dict[str, int]:
+    def _get_performance_distribution(self, durations: List[float]) -> Dict[str, int]:
         """Get performance distribution categorization."""
         fast = sum(1 for d in durations if d < 5)
         medium = sum(1 for d in durations if 5 <= d < 15)
@@ -452,7 +442,7 @@ class AdvancedTestReporter:
 
         # Simple linear trend calculation
         first_half = values[: len(values) // 2]
-        second_half = values[len(values) // 2:]
+        second_half = values[len(values) // 2 :]
 
         avg_first = statistics.mean(first_half)
         avg_second = statistics.mean(second_half)
@@ -500,8 +490,7 @@ class AdvancedTestReporter:
         avg_pass_rate = statistics.mean(recent_pass_rates)
 
         if avg_pass_rate < 80:
-            recommendations.append(
-                "Focus on test stability - pass rate below 80%")
+            recommendations.append("Focus on test stability - pass rate below 80%")
         if avg_pass_rate < 90:
             recommendations.append("Review and fix frequently failing tests")
 
@@ -514,8 +503,7 @@ class AdvancedTestReporter:
                 "Optimize test execution time - average duration > 15s"
             )
         if avg_duration > 30:
-            recommendations.append(
-                "Consider parallelization for faster execution")
+            recommendations.append("Consider parallelization for faster execution")
 
         return recommendations
 
@@ -542,8 +530,7 @@ class AdvancedTestReporter:
         """Analyze failure distribution by browser."""
         return dict(Counter([t.browser for t in failed_tests]))
 
-    def _get_failure_recommendations(
-            self, error_patterns: Counter) -> List[str]:
+    def _get_failure_recommendations(self, error_patterns: Counter) -> List[str]:
         """Generate recommendations based on error patterns."""
         recommendations = []
 
@@ -552,11 +539,9 @@ class AdvancedTestReporter:
                 "Consider increasing timeout values or optimizing page load times"
             )
         if error_patterns.get("element_not_found", 0) > 2:
-            recommendations.append(
-                "Review element locators and add explicit waits")
+            recommendations.append("Review element locators and add explicit waits")
         if error_patterns.get("connection_errors", 0) > 2:
-            recommendations.append(
-                "Check network connectivity and server stability")
+            recommendations.append("Check network connectivity and server stability")
 
         return recommendations
 

@@ -59,10 +59,7 @@ class PlaywrightFactory:
 
         return self.browser
 
-    async def create_context(
-            self,
-            browser: Browser = None,
-            **kwargs) -> BrowserContext:
+    async def create_context(self, browser: Browser = None, **kwargs) -> BrowserContext:
         """
         Create a browser context with optional configuration.
 
@@ -172,10 +169,7 @@ class PlaywrightPage:
         """Get current URL."""
         return self.page.url
 
-    async def wait_for_element(
-            self,
-            selector: str,
-            timeout: int = None) -> Any:
+    async def wait_for_element(self, selector: str, timeout: int = None) -> Any:
         """Wait for element to be visible."""
         timeout_ms = (timeout or settings.TIMEOUT) * 1000
         return await self.page.wait_for_selector(selector, timeout=timeout_ms)

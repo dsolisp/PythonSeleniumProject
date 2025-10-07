@@ -193,23 +193,19 @@ Test Counts:
         help="Type of tests to run (default: regression)",
     )
     parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Run tests with verbose output")
+        "--verbose", "-v", action="store_true", help="Run tests with verbose output"
+    )
     parser.add_argument(
-        "--coverage",
-        action="store_true",
-        help="Run tests with coverage report")
+        "--coverage", action="store_true", help="Run tests with coverage report"
+    )
     parser.add_argument(
         "--no-export",
         action="store_true",
         help="Skip test result export and ML analysis",
     )
     parser.add_argument(
-        "--no-ml",
-        action="store_true",
-        help="Skip ML analysis (still exports results)")
+        "--no-ml", action="store_true", help="Skip ML analysis (still exports results)"
+    )
 
     args = parser.parse_args()
 
@@ -259,8 +255,7 @@ Test Counts:
         # Run API tests (5 tests with conditional Allure)
         success_result, _ = run_command(
             f"{base_cmd} tests/api/test_api.py",
-            "API Tests (5 tests: GET, POST, performance "
-            "with conditional Allure)",
+            "API Tests (5 tests: GET, POST, performance " "with conditional Allure)",
         )
         success &= success_result
         test_runs.append(("api", success_result))

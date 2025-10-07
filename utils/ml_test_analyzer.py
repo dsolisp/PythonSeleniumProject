@@ -71,24 +71,16 @@ class MLTestAnalyzer:
                     # Extract test details if available
                     if "results" in data:
                         results_data = data["results"]
-                        if isinstance(
-                                results_data,
-                                dict) and "tests" in results_data:
+                        if isinstance(results_data, dict) and "tests" in results_data:
                             for test in results_data["tests"]:
                                 test_record = {
                                     "test_name": test.get("name", "unknown"),
                                     "status": test.get("status", "unknown"),
                                     "duration": test.get("duration", 0),
-                                    "environment": data.get(
-                                        "environment", "unknown"
-                                    ),
+                                    "environment": data.get("environment", "unknown"),
                                     "timestamp": data.get("timestamp", "unknown"),
-                                    "browser": results_data.get(
-                                        "browser", "unknown"
-                                    ),
-                                    "headless": results_data.get(
-                                        "headless", False
-                                    ),
+                                    "browser": results_data.get("browser", "unknown"),
+                                    "headless": results_data.get("headless", False),
                                 }
                                 results.append(test_record)
             except (json.JSONDecodeError, KeyError) as e:
@@ -100,8 +92,7 @@ class MLTestAnalyzer:
             return pd.DataFrame()
 
         self.df = pd.DataFrame(results)
-        print(
-            f"✅ Loaded {len(self.df)} test records from {len(json_files)} files")
+        print(f"✅ Loaded {len(self.df)} test records from {len(json_files)} files")
 
         return self.df
 
@@ -190,9 +181,8 @@ class MLTestAnalyzer:
 
         # Detect outliers (tests taking unusually long)
         z_scores = np.abs(
-            (self.df["duration"] -
-             stats["avg_duration"]) /
-            stats["std_duration"])
+            (self.df["duration"] - stats["avg_duration"]) / stats["std_duration"]
+        )
         outliers = self.df[z_scores > 2].copy()
 
         print("\n📈 Performance Statistics:")
@@ -305,13 +295,13 @@ class MLTestAnalyzer:
         for col in ["test_name", "environment", "browser"]:
             if col in df_ml.columns:
                 le = LabelEncoder()
-                df_ml[f"{col}_encoded"] = le.fit_transform(
-                    df_ml[col].astype(str))
+                df_ml[f"{col}_encoded"] = le.fit_transform(df_ml[col].astype(str))
                 self.label_encoders[col] = le
 
         # Features for prediction
-        feature_cols = [col for col in df_ml.columns if col.endswith(
-            "_encoded")] + ["duration"]
+        feature_cols = [col for col in df_ml.columns if col.endswith("_encoded")] + [
+            "duration"
+        ]
         if "headless" in df_ml.columns:
             df_ml["headless_int"] = df_ml["headless"].astype(int)
             feature_cols.append("headless_int")
@@ -372,13 +362,11 @@ class MLTestAnalyzer:
             for col, encoder in self.label_encoders.items():
                 if col in test:
                     try:
-                        features[f"{col}_encoded"] = encoder.transform([test[col]])[
-                            0]
+                        features[f"{col}_encoded"] = encoder.transform([test[col]])[0]
                     except ValueError:
                         features[f"{col}_encoded"] = 0  # Unknown value
 
-            features["duration"] = test.get(
-                "duration", self.df["duration"].mean())
+            features["duration"] = test.get("duration", self.df["duration"].mean())
             if "headless" in test:
                 features["headless_int"] = int(test["headless"])
 
@@ -422,9 +410,7 @@ class MLTestAnalyzer:
 
         return predictions
 
-    def generate_report(
-            self,
-            output_file: str = "reports/ml_analysis_report.txt"):
+    def generate_report(self, output_file: str = "reports/ml_analysis_report.txt"):
         """
         Generate comprehensive analysis report.
 
@@ -453,14 +439,17 @@ class MLTestAnalyzer:
             report_lines.append(f"   Total test executions: {len(df)}")
             report_lines.append(
                 f"   Unique tests: {
-                    df['test_name'].nunique()}")
+                    df['test_name'].nunique()}"
+            )
             report_lines.append(
                 f"   Environments: {
-                    df['environment'].nunique()}")
+                    df['environment'].nunique()}"
+            )
             report_lines.append(
                 f"   Date range: {
                     df['timestamp'].min()} to {
-                    df['timestamp'].max()}")
+                    df['timestamp'].max()}"
+            )
             report_lines.append("")
 
             # Flaky tests
@@ -471,7 +460,8 @@ class MLTestAnalyzer:
                     report_lines.append(
                         f"   • {
                             test['test_name']}: {
-                            test['pass_rate']:.1%} pass rate")
+                            test['pass_rate']:.1%} pass rate"
+                    )
                 report_lines.append("")
 
             # Performance trends
@@ -479,10 +469,12 @@ class MLTestAnalyzer:
             report_lines.append("📈 Performance Summary:")
             report_lines.append(
                 f"   Average duration: {
-                    perf['avg_duration']:.2f}s")
+                    perf['avg_duration']:.2f}s"
+            )
             report_lines.append(
                 f"   Median duration: {
-                    perf['median_duration']:.2f}s")
+                    perf['median_duration']:.2f}s"
+            )
             report_lines.append("")
 
             # Test statistics

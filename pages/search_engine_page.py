@@ -16,11 +16,7 @@ class SearchEnginePage(BasePage):
     Provides methods for search operations and result handling.
     """
 
-    def __init__(
-            self,
-            driver_and_db,
-            test_name: str = None,
-            environment: str = "test"):
+    def __init__(self, driver_and_db, test_name: str = None, environment: str = "test"):
         """Initialize Search engine page with enhanced features."""
         super().__init__(driver_and_db, test_name=test_name, environment=environment)
         from config.settings import settings
@@ -93,8 +89,7 @@ class SearchEnginePage(BasePage):
 
     def get_result_titles(self, max_count: int = 5) -> List[str]:
         """Get list of search result titles."""
-        elements = self.driver.find_elements(
-            *SearchEngineLocators.RESULT_TITLES)
+        elements = self.driver.find_elements(*SearchEngineLocators.RESULT_TITLES)
         titles = []
 
         for element in elements[:max_count]:
@@ -184,8 +179,7 @@ class SearchEnginePage(BasePage):
                 )
 
                 actions = ActionChains(self.driver)
-                actions.move_to_element(
-                    element).click().send_keys(text).perform()
+                actions.move_to_element(element).click().send_keys(text).perform()
                 return True
             return False
         except Exception:
@@ -197,10 +191,9 @@ class SearchEnginePage(BasePage):
             from selenium.webdriver.support import expected_conditions as EC
             from selenium.webdriver.support.ui import WebDriverWait
 
-            WebDriverWait(
-                self.driver, timeout).until(
-                EC.presence_of_element_located(
-                    SearchEngineLocators.SUGGESTIONS_LISTBOX))
+            WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located(SearchEngineLocators.SUGGESTIONS_LISTBOX)
+            )
             return True
         except Exception:
             return False
@@ -259,9 +252,9 @@ class SearchEnginePage(BasePage):
         """Wait until search input is visible."""
         try:
             return (
-                self.wait_for_element(
-                    SearchEngineLocators.SEARCH_BOX,
-                    timeout=timeout) is not None)
+                self.wait_for_element(SearchEngineLocators.SEARCH_BOX, timeout=timeout)
+                is not None
+            )
         except Exception:
             return False
 
@@ -290,8 +283,7 @@ class SearchEnginePage(BasePage):
         except Exception:
             return False
 
-    def wait_for_text_in_search_input(
-            self, text: str, timeout: int = 10) -> bool:
+    def wait_for_text_in_search_input(self, text: str, timeout: int = 10) -> bool:
         """Wait for specific text to appear in search input."""
         try:
             import time

@@ -143,11 +143,7 @@ class DataManager:
             }
 
             with open(config_path, "w") as f:
-                yaml.dump(
-                    default_config,
-                    f,
-                    default_flow_style=False,
-                    indent=2)
+                yaml.dump(default_config, f, default_flow_style=False, indent=2)
 
         # Load and return the YAML config
         with open(config_path, "r") as f:
@@ -234,9 +230,8 @@ class DataManager:
 
         if method:
             endpoints = [
-                ep for ep in endpoints if ep.get(
-                    "method",
-                    "").upper() == method.upper()]
+                ep for ep in endpoints if ep.get("method", "").upper() == method.upper()
+            ]
 
         return endpoints
 
@@ -391,8 +386,7 @@ class DataManager:
             except (OSError, ValueError):
                 continue
 
-    def validate_data_schema(
-            self, data: Dict[str, Any], schema_name: str) -> bool:
+    def validate_data_schema(self, data: Dict[str, Any], schema_name: str) -> bool:
         """
         Validate test data against predefined schemas.
 

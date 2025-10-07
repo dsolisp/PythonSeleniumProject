@@ -205,8 +205,7 @@ class TestSpecializedLogging:
 
         try:
             logger.assertion_result("equals", True, expected=5, actual=5)
-            logger.assertion_result(
-                "contains", False, expected="text", actual="other")
+            logger.assertion_result("contains", False, expected="text", actual="other")
         except Exception as e:
             pytest.fail(f"Assertion result logging failed: {e}")
 
