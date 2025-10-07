@@ -94,8 +94,9 @@ jobs:
     
     - name: Run Safety check
       run: |
-        safety check --json --output reports/safety-report.json || true
-        safety check
+        mkdir -p reports
+        safety scan --output json > reports/safety-report.json || true
+        safety scan || true
     
     - name: Upload security reports
       uses: actions/upload-artifact@v4
@@ -177,6 +178,8 @@ jobs:
         mkdir -p reports/coverage reports/html reports/json logs screenshots
     
     - name: Run unit tests
+      env:
+        HEADLESS: true
       run: |
         pytest tests/ -v --tb=short \
           --cov=pages --cov=utils --cov=locators \
@@ -255,6 +258,8 @@ jobs:
         echo "SELENIUM_GRID_URL=http://localhost:4444" >> .env
     
     - name: Run integration tests
+      env:
+        HEADLESS: true
       run: |
         pytest tests/ -v --tb=short \
           --browser=${{ matrix.browser }} \
@@ -316,6 +321,8 @@ jobs:
         echo "HEADLESS=true" >> .env
     
     - name: Run visual regression tests
+      env:
+        HEADLESS: true
       run: |
         pytest tests/ -v --tb=short \
           --html=reports/html/visual-tests.html \

@@ -42,10 +42,21 @@ class WebDriverFactory:
         temp_user_data_dir = tempfile.mkdtemp(prefix=f"chrome_profile_{unique_id}_")
         options.add_argument(f"--user-data-dir={temp_user_data_dir}")
 
+        # Add unique remote debugging port to avoid conflicts in parallel execution
+        import socket
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(("", 0))
+            s.listen(1)
+            port = s.getsockname()[1]
+        options.add_argument(f"--remote-debugging-port={port}")
+
         # Anti-detection options to avoid Google CAPTCHA
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-software-rasterizer")
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
 

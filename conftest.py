@@ -2,6 +2,7 @@
 Pytest configuration and fixtures for test automation.
 """
 
+import os
 import time
 from typing import Any, Dict, Tuple
 
@@ -25,10 +26,14 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def test_config(request) -> Dict[str, Any]:
-    """Test configuration from command line."""
+    """Test configuration from command line and environment."""
+    # Check both command line flag and environment variable for headless mode
+    headless_cli = request.config.getoption("--headless")
+    headless_env = os.getenv("HEADLESS", "false").lower() == "true"
+
     return {
         "browser": request.config.getoption("--selenium-browser"),
-        "headless": request.config.getoption("--headless"),
+        "headless": headless_cli or headless_env,  # Use headless if either is True
     }
 
 
