@@ -50,7 +50,6 @@ on:
 env:
   PYTHON_VERSION: '3.11'
   NODE_VERSION: '18'
-  RUN_UI_TESTS: 'false'  # Toggle to 'true' to re-enable UI/browser suites in CI
 
 jobs:
   setup:
@@ -58,6 +57,7 @@ jobs:
     outputs:
       python-version: ${{ steps.setup-python.outputs.python-version }}
       cache-key: ${{ steps.cache-key.outputs.key }}
+      run-ui-tests: ${{ steps.ui-flag.outputs.value }}
     steps:
     - uses: actions/checkout@v4
     
@@ -71,6 +71,11 @@ jobs:
       id: cache-key
       run: |
         echo "key=pip-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/requirements.txt') }}" >> $GITHUB_OUTPUT
+
+    - name: Configure UI test flag
+      id: ui-flag
+      run: |
+        echo "value=false" >> $GITHUB_OUTPUT  # Set to 'true' to re-enable UI/browser suites
 
   security-scan:
     runs-on: ubuntu-latest
@@ -205,7 +210,7 @@ jobs:
   # UI/E2E tests - Selenium & Playwright browser automation
   e2e-tests:
     runs-on: ubuntu-latest
-    if: ${{ env.RUN_UI_TESTS == 'true' }}
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
     needs: [setup, unit-tests]
     strategy:
       matrix:
@@ -264,7 +269,7 @@ jobs:
   # Integration tests with Selenium Grid (distributed testing)
   grid-integration-tests:
     runs-on: ubuntu-latest
-    if: ${{ env.RUN_UI_TESTS == 'true' }}
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
     needs: [setup, e2e-tests]
     strategy:
       matrix:
@@ -346,7 +351,7 @@ jobs:
   # Visual regression tests - screenshot comparison
   visual-tests:
     runs-on: ubuntu-latest
-    if: ${{ env.RUN_UI_TESTS == 'true' && github.event_name != 'schedule' }}
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' && github.event_name != 'schedule' }}
     needs: [setup, e2e-tests]
     steps:
     - uses: actions/checkout@v4
@@ -410,7 +415,7 @@ jobs:
   # Performance and load testing
   performance-tests:
     runs-on: ubuntu-latest
-    if: ${{ env.RUN_UI_TESTS == 'true' && (github.ref == 'refs/heads/main' || github.event_name == 'schedule') }}
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' && (github.ref == 'refs/heads/main' || github.event_name == 'schedule') }}
     needs: [setup, e2e-tests]
     steps:
     - uses: actions/checkout@v4
@@ -449,8 +454,8 @@ jobs:
   # Check combined coverage from all test jobs
   combined-coverage:
     runs-on: ubuntu-latest
-    needs: [unit-tests, e2e-tests]
-    if: ${{ env.RUN_UI_TESTS == 'true' }}
+    needs: [setup, unit-tests, e2e-tests]
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
     steps:
     - uses: actions/checkout@v4
     
@@ -487,8 +492,8 @@ jobs:
   # Aggregate all test reports
   generate-reports:
     runs-on: ubuntu-latest
-    needs: [unit-tests, e2e-tests, grid-integration-tests, visual-tests, combined-coverage]
-    if: ${{ env.RUN_UI_TESTS == 'true' }}
+    needs: [setup, unit-tests, e2e-tests, grid-integration-tests, visual-tests, combined-coverage]
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
     steps:
     - uses: actions/checkout@v4
     
