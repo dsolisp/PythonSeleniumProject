@@ -263,7 +263,12 @@ class WebDriverPerformanceMonitor(PerformanceMonitor):
         end_time = time.perf_counter()
 
         find_time = (end_time - start_time) * 1000
-        locator_str = f"{by}={value}" if isinstance(by, str) else f"{by.name}={value}"
+        if isinstance(by, str):
+            locator_str = f"{by}={value}"
+        elif by is not None and hasattr(by, "name"):
+            locator_str = f"{by.name}={value}"
+        else:
+            locator_str = f"{str(by)}={value}"
         self.record_metric("element_find_time", find_time, "ms", locator=locator_str)
 
         return find_time
