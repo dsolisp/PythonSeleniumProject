@@ -58,10 +58,7 @@ class APILoadTestUser(HttpUser):
                 response.success()
                 self.logger.debug("GET request successful", status_code=200)
             else:
-                response.failure(
-                    f"Unexpected status code: {
-                        response.status_code}"
-                )
+                response.failure(f"Unexpected status code: {response.status_code}")
                 self.logger.warning(
                     "GET request failed", status_code=response.status_code
                 )

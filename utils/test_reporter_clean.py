@@ -93,8 +93,7 @@ class TestReporter:
     def generate_json_report(self, filename: str = None) -> str:
         """Generate JSON format report."""
         if filename is None:
-            filename = f"test_report_{
-                datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            filename = f"test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
         report_data = {
             "generated_at": datetime.now().isoformat(),

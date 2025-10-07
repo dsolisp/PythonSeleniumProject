@@ -437,18 +437,10 @@ class MLTestAnalyzer:
             # Basic statistics
             report_lines.append("📊 Dataset Overview:")
             report_lines.append(f"   Total test executions: {len(df)}")
+            report_lines.append(f"   Unique tests: {df['test_name'].nunique()}")
+            report_lines.append(f"   Environments: {df['environment'].nunique()}")
             report_lines.append(
-                f"   Unique tests: {
-                    df['test_name'].nunique()}"
-            )
-            report_lines.append(
-                f"   Environments: {
-                    df['environment'].nunique()}"
-            )
-            report_lines.append(
-                f"   Date range: {
-                    df['timestamp'].min()} to {
-                    df['timestamp'].max()}"
+                f"   Date range: {df['timestamp'].min()} to {df['timestamp'].max()}"
             )
             report_lines.append("")
 

@@ -275,8 +275,7 @@ class RecoveryManager:
             True if recovery was successful, False otherwise
         """
         self.logger.info(
-            f"Executing recovery strategy: {
-                recovery_action.strategy.value}"
+            f"Executing recovery strategy: {recovery_action.strategy.value}"
         )
 
         recovery_start = datetime.now()

@@ -134,10 +134,7 @@ def execute_query_safe(
     try:
         return execute_query(conn, query, params)
     except Exception as e:
-        logger.warning(
-            f"Safe query execution failed, returning None: {
-                str(e)}"
-        )
+        logger.warning(f"Safe query execution failed, returning None: {str(e)}")
         return None
 
 

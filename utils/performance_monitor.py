@@ -358,10 +358,11 @@ def performance_test(threshold_ms: float = None, name: str = None):
             monitor.record_metric(f"{func.__name__}_execution", execution_time, "ms")
 
             if threshold_ms and execution_time > threshold_ms:
-                raise AssertionError(
-                    f"Performance threshold exceeded: {
-                        execution_time:.2f}ms > {threshold_ms}ms"
+                msg = (
+                    f"Performance threshold exceeded: "
+                    f"{execution_time:.2f}ms > {threshold_ms}ms"
                 )
+                raise AssertionError(msg)
 
             return result
 

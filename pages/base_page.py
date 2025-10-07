@@ -1002,8 +1002,7 @@ class BasePage:
 
             self.performance_data.append(performance_data)
             self.logger.info(
-                f"Operation '{operation_name}' completed in {
-                    duration:.2f}s"
+                f"Operation '{operation_name}' completed in {duration:.2f}s"
             )
 
             return result
@@ -1011,9 +1010,8 @@ class BasePage:
         except Exception as e:
             duration = time.time() - start_time
             self.logger.error(
-                f"Operation '{operation_name}' failed after {
-                    duration:.2f}s: {
-                    str(e)}"
+                f"Operation '{operation_name}' failed after "
+                f"{duration:.2f}s: {str(e)}"
             )
             raise
 
@@ -1039,10 +1037,7 @@ class BasePage:
             }
 
         except Exception as e:
-            self.logger.error(
-                f"Failed to generate performance report: {
-                    str(e)}"
-            )
+            self.logger.error(f"Failed to generate performance report: {str(e)}")
             return {"error": str(e)}
 
     def _record_interaction(

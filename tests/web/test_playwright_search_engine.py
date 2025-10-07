@@ -209,10 +209,7 @@ async def test_playwright_advanced_search():
                 github_links = [
                     link for link in links[:5] if "github.com" in link.lower()
                 ]
-                print(
-                    f"✅ Found {
-                        len(github_links)} GitHub links in top 5 results"
-                )
+                print(f"✅ Found {len(github_links)} GitHub links in top 5 results")
         else:
             print("⚠️ No results found - search engine may not support site: filter")
 

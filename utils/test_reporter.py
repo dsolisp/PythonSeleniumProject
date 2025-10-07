@@ -683,18 +683,24 @@ class AdvancedTestReporter:
         test_cases = []
 
         for result in self.test_results:
-            case_xml = f'    <testcase name="{
-                result.test_name}" time="{
-                result.duration}"'
+            case_xml = (
+                f'    <testcase name="{result.test_name}" ' f'time="{result.duration}"'
+            )
 
             if result.status == "FAILED":
-                case_xml += f'>\n      <failure message="{
-                    result.error_message or "Test failed"}">{
-                    result.stack_trace or ""}</failure>\n    </testcase>'
+                err_msg = result.error_message or "Test failed"
+                stack = result.stack_trace or ""
+                case_xml += (
+                    f'>\n      <failure message="{err_msg}">'
+                    f"{stack}</failure>\n    </testcase>"
+                )
             elif result.status == "ERROR":
-                case_xml += f'>\n      <error message="{
-                    result.error_message or "Test error"}">{
-                    result.stack_trace or ""}</error>\n    </testcase>'
+                err_msg = result.error_message or "Test error"
+                stack = result.stack_trace or ""
+                case_xml += (
+                    f'>\n      <error message="{err_msg}">'
+                    f"{stack}</error>\n    </testcase>"
+                )
             elif result.status == "SKIPPED":
                 case_xml += ">\n      <skipped/>\n    </testcase>"
             else:
