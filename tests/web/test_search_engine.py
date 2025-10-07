@@ -260,7 +260,6 @@ def test_webdriver_wait_conditions(driver):
     assert_that(final_value, equal_to("selenium"))
 
 
-# need to fix
 @pytest.mark.performance
 def test_page_interaction_timing(driver):
     search_page = SearchEnginePage(driver)
