@@ -24,7 +24,7 @@ def test_simple_google_search(driver):
 
     search_page.open_search_engine()
     search_page.enter_search_term(search_term)
-    search_page.click_search_button()
+    search_page.submit_search_with_enter()
 
     result_page.wait_for_results_page()
 
@@ -56,7 +56,7 @@ def test_sql_google_search(driver):
     assert_that(name, is_not(none()))
 
     search_page.enter_search_term(name)
-    search_page.click_search_button()
+    search_page.submit_search_with_enter()
 
     result_page.wait_for_results_page()
 
@@ -100,7 +100,7 @@ def test_google_search_with_action_chains(driver):
     else:
         print("ℹ️ No search suggestions appeared")
 
-    search_page.click_search_button()
+    search_page.submit_search_with_enter()
 
     result_page.wait_for_results_page_complete()
 
@@ -146,7 +146,7 @@ def test_database_search_with_performance_monitoring(driver):
 
     start_time = time.time()
     search_page.enter_search_term(search_term)
-    search_page.click_search_button()
+    search_page.submit_search_with_enter()
     search_execution_time = time.time() - start_time
 
     result_page.wait_for_results_page()

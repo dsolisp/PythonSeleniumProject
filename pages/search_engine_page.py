@@ -158,6 +158,16 @@ class SearchEnginePage(BasePage):
         """Click search button with enhanced features."""
         return self.click(SearchEngineLocators.SEARCH_BUTTON)
 
+    def submit_search_with_enter(self) -> bool:
+        """Submit search using Enter key (more reliable in headless mode)."""
+        from selenium.webdriver.common.keys import Keys
+
+        element = self.find_element(SearchEngineLocators.SEARCH_BOX)
+        if element:
+            element.send_keys(Keys.RETURN)
+            return True
+        return False
+
     def capture_search_input_screenshot(self, filename: str) -> str:
         """Capture screenshot of search input area."""
         element = self.find_element(SearchEngineLocators.SEARCH_BOX)
