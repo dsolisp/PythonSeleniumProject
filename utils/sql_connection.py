@@ -419,9 +419,9 @@ def validate_connection(db_file: str) -> bool:
             version = fetch_one(cursor)
 
             if version:
+                sqlite_version = version[0]
                 logger.info(
-                    f"Database connection test passed. SQLite version: {
-                        version[0]}"
+                    f"Database connection test passed. SQLite version: {sqlite_version}"
                 )
                 return True
             else:

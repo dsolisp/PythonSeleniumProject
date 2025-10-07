@@ -1,0 +1,15 @@
+[tool.black]
+line-length = 88
+target-version = ['py311']
+# Prevent Black from breaking strings aggressively
+skip-string-normalization = false
+# Preserve some formatting to avoid syntax errors
+preview = false
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]

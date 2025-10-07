@@ -19,3 +19,4 @@ custom_screenshots/
 custom_reports/
 custom_logs/
 /data/results
+.coverage

@@ -125,8 +125,8 @@ class TestReporter:
     def generate_html_report(self, filename: str = None) -> str:
         """Generate HTML format report."""
         if filename is None:
-            filename = f"test_report_{
-                datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"test_report_{timestamp}.html"
 
         html_content = self._generate_html_content()
 

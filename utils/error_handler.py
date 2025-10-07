@@ -337,12 +337,8 @@ class RecoveryManager:
                     return True
 
             except Exception as e:
-                self.logger.warning(
-                    f"Retry attempt {
-                        attempt +
-                        1} failed: {
-                        str(e)}"
-                )
+                attempt_num = attempt + 1
+                self.logger.warning(f"Retry attempt {attempt_num} failed: {str(e)}")
                 continue
 
         return False

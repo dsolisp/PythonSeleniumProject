@@ -449,11 +449,9 @@ class MLTestAnalyzer:
             if not flaky.empty:
                 report_lines.append(f"⚠️  Flaky Tests Detected: {len(flaky)}")
                 for _, test in flaky.iterrows():
-                    report_lines.append(
-                        f"   • {
-                            test['test_name']}: {
-                            test['pass_rate']:.1%} pass rate"
-                    )
+                    test_name = test["test_name"]
+                    pass_rate = test["pass_rate"]
+                    report_lines.append(f"   • {test_name}: {pass_rate:.1%} pass rate")
                 report_lines.append("")
 
             # Performance trends
