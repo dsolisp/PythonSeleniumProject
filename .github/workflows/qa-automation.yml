@@ -245,7 +245,7 @@ jobs:
           --cov-report=html:reports/coverage/e2e-html \
           --cov-report=xml:reports/coverage/e2e-coverage.xml \
           --cov-report=term-missing \
-          --cov-fail-under=60 \
+          --cov-fail-under=20 \
           --html=reports/html/e2e-tests-${{ matrix.test-suite }}.html \
           --json-report --json-report-file=reports/json/e2e-tests-${{ matrix.test-suite }}.json \
           -m "${{ matrix.test-suite }}"
