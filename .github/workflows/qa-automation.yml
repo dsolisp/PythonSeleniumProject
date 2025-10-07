@@ -1,5 +1,9 @@
 name: QA Automation CI/CD Pipeline
 
+permissions:
+  actions: write
+  contents: read
+
 # Test Strategy:
 # 1. unit-tests: Fast tests with no external dependencies (tests/unit/)
 # 2. e2e-tests: UI automation with Selenium/Playwright (tests/web/, tests/api/)
