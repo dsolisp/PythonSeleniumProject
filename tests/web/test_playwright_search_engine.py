@@ -1,3 +1,7 @@
+"""
+Playwright Search engine tests demonstrating modern browser automation.
+"""
+
 from hamcrest import (
     assert_that,
     contains_string,
@@ -6,10 +10,6 @@ from hamcrest import (
     is_,
     less_than,
 )
-
-"""
-Playwright Search engine tests demonstrating modern browser automation.
-"""
 
 import asyncio
 
