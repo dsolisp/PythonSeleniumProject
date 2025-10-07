@@ -4,7 +4,9 @@ WebDriver and Database factory classes for test automation.
 
 import logging
 import os
+import shutil
 import sqlite3
+import tempfile
 from typing import Optional, Tuple
 
 from selenium import webdriver
@@ -33,6 +35,10 @@ class WebDriverFactory:
         """Create Chrome driver with anti-detection configuration."""
         options = ChromeOptions()
 
+        # Create a unique temporary user data directory to avoid conflicts
+        temp_user_data_dir = tempfile.mkdtemp(prefix="chrome_profile_")
+        options.add_argument(f"--user-data-dir={temp_user_data_dir}")
+
         # Anti-detection options to avoid Google CAPTCHA
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
@@ -56,6 +62,9 @@ class WebDriverFactory:
 
         service = ChromeService(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
+
+        # Store the temp directory path for cleanup
+        driver._temp_user_data_dir = temp_user_data_dir
 
         # Remove webdriver property that Google detects
         driver.execute_script(
@@ -223,10 +232,21 @@ def cleanup_driver_and_database(
     driver: webdriver.Chrome, database: Optional[object]
 ) -> None:
     """Clean resource cleanup following DRY principle."""
+    temp_dir = None
     try:
         if driver:
+            # Store temp directory path before quitting
+            temp_dir = getattr(driver, "_temp_user_data_dir", None)
             driver.quit()
             logger.info("Driver closed successfully")
+
+            # Clean up temporary user data directory
+            if temp_dir and os.path.exists(temp_dir):
+                try:
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                    logger.info(f"Cleaned up temp user data dir: {temp_dir}")
+                except Exception as e:
+                    logger.warning(f"Could not remove temp directory {temp_dir}: {e}")
     except Exception as e:
         logger.error(f"Error closing driver: {e}")
 

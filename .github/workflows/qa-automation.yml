@@ -168,6 +168,10 @@ jobs:
         pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Install Playwright browsers
+      run: |
+        playwright install --with-deps chromium firefox
+    
     - name: Create test directories
       run: |
         mkdir -p reports/coverage reports/html reports/json logs screenshots
@@ -234,6 +238,10 @@ jobs:
         pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Install Playwright browsers
+      run: |
+        playwright install --with-deps chromium firefox
+    
     - name: Create test directories
       run: |
         mkdir -p reports/allure-results reports/html reports/json logs screenshots
@@ -288,6 +296,10 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install -r requirements.txt
+    
+    - name: Install Playwright browsers
+      run: |
+        playwright install --with-deps chromium
     
     - name: Create test directories
       run: |
