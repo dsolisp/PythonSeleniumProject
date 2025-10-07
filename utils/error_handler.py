@@ -404,8 +404,8 @@ class RecoveryManager:
             # Close current driver
             try:
                 driver.quit()
-            except BaseException:
-                pass
+            except Exception as e:
+                self.logger.error(f"Exception during driver.quit(): {str(e)}")
 
             # Create new driver
             new_driver = self.driver_factory.create_driver()
