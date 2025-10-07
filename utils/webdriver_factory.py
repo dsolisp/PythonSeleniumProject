@@ -37,21 +37,24 @@ class WebDriverFactory:
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option(
+            "excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
 
         # User agent to appear more like a real browser
         user_agent = (
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
-        )
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/119.0.0.0 Safari/537.36")
         options.add_argument(f"--user-agent={user_agent}")
 
         if headless:
             options.add_argument("--headless=new")  # Use new headless mode
 
         if window_size:
-            options.add_argument(f"--window-size={window_size[0]},{window_size[1]}")
+            options.add_argument(
+                f"--window-size={window_size[0]},{window_size[1]}"
+            )
 
         service = ChromeService(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
@@ -110,7 +113,8 @@ class WebDriverFactory:
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option(
+            "excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
 
         # User agent to appear more like a real browser
@@ -125,7 +129,9 @@ class WebDriverFactory:
             options.add_argument("--headless=new")
 
         if window_size:
-            options.add_argument(f"--window-size={window_size[0]},{window_size[1]}")
+            options.add_argument(
+                f"--window-size={window_size[0]},{window_size[1]}"
+            )
 
         service = EdgeService(EdgeChromiumDriverManager().install())
         driver = webdriver.Edge(service=service, options=options)

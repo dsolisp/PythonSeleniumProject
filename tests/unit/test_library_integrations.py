@@ -87,7 +87,13 @@ class TestPandasIntegration:
         reporter.start_test_suite("csv_test", "test", "chrome")
 
         # Add test result
-        result = Result("test_csv", "passed", 1.2, datetime.now(), "test", "chrome")
+        result = Result(
+            "test_csv",
+            "passed",
+            1.2,
+            datetime.now(),
+            "test",
+            "chrome")
         reporter.add_test_result(result)
 
         # Export to CSV
@@ -115,8 +121,12 @@ class TestPandasIntegration:
         durations = [1.0, 2.0, 3.0, 10.0, 1.5]  # 10.0 should be an outlier
         for i, duration in enumerate(durations):
             result = Result(
-                f"test_{i}", "passed", duration, datetime.now(), "test", "chrome"
-            )
+                f"test_{i}",
+                "passed",
+                duration,
+                datetime.now(),
+                "test",
+                "chrome")
             reporter.add_test_result(result)
 
         # Generate analytics
@@ -222,13 +232,19 @@ class TestPsutilIntegration:
             any_of(instance_of(int), instance_of(float)),
         )
         assert_that(
-            memory_data["memory_percent"], any_of(instance_of(int), instance_of(float))
-        )
+            memory_data["memory_percent"],
+            any_of(
+                instance_of(int),
+                instance_of(float)))
         assert_that(
-            memory_data["cpu_percent"], any_of(instance_of(int), instance_of(float))
-        )
+            memory_data["cpu_percent"],
+            any_of(
+                instance_of(int),
+                instance_of(float)))
         assert_that(memory_data["current_memory_mb"], greater_than(0))
-        assert_that(0, less_than_or_equal_to(memory_data["memory_percent"] <= 100))
+        assert_that(
+            0, less_than_or_equal_to(
+                memory_data["memory_percent"] <= 100))
 
     def test_system_info_collection(self):
         """Test system information collection."""
@@ -286,7 +302,8 @@ class TestTenacityIntegration:
 
         # Configure retry
         retry_config = Retrying(
-            stop=stop_after_attempt(3), wait=wait_fixed(0.1)  # Fast retry for testing
+            # Fast retry for testing
+            stop=stop_after_attempt(3), wait=wait_fixed(0.1)
         )
 
         # Execute with retry
@@ -313,13 +330,15 @@ class TestJinja2Integration:
         )
 
         assert_that(rendered, contains_string("<h1>Test Report</h1>"))
-        assert_that(rendered, contains_string("<p>This is a test description</p>"))
+        assert_that(rendered, contains_string(
+            "<p>This is a test description</p>"))
 
     def test_html_report_template(self):
         """Test HTML report template functionality."""
         from jinja2 import Template
 
-        # Create a more complex template similar to what would be used for reports
+        # Create a more complex template similar to what would be used for
+        # reports
         html_template = Template(
             """
         <!DOCTYPE html>
@@ -370,9 +389,8 @@ class TestJinja2Integration:
 
         # Verify rendered content
         assert_that(rendered, contains_string("<!DOCTYPE html>"))
-        assert_that(
-            rendered, contains_string("<title>Integration Tests - Test Report</title>")
-        )
+        assert_that(rendered, contains_string(
+            "<title>Integration Tests - Test Report</title>"))
         assert_that(rendered, contains_string("Environment: test"))
         assert_that(rendered, contains_string("Browser: chrome"))
         assert_that(rendered, contains_string("Total Tests: 3"))

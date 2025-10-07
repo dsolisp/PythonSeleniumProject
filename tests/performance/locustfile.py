@@ -58,7 +58,9 @@ class APILoadTestUser(HttpUser):
                 response.success()
                 self.logger.debug("GET request successful", status_code=200)
             else:
-                response.failure(f"Unexpected status code: {response.status_code}")
+                response.failure(
+                    f"Unexpected status code: {
+                        response.status_code}")
                 self.logger.warning(
                     "GET request failed", status_code=response.status_code
                 )
@@ -94,7 +96,12 @@ class APILoadTestUser(HttpUser):
     @task(1)  # Weight 1 - less common operation
     def test_api_search(self):
         """Test search API performance."""
-        search_terms = ["selenium", "python", "testing", "automation", "performance"]
+        search_terms = [
+            "selenium",
+            "python",
+            "testing",
+            "automation",
+            "performance"]
         search_term = random.choice(search_terms)
 
         with self.client.get(
@@ -115,7 +122,8 @@ class APILoadTestUser(HttpUser):
                         self.logger.warning("Search response invalid format")
                 except Exception as e:
                     response.failure(f"JSON parsing failed: {e}")
-                    self.logger.error("Search JSON parsing failed", error=str(e))
+                    self.logger.error(
+                        "Search JSON parsing failed", error=str(e))
             else:
                 response.failure(f"Search failed: {response.status_code}")
 
@@ -189,8 +197,13 @@ class WebUILoadTestUser(HttpUser):
 # Locust event handlers for advanced monitoring
 @events.request.add_listener
 def request_handler(
-    request_type, name, response_time, response_length, exception, context, **kwargs
-):
+        request_type,
+        name,
+        response_time,
+        response_length,
+        exception,
+        context,
+        **kwargs):
     """Log all requests for detailed monitoring."""
     logger = get_logger("LoadTest.Events")
 

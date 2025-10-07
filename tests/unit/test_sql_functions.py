@@ -86,7 +86,8 @@ class TestQueryExecutionFunctions:
         mock_cursor = Mock()
         mock_conn.cursor.return_value = mock_cursor
 
-        result = execute_query(mock_conn, "SELECT * FROM users WHERE id = ?", (1,))
+        result = execute_query(
+            mock_conn, "SELECT * FROM users WHERE id = ?", (1,))
 
         assert_that(result, equal_to(mock_cursor))
         mock_cursor.execute.assert_called_once_with(
@@ -208,7 +209,9 @@ class TestDataModificationFunctions:
         mock_cursor.lastrowid = 123
 
         with patch("utils.sql_connection.execute_query", return_value=mock_cursor):
-            result = insert_data(mock_conn, "users", {"name": "John", "age": 30})
+            result = insert_data(
+                mock_conn, "users", {
+                    "name": "John", "age": 30})
 
         assert_that(result, equal_to(123))
         mock_conn.commit.assert_called_once()
@@ -232,7 +235,9 @@ class TestDataModificationFunctions:
         mock_cursor.rowcount = 2
 
         with patch("utils.sql_connection.execute_query", return_value=mock_cursor):
-            result = update_data(mock_conn, "users", {"name": "Jane"}, "id = ?", (1,))
+            result = update_data(
+                mock_conn, "users", {
+                    "name": "Jane"}, "id = ?", (1,))
 
         assert_that(result, equal_to(2))
         mock_conn.commit.assert_called_once()
@@ -244,7 +249,9 @@ class TestDataModificationFunctions:
         with patch(
             "utils.sql_connection.execute_query", side_effect=Exception("Update failed")
         ):
-            result = update_data(mock_conn, "users", {"name": "Jane"}, "id = ?", (1,))
+            result = update_data(
+                mock_conn, "users", {
+                    "name": "Jane"}, "id = ?", (1,))
 
         assert_that(result, equal_to(0))
         mock_conn.rollback.assert_called_once()
@@ -341,7 +348,8 @@ class TestValidationFunctions:
     @patch("utils.sql_connection.get_connection_context")
     @patch("utils.sql_connection.execute_query")
     @patch("utils.sql_connection.fetch_one")
-    def test_validate_connection_success(self, mock_fetch, mock_execute, mock_context):
+    def test_validate_connection_success(
+            self, mock_fetch, mock_execute, mock_context):
         """Test validate_connection returns True on success."""
         mock_conn = Mock()
         mock_context.return_value.__enter__.return_value = mock_conn

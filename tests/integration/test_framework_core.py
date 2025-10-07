@@ -44,7 +44,8 @@ def test_database_factory():
     db = DatabaseFactory.create_database_connection()
 
     if db:
-        assert_that(db, is_(not_none())), "Database connection should be created"
+        assert_that(db, is_(not_none())
+                    ), "Database connection should be created"
         db.close()
     else:
         pytest.skip("No database available for testing")
@@ -84,7 +85,8 @@ def test_base_page_functionality(driver):
         title_text, contains_string("Test Framework")
     ), f"Should get correct text, got: {title_text}"
 
-    is_visible = base_page.is_element_visible(TestFrameworkLocators.TEST_INPUT_1)
+    is_visible = base_page.is_element_visible(
+        TestFrameworkLocators.TEST_INPUT_1)
     assert_that(is_visible, is_(True)), "Input element should be visible"
 
     type_success = base_page.send_keys(
@@ -96,7 +98,8 @@ def test_base_page_functionality(driver):
     assert_that(click_success, is_(True)), "Should be able to click button"
 
     screenshot_path = base_page.take_screenshot("framework_test.png")
-    assert_that(screenshot_path, not_none()), "Should be able to take screenshot"
+    assert_that(screenshot_path, not_none()
+                ), "Should be able to take screenshot"
 
     print("✅ All BasePage functionality tests passed!")
 

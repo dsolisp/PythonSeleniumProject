@@ -96,8 +96,7 @@ class TestPageObjectIntegration:
 
         # Verify data was inserted
         fetched_record = base_page.execute_query(
-            "SELECT * FROM test_results WHERE test_name = ?", ("integration_test",)
-        )
+            "SELECT * FROM test_results WHERE test_name = ?", ("integration_test",))
         assert_that(fetched_record, is_(not_none()))
         assert_that(len(fetched_record), greater_than(0))
 
@@ -205,7 +204,8 @@ class TestPageObjectIntegration:
         # Test finding elements using locators
         search_elements = page.find_elements(SearchEngineLocators.SEARCH_BOX)
 
-        # Google should have at least one search box (Allow for 0 in case of changes)
+        # Google should have at least one search box (Allow for 0 in case of
+        # changes)
         assert_that(len(search_elements), greater_than_or_equal_to(0))
 
         # Test that page loaded successfully
@@ -228,8 +228,8 @@ class TestPageObjectIntegration:
         # Result may vary, but shouldn't raise unhandled exceptions
         # Screenshot path should be either None or a valid string
         assert_that(
-            screenshot_path is None or isinstance(screenshot_path, str), is_(True)
-        )
+            screenshot_path is None or isinstance(
+                screenshot_path, str), is_(True))
 
     def test_multiple_page_objects_integration(self, chrome_driver):
         """Test integration between multiple page objects."""
@@ -244,10 +244,16 @@ class TestPageObjectIntegration:
         result_page.navigate_to(settings.GOOGLE_SEARCH_URL)
         result_title = result_page.get_title()
 
-        # Both operations should work - titles may vary based on Google's current layout
-        assert_that(search_title is not None and len(search_title), greater_than(0))
-        assert_that(result_title is not None and len(result_title), greater_than(0))
-        # Accept various Google page titles (Google, google.com, or test-related)
+        # Both operations should work - titles may vary based on Google's
+        # current layout
+        assert_that(
+            search_title is not None and len(search_title),
+            greater_than(0))
+        assert_that(
+            result_title is not None and len(result_title),
+            greater_than(0))
+        # Accept various Google page titles (Google, google.com, or
+        # test-related)
         search_valid = any(
             term in search_title.lower() for term in ["google", "search"]
         )
@@ -313,7 +319,8 @@ class TestConfigurationIntegration:
 
             page = BasePage(mock_driver, conn)
 
-            # Test that page object can perform database operations (core functionality)
+            # Test that page object can perform database operations (core
+            # functionality)
             assert_that(page.driver, equal_to(mock_driver))
             assert_that(page.database, equal_to(conn))
 
@@ -366,7 +373,8 @@ class TestEndToEndWorkflow:
 
             # Record test start
             start_query = "INSERT INTO test_results (test_name, result) VALUES (?, ?)"
-            search_page.execute_query(start_query, ("end_to_end_workflow", "started"))
+            search_page.execute_query(
+                start_query, ("end_to_end_workflow", "started"))
 
             # Navigate to search page
             search_page.navigate_to(settings.BASE_URL)

@@ -126,7 +126,8 @@ class BasePage:
             return element
         except (TimeoutException, NoSuchElementException) as e:
             if ADVANCED_FEATURES_AVAILABLE:
-                self._record_interaction("find_element", locator, "FAILED", str(e))
+                self._record_interaction(
+                    "find_element", locator, "FAILED", str(e))
                 self._end_performance_tracking("find_element")
 
                 # Try error recovery
@@ -237,7 +238,8 @@ class BasePage:
                 except ElementClickInterceptedException:
                     if force_click:
                         # Use JavaScript click as fallback
-                        self.driver.execute_script("arguments[0].click();", element)
+                        self.driver.execute_script(
+                            "arguments[0].click();", element)
                         if ADVANCED_FEATURES_AVAILABLE:
                             self._record_interaction(
                                 "click", locator, "SUCCESS", "Used JS click"
@@ -264,7 +266,8 @@ class BasePage:
                     e, self.driver, self.test_name
                 ):
                     # Retry after recovery
-                    return self.click(locator, timeout, scroll_to_element, force_click)
+                    return self.click(
+                        locator, timeout, scroll_to_element, force_click)
 
             return False
 
@@ -334,7 +337,8 @@ class BasePage:
 
         except Exception as e:
             if ADVANCED_FEATURES_AVAILABLE:
-                self._record_interaction("send_keys", locator, "FAILED", str(e))
+                self._record_interaction(
+                    "send_keys", locator, "FAILED", str(e))
                 self._end_performance_tracking("send_keys")
             return False
 
@@ -379,7 +383,8 @@ class BasePage:
                 return ""
         return ""
 
-    def is_element_visible(self, locator: Tuple[str, str], timeout: int = 1) -> bool:
+    def is_element_visible(
+            self, locator: Tuple[str, str], timeout: int = 1) -> bool:
         """
         Check if element is visible.
 
@@ -558,7 +563,8 @@ class BasePage:
         except WebDriverException:
             return None
 
-    def scroll_to_element(self, locator: Tuple[str, str], timeout: int = None) -> bool:
+    def scroll_to_element(
+            self, locator: Tuple[str, str], timeout: int = None) -> bool:
         """
         Scroll element into view.
 
@@ -580,7 +586,10 @@ class BasePage:
 
     # === DATABASE METHODS (if database connection provided) ===
 
-    def execute_query(self, query: str, parameters: tuple = None) -> List[dict]:
+    def execute_query(
+            self,
+            query: str,
+            parameters: tuple = None) -> List[dict]:
         """
         Execute database query if database connection available.
 
@@ -646,7 +655,9 @@ class BasePage:
             "visible": EC.visibility_of_element_located(locator),
             "clickable": EC.element_to_be_clickable(locator),
             "invisible": EC.invisibility_of_element_located(locator),
-            "text_present": lambda driver: len(driver.find_element(*locator).text) > 0,
+            "text_present": lambda driver: len(
+                driver.find_element(
+                    *locator).text) > 0,
         }
 
         if condition not in condition_map:
@@ -724,7 +735,8 @@ class BasePage:
             # Content check
             text_content = element.text
             value_content = element.get_attribute("value")
-            health_report["checks"]["has_content"] = bool(text_content or value_content)
+            health_report["checks"]["has_content"] = bool(
+                text_content or value_content)
 
             # Stale element check
             try:
@@ -732,7 +744,8 @@ class BasePage:
                 health_report["checks"]["not_stale"] = True
             except StaleElementReferenceException:
                 health_report["checks"]["not_stale"] = False
-                health_report["recommendations"].append("Element reference is stale")
+                health_report["recommendations"].append(
+                    "Element reference is stale")
 
             # Calculate overall health
             passed_checks = sum(
@@ -770,7 +783,8 @@ class BasePage:
         if not ADVANCED_FEATURES_AVAILABLE or not self.test_data_manager:
             return {}
 
-        scenarios = self.test_data_manager.get_search_scenarios(self.environment)
+        scenarios = self.test_data_manager.get_search_scenarios(
+            self.environment)
 
         for scenario in scenarios:
             if scenario.get("name") == scenario_name:
@@ -791,7 +805,8 @@ class BasePage:
         if not ADVANCED_FEATURES_AVAILABLE or not self.test_data_manager:
             return {}
 
-        users = self.test_data_manager.get_user_accounts(role, self.environment)
+        users = self.test_data_manager.get_user_accounts(
+            role, self.environment)
 
         if not users:
             # Generate dynamic user if none found
@@ -831,9 +846,8 @@ class BasePage:
 
         # Calculate overall performance score
         if report["action_metrics"]:
-            avg_times = [
-                metrics["average_time"] for metrics in report["action_metrics"].values()
-            ]
+            avg_times = [metrics["average_time"]
+                         for metrics in report["action_metrics"].values()]
             overall_avg = sum(avg_times) / len(avg_times)
 
             if overall_avg < 1.0:
@@ -956,10 +970,10 @@ class BasePage:
             return {"config": "YAML configuration not available"}
 
         try:
-            config = self.data_manager.load_yaml_config(config_name, environment)
+            config = self.data_manager.load_yaml_config(
+                config_name, environment)
             self.logger.info(
-                f"Loaded configuration: {config_name} for environment: {environment}"
-            )
+                f"Loaded configuration: {config_name} for environment: {environment}")
             return config
         except Exception as e:
             self.logger.warning(f"Failed to load configuration: {str(e)}")
@@ -1028,12 +1042,15 @@ class BasePage:
         try:
             # Use reporter's pandas analytics for insights
             insights = self.test_reporter.get_performance_insights()
-            csv_file = self.test_reporter.export_to_csv("performance_report.csv")
+            csv_file = self.test_reporter.export_to_csv(
+                "performance_report.csv")
 
             return {
-                "total_operations": len(self.performance_data),
-                "avg_duration": sum(d["duration"] for d in self.performance_data)
-                / len(self.performance_data),
+                "total_operations": len(
+                    self.performance_data),
+                "avg_duration": sum(
+                    d["duration"] for d in self.performance_data) / len(
+                    self.performance_data),
                 "detailed_insights": insights,
                 "data_exported": csv_file,
             }

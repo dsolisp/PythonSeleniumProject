@@ -5,7 +5,6 @@ Controlled by settings.ENABLE_ALLURE flag.
 
 import json
 import time
-from typing import Optional
 
 import pytest
 import requests
@@ -14,14 +13,11 @@ from hamcrest import (
     contains_string,
     equal_to,
     greater_than,
-    has_item,
     has_key,
-    has_length,
     instance_of,
     is_,
     is_in,
     less_than,
-    not_none,
 )
 
 from config.settings import settings
@@ -141,12 +137,17 @@ class TestUnifiedAPI:
             ):
                 self.test_logger.log_step("Session cleanup", "close_session")
 
-        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(self, "test_logger"):
+        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(
+                self, "test_logger"):
             self.test_logger.end_test("COMPLETED")
 
-    def _log_api_response(self, response: requests.Response, operation: str) -> None:
+    def _log_api_response(
+            self,
+            response: requests.Response,
+            operation: str) -> None:
         """Log API response with optional Allure attachment."""
-        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(self, "test_logger"):
+        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(
+                self, "test_logger"):
             self.test_logger.api_request(
                 method=response.request.method,
                 url=response.url,
@@ -158,9 +159,11 @@ class TestUnifiedAPI:
                 f"Method: {response.request.method}\n"
                 f"URL: {response.url}\n"
                 f"Status Code: {response.status_code}\n"
-                f"Response Time: {response.elapsed.total_seconds() * 1000:.2f}ms\n"
+                f"Response Time: "
+                f"{response.elapsed.total_seconds() * 1000:.2f}ms\n"
                 f"Headers: {dict(response.headers)}\n"
-                f"Body: {response.text[:500]}{'...' if len(response.text) > 500 else ''}",
+                f"Body: {response.text[:500]}"
+                f"{'...' if len(response.text) > 500 else ''}",
                 name=f"{operation} - API Response Details",
                 attachment_type=allure.attachment_type.TEXT,
             )
@@ -271,7 +274,9 @@ class TestUnifiedAPI:
                     expected="list",
                     actual=type(posts).__name__,
                 )
-            assert_that(posts, instance_of(list)), f"Expected list, got {type(posts)}"
+            assert_that(
+                posts, instance_of(list)
+            ), f"Expected list, got {type(posts)}"
 
             # Verify list is not empty
             if (
@@ -285,7 +290,9 @@ class TestUnifiedAPI:
                     expected=">0 posts",
                     actual=len(posts),
                 )
-            assert_that(len(posts), greater_than(0)), "Posts list should not be empty"
+            assert_that(
+                len(posts), greater_than(0)
+            ), "Posts list should not be empty"
 
             # Attach posts count to Allure
             if settings.ENABLE_ALLURE and ALLURE_AVAILABLE:
@@ -323,10 +330,11 @@ class TestUnifiedAPI:
                     attachment_type=allure.attachment_type.JSON,
                 )
 
-        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(self, "test_logger"):
+        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(
+                self, "test_logger"):
             self.test_logger.end_test("PASS")
 
-        print(f"✅ GET /posts test completed successfully")
+        print("✅ GET /posts test completed successfully")
         print(f"Retrieved {len(posts)} posts")
 
     @pytest.mark.api
@@ -381,9 +389,12 @@ class TestUnifiedAPI:
             ), f"Expected post ID {post_id}, got {post['id']}"
 
             # Verify data types
-            assert_that(post["title"], instance_of(str)), "Title should be string"
-            assert_that(post["body"], instance_of(str)), "Body should be string"
-            assert_that(post["userId"], instance_of(int)), "UserId should be integer"
+            assert_that(post["title"], instance_of(
+                str)), "Title should be string"
+            assert_that(post["body"], instance_of(
+                str)), "Body should be string"
+            assert_that(post["userId"], instance_of(
+                int)), "UserId should be integer"
 
             if settings.ENABLE_ALLURE and ALLURE_AVAILABLE:
                 allure.attach(
@@ -392,7 +403,8 @@ class TestUnifiedAPI:
                     attachment_type=allure.attachment_type.JSON,
                 )
 
-        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(self, "test_logger"):
+        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(
+                self, "test_logger"):
             self.test_logger.end_test("PASS")
 
         print(f"✅ GET /posts/{post_id} test completed successfully")
@@ -425,11 +437,13 @@ class TestUnifiedAPI:
                 and ALLURE_AVAILABLE
                 and hasattr(self, "test_logger")
             ):
-                self.test_logger.log_step("Request preparation", "create_payload")
+                self.test_logger.log_step(
+                    "Request preparation", "create_payload")
 
         with self._step("Send POST request to create new post"):
             start_time = time.time()
-            response = self.session.post(f"{self.base_url}/posts", json=new_post_data)
+            response = self.session.post(
+                f"{self.base_url}/posts", json=new_post_data)
             response_time = time.time() - start_time
             self._log_api_response(response, "POST Create Post")
 
@@ -453,7 +467,8 @@ class TestUnifiedAPI:
             created_post = response.json()
 
             # Verify the created post has an ID
-            assert_that(created_post, has_key("id")), "Created post should have an ID"
+            assert_that(created_post, has_key("id")
+                        ), "Created post should have an ID"
             if (
                 settings.ENABLE_ALLURE
                 and ALLURE_AVAILABLE
@@ -490,7 +505,8 @@ class TestUnifiedAPI:
                     attachment_type=allure.attachment_type.JSON,
                 )
 
-        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(self, "test_logger"):
+        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(
+                self, "test_logger"):
             self.test_logger.end_test("PASS")
 
         print(f"✅ Created post with ID: {created_post['id']}")
@@ -508,8 +524,10 @@ class TestUnifiedAPI:
         invalid_post_id = 99999
 
         with self._step(f"Request non-existent post ID {invalid_post_id}"):
-            response = self.session.get(f"{self.base_url}/posts/{invalid_post_id}")
-            self._log_api_response(response, f"GET Invalid Post {invalid_post_id}")
+            response = self.session.get(
+                f"{self.base_url}/posts/{invalid_post_id}")
+            self._log_api_response(
+                response, f"GET Invalid Post {invalid_post_id}")
 
         with self._step("Verify 404 error response"):
             if (
@@ -546,7 +564,8 @@ class TestUnifiedAPI:
                             attachment_type=allure.attachment_type.TEXT,
                         )
 
-        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(self, "test_logger"):
+        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(
+                self, "test_logger"):
             self.test_logger.end_test("PASS")
 
         print("✅ 404 error handling works correctly")
@@ -581,7 +600,7 @@ class TestUnifiedAPI:
         ):
             for i in range(num_requests):
                 start_time = time.time()
-                response = self.session.get(f"{self.base_url}/posts/{i+1}")
+                response = self.session.get(f"{self.base_url}/posts/{i + 1}")
                 response_time = (time.time() - start_time) * 1000
 
                 performance_data.append(
@@ -598,11 +617,12 @@ class TestUnifiedAPI:
                     and hasattr(self, "test_logger")
                 ):
                     self.test_logger.performance_metric(
-                        f"api_request_{i+1}_response_time", response_time, "ms"
+                        f"api_request_{i + 1}_response_time", response_time, "ms"
                     )
 
         with self._step("Analyze performance metrics"):
-            response_times = [data["response_time_ms"] for data in performance_data]
+            response_times = [data["response_time_ms"]
+                              for data in performance_data]
             avg_response_time = sum(response_times) / len(response_times)
             max_recorded_time = max(response_times)
             min_recorded_time = min(response_times)
@@ -655,8 +675,9 @@ class TestUnifiedAPI:
                 all(data["status_code"] == 200 for data in performance_data), is_(True)
             ), "Some requests failed"
 
-        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(self, "test_logger"):
+        if settings.ENABLE_ALLURE and ALLURE_AVAILABLE and hasattr(
+                self, "test_logger"):
             self.test_logger.end_test("PASS")
 
-        print(f"✅ Performance test completed")
-        print(f"Average response time: {avg_response_time/1000:.2f}s")
+        print("✅ Performance test completed")
+        print(f"Average response time: {avg_response_time / 1000:.2f}s")

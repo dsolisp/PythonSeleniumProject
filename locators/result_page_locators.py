@@ -11,7 +11,9 @@ class ResultPageLocators:
 
     # Results container and lists
     RESULTS_CONTAINER = (By.ID, "react-layout")  # Main results container
-    RESULT_ITEMS = (By.CSS_SELECTOR, "article[data-testid='result']")  # Result items
+    RESULT_ITEMS = (
+        By.CSS_SELECTOR,
+        "article[data-testid='result']")  # Result items
     RESULT_TITLES = (By.CSS_SELECTOR, "article h2")  # Result titles
     RESULT_LINKS = (By.CSS_SELECTOR, "article h2 a")  # Result links
     RESULT_DESCRIPTIONS = (

@@ -19,7 +19,8 @@ class TestRegressionProtection:
         try:
             pass
 
-            assert_that(True, is_(True)), "All core modules imported successfully"
+            assert_that(
+                True, is_(True)), "All core modules imported successfully"
         except ImportError as e:
             pytest.fail(f"Core module import failed: {e}")
 
@@ -86,8 +87,10 @@ class TestRegressionProtection:
     def test_pytest_configuration(self):
         """Test that pytest configuration exists."""
         pytest_ini_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "pytest.ini"
-        )
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(__file__))),
+            "pytest.ini")
         assert_that(
             os.path.exists(pytest_ini_path), is_(True)
         ), "pytest.ini configuration file not found"

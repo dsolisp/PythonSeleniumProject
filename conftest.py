@@ -20,7 +20,10 @@ def pytest_addoption(parser):
         default="chrome",
         help="Browser to use for Selenium tests",
     )
-    parser.addoption("--headless", action="store_true", help="Run in headless mode")
+    parser.addoption(
+        "--headless",
+        action="store_true",
+        help="Run in headless mode")
 
 
 @pytest.fixture(scope="session")

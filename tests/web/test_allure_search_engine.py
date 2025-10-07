@@ -30,8 +30,9 @@ class TestAllureGoogleSearch:
     def setup_method(self, method):
         self.test_logger = get_test_logger(method.__name__)
         self.test_logger.start_test(
-            browser="chrome", test_suite="Google Search Allure", framework="Selenium"
-        )
+            browser="chrome",
+            test_suite="Google Search Allure",
+            framework="Selenium")
 
     def teardown_method(self):
         if hasattr(self, "driver") and self.driver:
@@ -153,7 +154,8 @@ class TestAllureGoogleSearch:
             self.driver = factory.create_chrome_driver()
             search_page = SearchEnginePage(self.driver)
             search_page.open()
-            self.test_logger.log_step("Browser setup", "navigate_to_duckduckgo")
+            self.test_logger.log_step(
+                "Browser setup", "navigate_to_duckduckgo")
 
         search_terms = settings.SEARCH_TERMS_LIST
 
@@ -161,7 +163,8 @@ class TestAllureGoogleSearch:
             with allure.step(f"Search {i}: '{term}'"):
                 if i > 1:
                     search_page.clear_search()
-                    self.test_logger.browser_action("clear", element="search_input")
+                    self.test_logger.browser_action(
+                        "clear", element="search_input")
 
                 search_page.search(term)
                 self.test_logger.browser_action(
@@ -289,7 +292,8 @@ class TestAllureGoogleSearch:
                 current_url = self.driver.current_url
                 page_title = self.driver.title
 
-                self.test_logger.log_step("Empty search behavior", "capture_response")
+                self.test_logger.log_step(
+                    "Empty search behavior", "capture_response")
 
                 allure.attach(
                     f"URL after empty search: {current_url}\nPage title: {page_title}",

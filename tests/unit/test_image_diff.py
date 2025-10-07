@@ -21,7 +21,11 @@ class TestImageDiffHandler:
     @patch("utils.diff_handler.Image.open")
     @patch("utils.diff_handler.Image.new")
     @patch("utils.diff_handler.pixelmatch")
-    def test_compare_images_success(self, mock_pixelmatch, mock_new, mock_open):
+    def test_compare_images_success(
+            self,
+            mock_pixelmatch,
+            mock_new,
+            mock_open):
         """Test successful image comparison."""
         # Setup mocks
         mock_img1 = Mock()
@@ -47,7 +51,8 @@ class TestImageDiffHandler:
     @patch("utils.diff_handler.Image.open")
     @patch("utils.diff_handler.Image.new")
     @patch("utils.diff_handler.pixelmatch")
-    def test_compare_images_value_error(self, mock_pixelmatch, mock_new, mock_open):
+    def test_compare_images_value_error(
+            self, mock_pixelmatch, mock_new, mock_open):
         """Test compare_images handles ValueError from pixelmatch."""
         # Setup mocks
         mock_img1 = Mock()
@@ -79,7 +84,8 @@ class TestImageDiffHandler:
     @patch("utils.diff_handler.Image.open")
     @patch("utils.diff_handler.Image.new")
     @patch("utils.diff_handler.pixelmatch")
-    def test_compare_images_save_error(self, mock_pixelmatch, mock_new, mock_open):
+    def test_compare_images_save_error(
+            self, mock_pixelmatch, mock_new, mock_open):
         """Test compare_images handles save error."""
         # Setup mocks
         mock_img1 = Mock()
@@ -98,7 +104,8 @@ class TestImageDiffHandler:
     @patch("utils.diff_handler.Image.open")
     @patch("utils.diff_handler.Image.new")
     @patch("utils.diff_handler.pixelmatch")
-    def test_compare_images_zero_mismatch(self, mock_pixelmatch, mock_new, mock_open):
+    def test_compare_images_zero_mismatch(
+            self, mock_pixelmatch, mock_new, mock_open):
         """Test compare_images when images are identical."""
         # Setup mocks
         mock_img1 = Mock()
@@ -110,7 +117,10 @@ class TestImageDiffHandler:
         mock_new.return_value = mock_img_diff
         mock_pixelmatch.return_value = 0  # No differences
 
-        result = compare_images("identical1.png", "identical2.png", "no_diff.png")
+        result = compare_images(
+            "identical1.png",
+            "identical2.png",
+            "no_diff.png")
 
         assert_that(result, equal_to(0))
         mock_new.assert_called_once_with("RGBA", (200, 150))
@@ -118,7 +128,8 @@ class TestImageDiffHandler:
     @patch("utils.diff_handler.Image.open")
     @patch("utils.diff_handler.Image.new")
     @patch("utils.diff_handler.pixelmatch")
-    def test_compare_images_large_mismatch(self, mock_pixelmatch, mock_new, mock_open):
+    def test_compare_images_large_mismatch(
+            self, mock_pixelmatch, mock_new, mock_open):
         """Test compare_images with large number of mismatched pixels."""
         # Setup mocks
         mock_img1 = Mock()

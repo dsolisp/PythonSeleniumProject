@@ -29,7 +29,7 @@ from pathlib import Path
 
 def run_command(command, description):
     """Run a command and handle errors."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"🧪 {description}")
     print("=" * 60)
 
@@ -38,10 +38,11 @@ def run_command(command, description):
         # nosec B603 - Command constructed from trusted internal sources
         if isinstance(command, str):
             import shlex
+
             command_list = shlex.split(command)
         else:
             command_list = command
-            
+
         result = subprocess.run(
             command_list,
             shell=False,  # Security: Avoid shell injection
@@ -107,7 +108,7 @@ def export_test_results(test_type: str, success: bool, duration: float):
 
 def run_ml_analysis():
     """Run ML-powered test analysis on historical data."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("🤖 Running ML-Powered Test Analysis")
     print("=" * 60)
 
@@ -192,19 +193,23 @@ Test Counts:
         help="Type of tests to run (default: regression)",
     )
     parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Run tests with verbose output"
-    )
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Run tests with verbose output")
     parser.add_argument(
-        "--coverage", action="store_true", help="Run tests with coverage report"
-    )
+        "--coverage",
+        action="store_true",
+        help="Run tests with coverage report")
     parser.add_argument(
         "--no-export",
         action="store_true",
         help="Skip test result export and ML analysis",
     )
     parser.add_argument(
-        "--no-ml", action="store_true", help="Skip ML analysis (still exports results)"
-    )
+        "--no-ml",
+        action="store_true",
+        help="Skip ML analysis (still exports results)")
 
     args = parser.parse_args()
 
@@ -235,7 +240,8 @@ Test Counts:
         # Run integration tests (19 tests)
         success_result, _ = run_command(
             f"{base_cmd} tests/integration/",
-            "Integration Tests (19 tests: framework core, page integration, image diff)",
+            "Integration Tests (19 tests: framework core, "
+            "page integration, image diff)",
         )
         success &= success_result
         test_runs.append(("integration", success_result))
@@ -253,7 +259,8 @@ Test Counts:
         # Run API tests (5 tests with conditional Allure)
         success_result, _ = run_command(
             f"{base_cmd} tests/api/test_api.py",
-            "API Tests (5 tests: GET, POST, performance with conditional Allure)",
+            "API Tests (5 tests: GET, POST, performance "
+            "with conditional Allure)",
         )
         success &= success_result
         test_runs.append(("api", success_result))
@@ -282,17 +289,21 @@ Test Counts:
         print("   This will take several minutes...\n")
 
         for test_type, cmd, desc in [
-            ("api", f"{base_cmd} tests/api/test_api.py", "API Tests (5 tests)"),
-            ("unit", f"{base_cmd} tests/unit/ --maxfail=10", "Unit Tests (229 tests)"),
+            ("api", f"{base_cmd} tests/api/test_api.py", "API Tests (5)"),
+            (
+                "unit",
+                f"{base_cmd} tests/unit/ --maxfail=10",
+                "Unit Tests (229)",
+            ),
             (
                 "integration",
                 f"{base_cmd} tests/integration/",
-                "Integration Tests (19 tests)",
+                "Integration Tests (19)",
             ),
             (
                 "performance",
                 f"{base_cmd} tests/performance/test_benchmarks.py",
-                "Performance Tests (3 tests)",
+                "Performance Tests (3)",
             ),
         ]:
             success_result, _ = run_command(cmd, desc)
@@ -304,7 +315,7 @@ Test Counts:
 
     # Export results (unless disabled)
     if not args.no_export:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("📊 Exporting Test Results")
         print("=" * 60)
 
@@ -316,7 +327,7 @@ Test Counts:
         run_ml_analysis()
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("📋 TEST RUN SUMMARY")
     print("=" * 60)
     print(f"⏱️  Total duration: {duration:.2f}s")

@@ -106,7 +106,8 @@ class PerformanceMonitor:
                     raise
                 finally:
                     end_time = time.perf_counter()
-                    duration = (end_time - start_time) * 1000  # Convert to milliseconds
+                    duration = (end_time - start_time) * \
+                        1000  # Convert to milliseconds
 
                     self.record_metric(
                         metric_name,
@@ -124,7 +125,8 @@ class PerformanceMonitor:
 
         return decorator
 
-    def measure_memory_usage(self, name: str = "memory_usage") -> Dict[str, float]:
+    def measure_memory_usage(
+            self, name: str = "memory_usage") -> Dict[str, float]:
         """Measure current memory usage and record as metric."""
         process = psutil.Process()
         memory_info = process.memory_info()
@@ -137,7 +139,10 @@ class PerformanceMonitor:
 
         # Record each metric
         for key, value in metrics.items():
-            self.record_metric(f"{name}_{key}", value, "MB" if "mb" in key else "%")
+            self.record_metric(
+                f"{name}_{key}",
+                value,
+                "MB" if "mb" in key else "%")
 
         return metrics
 
@@ -159,7 +164,8 @@ class PerformanceMonitor:
             start_time = time.perf_counter()
             func(*args, **kwargs)
             end_time = time.perf_counter()
-            execution_times.append((end_time - start_time) * 1000)  # Convert to ms
+            execution_times.append(
+                (end_time - start_time) * 1000)  # Convert to ms
 
         # Statistical analysis
         stats = {
@@ -168,8 +174,7 @@ class PerformanceMonitor:
             "min": min(execution_times),
             "max": max(execution_times),
             "stddev": (
-                statistics.stdev(execution_times) if len(execution_times) > 1 else 0
-            ),
+                statistics.stdev(execution_times) if len(execution_times) > 1 else 0),
             "iterations": iterations,
         }
 
@@ -216,10 +221,8 @@ class PerformanceMonitor:
         for name, values in grouped_metrics.items():
             if len(values) == 1:
                 summary["metrics"][name] = {
-                    "count": 1,
-                    "value": values[0],
-                    "unit": next(m.unit for m in self.metrics if m.name == name),
-                }
+                    "count": 1, "value": values[0], "unit": next(
+                        m.unit for m in self.metrics if m.name == name), }
             else:
                 summary["metrics"][name] = {
                     "count": len(values),
@@ -227,7 +230,8 @@ class PerformanceMonitor:
                     "min": min(values),
                     "max": max(values),
                     "stddev": statistics.stdev(values),
-                    "unit": next(m.unit for m in self.metrics if m.name == name),
+                    "unit": next(
+                        m.unit for m in self.metrics if m.name == name),
                 }
 
         return summary
@@ -263,8 +267,13 @@ class WebDriverPerformanceMonitor(PerformanceMonitor):
         end_time = time.perf_counter()
 
         find_time = (end_time - start_time) * 1000
-        locator_str = f"{by}={value}" if isinstance(by, str) else f"{by.name}={value}"
-        self.record_metric("element_find_time", find_time, "ms", locator=locator_str)
+        locator_str = f"{by}={value}" if isinstance(
+            by, str) else f"{by.name}={value}"
+        self.record_metric(
+            "element_find_time",
+            find_time,
+            "ms",
+            locator=locator_str)
 
         return find_time
 
@@ -332,7 +341,8 @@ def benchmark_decorator(iterations: int = 100, name: str = None):
             else:
                 # Fallback to manual benchmarking
                 monitor = PerformanceMonitor(name or func.__name__)
-                return monitor.benchmark_function(func, iterations, *args, **kwargs)
+                return monitor.benchmark_function(
+                    func, iterations, *args, **kwargs)
 
         return wrapper
 
@@ -348,14 +358,16 @@ def performance_test(threshold_ms: float = None, name: str = None):
             monitor = PerformanceMonitor(name or func.__name__)
 
             if threshold_ms:
-                monitor.set_threshold(f"{func.__name__}_execution", threshold_ms, "ms")
+                monitor.set_threshold(
+                    f"{func.__name__}_execution", threshold_ms, "ms")
 
             start_time = time.perf_counter()
             result = func(*args, **kwargs)
             end_time = time.perf_counter()
 
             execution_time = (end_time - start_time) * 1000
-            monitor.record_metric(f"{func.__name__}_execution", execution_time, "ms")
+            monitor.record_metric(
+                f"{func.__name__}_execution", execution_time, "ms")
 
             if threshold_ms and execution_time > threshold_ms:
                 raise AssertionError(

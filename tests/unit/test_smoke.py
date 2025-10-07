@@ -43,7 +43,8 @@ class TestFrameworkSmoke:
         assert_that(settings, has_property("TIMEOUT"))
 
         # Values should be reasonable
-        assert_that(settings.BROWSER, is_in(["chrome", "firefox", "edge", "safari"]))
+        assert_that(settings.BROWSER, is_in(
+            ["chrome", "firefox", "edge", "safari"]))
         assert_that(settings.BASE_URL.lower(), contains_string("http"))
         assert_that(settings.TIMEOUT, instance_of(int))
         assert_that(settings.TIMEOUT, greater_than(0))

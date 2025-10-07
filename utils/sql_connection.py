@@ -428,7 +428,8 @@ def validate_connection(db_file: str) -> bool:
                 )
                 return True
             else:
-                logger.error("Database connection test failed - no version returned")
+                logger.error(
+                    "Database connection test failed - no version returned")
                 return False
 
     except Exception as e:
@@ -437,19 +438,22 @@ def validate_connection(db_file: str) -> bool:
 
 
 # Convenience functions for common Chinook database operations
-def get_artists(conn: sqlite3.Connection, limit: int = 10) -> List[sqlite3.Row]:
+def get_artists(conn: sqlite3.Connection,
+                limit: int = 10) -> List[sqlite3.Row]:
     """Get artists from Chinook database."""
     query = "SELECT ArtistId, Name FROM artists LIMIT ?"
     return execute_and_fetch_all(conn, query, (limit,))
 
 
-def get_albums_by_artist(conn: sqlite3.Connection, artist_id: int) -> List[sqlite3.Row]:
+def get_albums_by_artist(conn: sqlite3.Connection,
+                         artist_id: int) -> List[sqlite3.Row]:
     """Get albums by specific artist from Chinook database."""
     query = "SELECT AlbumId, Title FROM albums WHERE ArtistId = ?"
     return execute_and_fetch_all(conn, query, (artist_id,))
 
 
-def get_tracks_by_album(conn: sqlite3.Connection, album_id: int) -> List[sqlite3.Row]:
+def get_tracks_by_album(conn: sqlite3.Connection,
+                        album_id: int) -> List[sqlite3.Row]:
     """Get tracks by specific album from Chinook database."""
     query = "SELECT TrackId, Name, Milliseconds FROM tracks WHERE AlbumId = ?"
     return execute_and_fetch_all(conn, query, (album_id,))

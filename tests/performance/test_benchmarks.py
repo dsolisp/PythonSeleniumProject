@@ -132,7 +132,8 @@ class TestPerformanceBenchmarks:
                 driver.find_elements(By.TAG_NAME, "a")
                 elements_found += 1
             except Exception as e:
-                self.logger.warning("Element finding partial failure", error=str(e))
+                self.logger.warning(
+                    "Element finding partial failure", error=str(e))
 
             return elements_found
 
@@ -187,7 +188,8 @@ class TestPerformanceBenchmarks:
                 cursor = connection.cursor()
 
                 # Simple query operation
-                cursor.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table'")
+                cursor.execute(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='table'")
                 result = cursor.fetchone()
 
                 cursor.close()
@@ -219,7 +221,9 @@ class TestPerformanceBenchmarks:
             end_time = time.perf_counter()
 
             load_time = (end_time - start_time) * 1000
-            self.logger.info("Page load test completed", load_time_ms=load_time)
+            self.logger.info(
+                "Page load test completed",
+                load_time_ms=load_time)
 
             # Performance threshold is enforced by decorator
             # Should be less than 5 seconds
@@ -287,7 +291,8 @@ class TestPerformanceBenchmarks:
 
             return len(completed_tasks)
 
-        result = benchmark.pedantic(concurrent_operations, iterations=5, rounds=2)
+        result = benchmark.pedantic(
+            concurrent_operations, iterations=5, rounds=2)
 
         # All 5 tasks should complete
         assert_that(result, equal_to(5))
@@ -330,11 +335,13 @@ class TestPerformanceMonitoringIntegration:
 
         try:
             # Monitor page load
-            load_time = web_performance.monitor_page_load(driver, settings.BASE_URL)
+            load_time = web_performance.monitor_page_load(
+                driver, settings.BASE_URL)
             assert_that(load_time, greater_than(0))
 
             # Monitor element finding
-            find_time = web_performance.monitor_element_find(driver, By.NAME, "q")
+            find_time = web_performance.monitor_element_find(
+                driver, By.NAME, "q")
             assert_that(find_time, greater_than(0))
 
             # Check metrics were recorded
