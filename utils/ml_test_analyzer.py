@@ -24,8 +24,11 @@ from sklearn.preprocessing import LabelEncoder
 
 from utils.structured_logger import get_logger
 
-# Suppress only sklearn UndefinedMetricWarning for cleaner output
-warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+# If you need to suppress sklearn UndefinedMetricWarning, use a context manager
+# Example:
+# with warnings.catch_warnings():
+#     warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+#     ... # code that may trigger the warning
 # Initialize logger
 logger = get_logger("MLTestAnalyzer")
 
