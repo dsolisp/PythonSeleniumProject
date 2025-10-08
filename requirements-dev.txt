@@ -1,0 +1,24 @@
+# Additional CI/CD and Advanced Development Dependencies
+# Install with: pip install -r requirements-dev.txt
+# (Only needed for advanced CI/CD features and documentation)
+
+# Include base requirements (with local dev tools)
+-r requirements.txt
+
+# Advanced CI/CD & Reporting
+pytest-json-report>=1.5.0         # JSON test reports for CI/CD
+pytest-xdist>=3.8.0               # Parallel test execution
+pytest-rerunfailures>=12.0        # Test retry capabilities
+allure-pytest>=2.13.2             # Allure test reporting
+pytest-benchmark>=4.0.0           # Performance benchmarking
+
+# Git Hooks & Automation
+pre-commit>=3.3.0                 # Git hooks for code quality
+
+# Code Quality Auto-fixers
+autopep8>=2.0.0                   # Auto-fix PEP 8 style violations (flake8 issues)
+autoflake>=2.2.0                  # Remove unused imports and variables
+
+# Documentation Generation
+mkdocs>=1.5.0                     # Documentation generation
+mkdocs-material>=9.0.0            # Material theme for docs

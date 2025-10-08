@@ -1,0 +1,95 @@
+{
+  "search_scenarios": [
+    {
+      "name": "basic_search",
+      "search_term": "Python automation testing",
+      "expected_results_count": 10,
+      "expected_title_contains": "Python",
+      "timeout": 10
+    },
+    {
+      "name": "selenium_search", 
+      "search_term": "Selenium WebDriver",
+      "expected_results_count": 10,
+      "expected_title_contains": "Selenium",
+      "timeout": 15
+    },
+    {
+      "name": "playwright_search",
+      "search_term": "Playwright automation framework",
+      "expected_results_count": 10,
+      "expected_title_contains": "Playwright",
+      "timeout": 12
+    }
+  ],
+  
+  "user_accounts": [
+    {
+      "role": "admin",
+      "username": "admin_user",
+      "password": "admin_pass",
+      "permissions": ["read", "write", "delete"]
+    },
+    {
+      "role": "standard",
+      "username": "standard_user", 
+      "password": "standard_pass",
+      "permissions": ["read", "write"]
+    },
+    {
+      "role": "readonly",
+      "username": "readonly_user",
+      "password": "readonly_pass", 
+      "permissions": ["read"]
+    }
+  ],
+
+  "api_endpoints": [
+    {
+      "name": "posts",
+      "url": "/posts",
+      "method": "GET",
+      "expected_status": 200,
+      "expected_count": 100
+    },
+    {
+      "name": "users",
+      "url": "/users", 
+      "method": "GET",
+      "expected_status": 200,
+      "expected_count": 10
+    },
+    {
+      "name": "comments",
+      "url": "/comments",
+      "method": "GET", 
+      "expected_status": 200,
+      "expected_count": 500
+    }
+  ],
+
+  "browser_configurations": [
+    {
+      "name": "chrome_desktop",
+      "browser": "chrome",
+      "headless": false,
+      "window_size": [1920, 1080],
+      "mobile": false
+    },
+    {
+      "name": "firefox_desktop", 
+      "browser": "firefox",
+      "headless": false,
+      "window_size": [1920, 1080],
+      "mobile": false
+    },
+    {
+      "name": "chrome_mobile",
+      "browser": "chrome",
+      "headless": true,
+      "window_size": [375, 667],
+      "mobile": true,
+      "device": "iPhone 8"
+    }
+  ]
+}

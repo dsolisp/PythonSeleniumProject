@@ -1,0 +1,30 @@
+browser_config:
+  default_browser: chrome
+  headless: true
+  wait_timeout: 10
+  window_size:
+  - 1920
+  - 1080
+test_data:
+  test_scenarios:
+  - data_set: admin_users
+    name: login_flow
+    priority: high
+  - data_set: search_queries
+    name: search_functionality
+    priority: medium
+  - data_set: user_accounts
+    name: user_management
+    priority: high
+  user_pools:
+  - count: 2
+    role: admin
+  - count: 5
+    role: standard
+  - count: 3
+    role: readonly
+test_environment:
+  base_url: https://qa.example.com
+  name: qa
+  retry_attempts: 3
+  timeout: 10

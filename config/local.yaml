@@ -1,0 +1,38 @@
+# Environment Configuration Templates
+# Copy and customize these files for your specific environments
+
+# Local Development Environment
+database:
+  driver: "sqlite"
+  name: "chinook.db"
+  connection_timeout: 30
+
+browser:
+  default_browser: "chrome"
+  headless: false
+  window_width: 1920
+  window_height: 1080
+  implicit_wait: 10
+  explicit_wait: 30
+  page_load_timeout: 60
+
+test:
+  environment: "local"
+  base_url: "https://duckduckgo.com"
+  api_base_url: "https://jsonplaceholder.typicode.com"
+  parallel_workers: 1
+  retry_count: 2
+  test_timeout: 300
+  screenshot_on_failure: true
+  video_recording: false
+
+reporting:
+  report_format: "html"
+  log_level: "INFO"
+  enable_allure: false
+  enable_dashboard: false
+  report_directory: "reports"
+  log_directory: "logs"
+
+security:
+  enable_ssl_verification: true

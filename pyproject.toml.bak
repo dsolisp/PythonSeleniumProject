@@ -1,0 +1,96 @@
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--tb=short",
+    "--html=reports/html/report.html",
+    "--json-report",
+    "--json-report-file=reports/json/report.json",
+    "--cov=pages",
+    "--cov=utils",
+    "--cov=locators",
+    "--cov-report=html:reports/coverage/html",
+    "--cov-report=xml:reports/coverage/coverage.xml",
+    "--cov-report=term-missing",
+    "--alluredir=reports/allure-results",
+    "--reruns=2",
+    "--reruns-delay=2"
+]
+markers = [
+    "smoke: Quick smoke tests",
+    "regression: Full regression test suite",
+    "visual: Visual regression tests",
+    "api: API tests",
+    "database: Database tests",
+    "slow: Tests that take a long time to run",
+    "skip_in_ci: Tests to skip in CI environment",
+    "cross_browser: Cross-browser tests",
+    "mobile: Mobile-specific tests",
+    "security: Security tests",
+    "performance: Performance tests"
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning"
+]
+
+[tool.coverage.run]
+source = ["pages", "utils", "locators"]
+omit = [
+    "*/tests/*",
+    "*/venv/*",
+    "*/__pycache__/*",
+    "*/migrations/*"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError"
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["pages", "utils", "locators", "tests"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "venv"]
+skips = ["B101", "B601"]

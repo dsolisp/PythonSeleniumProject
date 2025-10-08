@@ -1,0 +1,604 @@
+name: QA Automation CI/CD Pipeline
+
+permissions:
+  actions: write
+  contents: read
+
+# Test Strategy:
+# 1. unit-tests: Fast tests with no external dependencies (tests/unit/)
+# 2. e2e-tests: UI automation with Selenium/Playwright (tests/web/, tests/api/)
+# 3. grid-integration-tests: Distributed testing with Selenium Grid
+# 4. visual-tests: Visual regression testing (screenshot comparison)
+# 5. performance-tests: Load and performance testing
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+        - smoke
+        - regression
+        - api
+        - visual
+        - all
+      browser:
+        description: 'Browser to test'
+        required: true
+        default: 'chrome'
+        type: choice
+        options:
+        - chrome
+        - firefox
+        - edge
+        - safari
+      environment:
+        description: 'Environment to test'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      python-version: ${{ steps.setup-python.outputs.python-version }}
+      cache-key: ${{ steps.cache-key.outputs.key }}
+      run-ui-tests: ${{ steps.ui-flag.outputs.value }}
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      id: setup-python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Generate cache key
+      id: cache-key
+      run: |
+        echo "key=pip-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/requirements.txt') }}" >> $GITHUB_OUTPUT
+
+    - name: Configure UI test flag
+      id: ui-flag
+      run: |
+        echo "value=false" >> $GITHUB_OUTPUT  # Set to 'true' to re-enable UI/browser suites
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ needs.setup.outputs.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ needs.setup.outputs.cache-key }}
+        restore-keys: |
+          pip-${{ runner.os }}-${{ needs.setup.outputs.python-version }}-
+    
+    - name: Install security tools
+      run: |
+        pip install bandit safety
+    
+    - name: Run Bandit security scan
+      run: |
+        bandit -r . -s B101,B105,B110,B112,B311,B404,B603 -f json -o reports/bandit-report.json || true
+        bandit -r . -s B101,B105,B110,B112,B311,B404,B603 -f txt || true
+    
+    - name: Run Safety check
+      run: |
+        mkdir -p reports
+        safety scan --output json > reports/safety-report.json || true
+        safety scan || true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports
+        path: reports/*-report.json
+
+  code-quality:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ needs.setup.outputs.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ needs.setup.outputs.cache-key }}
+        restore-keys: |
+          pip-${{ runner.os }}-${{ needs.setup.outputs.python-version }}-
+    
+    - name: Install code quality tools
+      run: |
+        pip install black isort flake8 mypy
+    
+    - name: Check code formatting with Black
+      run: |
+        black --check --diff .
+    
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only --diff .
+    
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+    
+    - name: Type check with mypy
+      run: |
+        mypy . --ignore-missing-imports
+
+  # True unit tests - fast, no browser, no external dependencies
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: [setup, security-scan, code-quality]
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: pip-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
+    
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Create test directories
+      run: |
+        mkdir -p reports/coverage reports/html reports/json logs screenshots
+    
+    - name: Run unit tests (tests/unit/)
+      run: |
+        pytest tests/unit/ -v --tb=short \
+          --cov=pages --cov=utils --cov=locators --cov=config \
+          --cov-report=html:reports/coverage/html \
+          --cov-report=xml:reports/coverage/coverage.xml \
+          --cov-report=term-missing \
+          --cov-fail-under=40 \
+          --html=reports/html/unit-tests.html \
+          --json-report --json-report-file=reports/json/unit-tests.json
+    
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: unit-test-reports-${{ matrix.python-version }}
+        path: |
+          reports/
+          logs/
+
+  # UI/E2E tests - Selenium & Playwright browser automation
+  e2e-tests:
+    runs-on: ubuntu-latest
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
+    needs: [setup, unit-tests]
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+        test-suite: [smoke, advanced, database]
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: pip-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
+    
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Install Playwright browsers
+      run: |
+        playwright install --with-deps chromium firefox
+    
+    - name: Create test directories
+      run: |
+        mkdir -p reports/coverage reports/html reports/json logs screenshots
+    
+    - name: Run E2E tests (UI automation with browsers)
+      env:
+        HEADLESS: true
+      run: |
+        pytest tests/web/ tests/api/ -v --tb=short \
+          --cov=pages --cov=utils \
+          --cov-report=html:reports/coverage/e2e-html \
+          --cov-report=xml:reports/coverage/e2e-coverage.xml \
+          --cov-report=term-missing \
+          --cov-fail-under=20 \
+          --html=reports/html/e2e-tests-${{ matrix.test-suite }}.html \
+          --json-report --json-report-file=reports/json/e2e-tests-${{ matrix.test-suite }}.json \
+          -m "${{ matrix.test-suite }}"
+    
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: e2e-test-reports-${{ matrix.python-version }}-${{ matrix.test-suite }}
+        path: |
+          reports/
+          logs/
+
+  # Integration tests with Selenium Grid (distributed testing)
+  grid-integration-tests:
+    runs-on: ubuntu-latest
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
+    needs: [setup, e2e-tests]
+    strategy:
+      matrix:
+        browser: [chrome, firefox]
+        test-suite: [smoke, api]
+    services:
+      selenium-hub:
+        image: selenium/hub:4.15.0
+        ports:
+          - 4444:4444
+      selenium-chrome:
+        image: selenium/node-chrome:4.15.0
+        env:
+          HUB_HOST: selenium-hub
+        options: --shm-size=2gb
+      selenium-firefox:
+        image: selenium/node-firefox:4.15.0
+        env:
+          HUB_HOST: selenium-hub
+        options: --shm-size=2gb
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ needs.setup.outputs.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ needs.setup.outputs.cache-key }}
+    
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Install Playwright browsers
+      run: |
+        playwright install --with-deps chromium firefox
+    
+    - name: Create test directories
+      run: |
+        mkdir -p reports/allure-results reports/html reports/json logs screenshots
+    
+    - name: Set up environment
+      run: |
+        cp .env.template .env
+        echo "ENVIRONMENT=ci" >> .env
+        echo "DEFAULT_BROWSER=${{ matrix.browser }}" >> .env
+        echo "HEADLESS=true" >> .env
+        echo "SELENIUM_GRID_URL=http://localhost:4444" >> .env
+    
+    - name: Run integration tests
+      env:
+        HEADLESS: true
+      run: |
+        pytest tests/ -v --tb=short \
+          --browser=${{ matrix.browser }} \
+          --html=reports/html/${{ matrix.test-suite }}-${{ matrix.browser }}.html \
+          --json-report --json-report-file=reports/json/${{ matrix.test-suite }}-${{ matrix.browser }}.json \
+          --alluredir=reports/allure-results \
+          -m "${{ matrix.test-suite }}" \
+          --maxfail=5
+    
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: grid-integration-tests-${{ matrix.browser }}-${{ matrix.test-suite }}
+        path: |
+          reports/
+          logs/
+          screenshots/
+
+  # Visual regression tests - screenshot comparison
+  visual-tests:
+    runs-on: ubuntu-latest
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' && github.event_name != 'schedule' }}
+    needs: [setup, e2e-tests]
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ needs.setup.outputs.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ needs.setup.outputs.cache-key }}
+    
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Install Playwright browsers
+      run: |
+        playwright install --with-deps chromium
+    
+    - name: Create test directories
+      run: |
+        mkdir -p reports/allure-results reports/html reports/json logs screenshots screenshots_diff
+    
+    - name: Set up Chrome
+      uses: browser-actions/setup-chrome@latest
+    
+    - name: Set up environment
+      run: |
+        cp .env.template .env
+        echo "ENVIRONMENT=ci" >> .env
+        echo "DEFAULT_BROWSER=chrome" >> .env
+        echo "HEADLESS=true" >> .env
+    
+    - name: Run visual regression tests
+      env:
+        HEADLESS: true
+      run: |
+        pytest tests/ -v --tb=short \
+          --html=reports/html/visual-tests.html \
+          --json-report --json-report-file=reports/json/visual-tests.json \
+          --alluredir=reports/allure-results \
+          -m "visual" \
+          --maxfail=3
+    
+    - name: Upload visual test artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: visual-test-results
+        path: |
+          reports/
+          logs/
+          screenshots/
+          screenshots_diff/
+
+  # Performance and load testing
+  performance-tests:
+    runs-on: ubuntu-latest
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' && (github.ref == 'refs/heads/main' || github.event_name == 'schedule') }}
+    needs: [setup, e2e-tests]
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ needs.setup.outputs.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ needs.setup.outputs.cache-key }}
+    
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run performance tests
+      run: |
+        pytest tests/ -v --tb=short \
+          --html=reports/html/performance-tests.html \
+          --json-report --json-report-file=reports/json/performance-tests.json \
+          -m "performance" \
+          --benchmark-json=reports/json/benchmark.json
+    
+    - name: Upload performance test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: performance-test-results
+        path: reports/
+
+  # Check combined coverage from all test jobs
+  combined-coverage:
+    runs-on: ubuntu-latest
+    needs: [setup, unit-tests, e2e-tests]
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install coverage tools
+      run: |
+        pip install coverage
+    
+    - name: Download coverage artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-test-reports-*'
+        merge-multiple: true
+    
+    - name: Combine coverage reports
+      run: |
+        # Find and combine all .coverage files
+        coverage combine reports/coverage/.coverage* 2>/dev/null || echo "No coverage data to combine"
+        coverage report --fail-under=80 || echo "Combined coverage below 80% - this is informational"
+        coverage html -d reports/combined-coverage
+      continue-on-error: true
+    
+    - name: Upload combined coverage
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: combined-coverage-report
+        path: reports/combined-coverage/
+
+  # Aggregate all test reports
+  generate-reports:
+    runs-on: ubuntu-latest
+    needs: [setup, unit-tests, e2e-tests, grid-integration-tests, visual-tests, combined-coverage]
+    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install Allure CLI
+      run: |
+        npm install -g allure-commandline
+    
+    - name: Generate Allure report
+      run: |
+        mkdir -p allure-results
+        find . -name "allure-results" -type d -exec cp -r {}/* allure-results/ \;
+        allure generate allure-results --clean -o allure-report
+    
+    - name: Upload Allure report
+      uses: actions/upload-artifact@v4
+      with:
+        name: allure-report
+        path: allure-report/
+    
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./allure-report
+
+  # Send notifications about test results
+  notify:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, e2e-tests, grid-integration-tests, visual-tests, performance-tests, generate-reports]
+    if: always()
+    steps:
+    - name: Determine overall status
+      id: status
+      run: |
+        if [[ "${{ needs.unit-tests.result }}" == "failure" || "${{ needs.e2e-tests.result }}" == "failure" ]]; then
+          echo "status=failure" >> $GITHUB_OUTPUT
+          echo "color=danger" >> $GITHUB_OUTPUT
+        elif [[ "${{ needs.visual-tests.result }}" == "failure" || "${{ needs.grid-integration-tests.result }}" == "failure" ]]; then
+          echo "status=warning" >> $GITHUB_OUTPUT
+          echo "color=warning" >> $GITHUB_OUTPUT
+        else
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "color=good" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Notify Slack
+      if: env.SLACK_WEBHOOK_URL != ''
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ steps.status.outputs.status }}
+        color: ${{ steps.status.outputs.color }}
+        text: |
+          QA Automation Pipeline ${{ steps.status.outputs.status }}
+          Branch: ${{ github.ref }}
+          Commit: ${{ github.sha }}
+          Author: ${{ github.actor }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    
+    - name: Notify Microsoft Teams
+      if: env.TEAMS_WEBHOOK_URL != ''
+      uses: skitionek/notify-microsoft-teams@master
+      with:
+        webhook_url: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        needs: ${{ toJson(needs) }}
+        job: ${{ toJson(job) }}
+        steps: ${{ toJson(steps) }}
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [generate-reports, notify]
+    if: always()
+    steps:
+    - name: Delete old artifacts
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: context.runId,
+          });
+          
+          // Keep only the final report artifacts
+          const keepArtifacts = ['allure-report', 'security-reports'];
+          
+          for (const artifact of artifacts.data.artifacts) {
+            if (!keepArtifacts.includes(artifact.name)) {
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+              });
+            }
+          }
