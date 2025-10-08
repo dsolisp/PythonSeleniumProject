@@ -54,7 +54,13 @@ class StructuredLogger:
             level (str): Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         """
         self.name = name
-        self.level = getattr(logging, level.upper())
+        allowed_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        level_upper = level.upper()
+        if level_upper not in allowed_levels:
+            raise ValueError(
+                f"Invalid log level '{level}'. Allowed values are: {', '.join(sorted(allowed_levels))}."
+            )
+        self.level = getattr(logging, level_upper)
 
         # Configure structlog
         structlog.configure(

@@ -20,17 +20,16 @@ import pandas as pd
 
 from utils.structured_logger import get_logger
 
-# Suppress sklearn warnings for cleaner output
-warnings.filterwarnings("ignore")
-
-# Initialize logger
-logger = get_logger("MLTestAnalyzer")
-
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+from sklearn.exceptions import UndefinedMetricWarning
 
+# Suppress only sklearn UndefinedMetricWarning for cleaner output
+warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
+# Initialize logger
+logger = get_logger("MLTestAnalyzer")
 class MLTestAnalyzer:
     """Analyzes test results using machine learning techniques."""
 

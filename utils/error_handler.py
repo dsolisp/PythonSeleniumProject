@@ -18,7 +18,6 @@ from typing import Any, Callable, Dict, List, Optional
 import psutil
 
 # Retry libraries for robust error handling
-from retry import retry
 from selenium.common.exceptions import (
     ElementNotInteractableException,
     NoSuchElementException,
