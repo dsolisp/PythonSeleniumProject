@@ -319,7 +319,9 @@ def insert_data(
         validated_columns = [_validate_column_name(col) for col in data.keys()]
         columns = ", ".join(validated_columns)
         placeholders = ", ".join(["?" for _ in data])
-        # Safe: table/column names validated, values parameterized
+        # Safe: table and column names have been validated using _validate_table_name() and
+        # _validate_column_name() to allow only alphanumeric characters and underscores,
+        # preventing SQL injection. Values are parameterized.
         query = f"INSERT INTO {validated_table} ({columns}) VALUES ({placeholders})"  # nosec B608
 
         cursor = execute_query(conn, query, tuple(data.values()))
