@@ -15,24 +15,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+import psutil
+
 # Retry libraries for robust error handling
 from retry import retry
-from tenacity import (
-    Retrying,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
-
-# Memory and performance monitoring
-try:
-    import psutil
-
-    PROFILING_AVAILABLE = True
-except ImportError:
-    PROFILING_AVAILABLE = False
-    psutil = None
-
 from selenium.common.exceptions import (
     ElementNotInteractableException,
     NoSuchElementException,
@@ -40,6 +26,12 @@ from selenium.common.exceptions import (
     TimeoutException,
 )
 from selenium.webdriver.support.ui import WebDriverWait
+from tenacity import (
+    Retrying,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 
 class ErrorSeverity(Enum):
@@ -588,9 +580,6 @@ class SmartErrorHandler:
         """
         Monitor memory usage during test execution using psutil.
         """
-        if not PROFILING_AVAILABLE:
-            return {"memory_monitoring": "Not available - psutil not installed"}
-
         process = psutil.Process()
         memory_info = process.memory_info()
 
@@ -607,12 +596,28 @@ class SmartErrorHandler:
         *args,
         max_attempts: int = 3,
         wait_strategy: str = "exponential",
+        retry_exceptions: tuple = None,
         **kwargs,
     ) -> Any:
         """
         Execute operation with tenacity-based retry logic.
         Provides robust retry mechanisms with different wait strategies.
+
+        Args:
+            operation: Function to execute
+            max_attempts: Maximum retry attempts
+            wait_strategy: Wait strategy ("exponential" or "fixed")
+            retry_exceptions: Specific exceptions to retry (defaults to Selenium exceptions)
         """
+        # Default to common Selenium exceptions that should trigger retries
+        if retry_exceptions is None:
+            retry_exceptions = (
+                TimeoutException,
+                StaleElementReferenceException,
+                ElementNotInteractableException,
+                NoSuchElementException,
+            )
+
         # Configure wait strategy
         if wait_strategy == "exponential":
             wait_func = wait_exponential(multiplier=1, min=1, max=10)
@@ -623,7 +628,7 @@ class SmartErrorHandler:
         for attempt in Retrying(
             stop=stop_after_attempt(max_attempts),
             wait=wait_func,
-            retry=retry_if_exception_type((Exception,)),
+            retry=retry_if_exception_type(retry_exceptions),
         ):
             with attempt:
                 return operation(*args, **kwargs)

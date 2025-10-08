@@ -26,19 +26,9 @@ warnings.filterwarnings("ignore")
 # Initialize logger
 logger = get_logger("MLTestAnalyzer")
 
-try:
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.model_selection import train_test_split
-    from sklearn.preprocessing import LabelEncoder
-
-    SKLEARN_AVAILABLE = True
-except ImportError:
-    SKLEARN_AVAILABLE = False
-    logger.warning(
-        "scikit-learn not installed - ML features disabled",
-        package="scikit-learn",
-        install_command="pip install scikit-learn",
-    )
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 
 
 class MLTestAnalyzer:
@@ -287,10 +277,6 @@ class MLTestAnalyzer:
         Returns:
             Tuple of (accuracy, model)
         """
-        if not SKLEARN_AVAILABLE:
-            print("⚠️  scikit-learn not installed. Cannot train ML model.")
-            return 0.0, None
-
         print("\n🤖 Training failure prediction model...")
 
         if self.df is None or self.df.empty:
@@ -357,7 +343,7 @@ class MLTestAnalyzer:
         Returns:
             List of predictions with failure probabilities
         """
-        if not SKLEARN_AVAILABLE or self.model is None:
+        if self.model is None:
             print("⚠️  Model not trained. Run train_failure_predictor() first.")
             return []
 
@@ -483,11 +469,10 @@ class MLTestAnalyzer:
             report_lines.append("")
 
             # ML predictions
-            if SKLEARN_AVAILABLE:
-                accuracy, _ = self.train_failure_predictor()
-                report_lines.append("🤖 ML Model Performance:")
-                report_lines.append(f"   Prediction accuracy: {accuracy:.1%}")
-                report_lines.append("")
+            accuracy, _ = self.train_failure_predictor()
+            report_lines.append("🤖 ML Model Performance:")
+            report_lines.append(f"   Prediction accuracy: {accuracy:.1%}")
+            report_lines.append("")
 
         report_lines.append("=" * 70)
 
@@ -531,21 +516,20 @@ def main():
     analyzer.analyze_performance_trends()
     analyzer.get_test_statistics()
 
-    # Train ML model if sklearn available
-    if SKLEARN_AVAILABLE:
-        analyzer.train_failure_predictor()
+    # Train ML model
+    analyzer.train_failure_predictor()
 
-        # Example prediction
-        upcoming_tests = [
-            {
-                "test_name": df["test_name"].iloc[0],
-                "environment": "staging",
-                "browser": "chrome",
-                "duration": df["duration"].mean(),
-                "headless": False,
-            }
-        ]
-        analyzer.predict_test_failures(upcoming_tests)
+    # Example prediction
+    upcoming_tests = [
+        {
+            "test_name": df["test_name"].iloc[0],
+            "environment": "staging",
+            "browser": "chrome",
+            "duration": df["duration"].mean(),
+            "headless": False,
+        }
+    ]
+    analyzer.predict_test_failures(upcoming_tests)
 
     # Generate report
     analyzer.generate_report()

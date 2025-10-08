@@ -12,25 +12,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-# Data analysis libraries
-try:
-    import numpy as np
-    import pandas as pd
-
-    ANALYTICS_AVAILABLE = True
-except ImportError:
-    ANALYTICS_AVAILABLE = False
-    pd = None
-    np = None
-
-# Template engine for HTML reports
-try:
-    from jinja2 import Template
-
-    TEMPLATING_AVAILABLE = True
-except ImportError:
-    TEMPLATING_AVAILABLE = False
-    Template = None
+import numpy as np
+import pandas as pd
+from jinja2 import Template
 
 
 @dataclass
@@ -713,7 +697,7 @@ class AdvancedTestReporter:
         Generate pandas DataFrame for advanced analytics.
         Leverages pandas for statistical analysis and numpy for computations.
         """
-        if not ANALYTICS_AVAILABLE or not self.test_results:
+        if not self.test_results:
             return None
 
         # Convert test results to structured data
@@ -752,9 +736,6 @@ class AdvancedTestReporter:
         if df_data is None or not df_data:
             return {"insights": "No data available for analysis"}
 
-        if not ANALYTICS_AVAILABLE:
-            return {"insights": "Analytics not available - pandas not installed"}
-
         # Create DataFrame from data
         df = pd.DataFrame(df_data)
 
@@ -788,9 +769,6 @@ class AdvancedTestReporter:
         df_data = self.generate_dataframe_analytics()
         if df_data is None:
             return "No data to export"
-
-        if not ANALYTICS_AVAILABLE:
-            return "CSV export not available - pandas not installed"
 
         df = pd.DataFrame(df_data)
 

@@ -295,8 +295,8 @@ def test_page_interaction_timing(driver):
 
 def get_track_name_from_db(sql_conn):
     try:
-        query = "SELECT Name FROM tracks WHERE TrackId = '1'"
-        cursor = sql_util.execute_query(sql_conn, query)
+        query = "SELECT Name FROM tracks WHERE TrackId = ?"
+        cursor = sql_util.execute_query(sql_conn, query, (1,))
         result = sql_util.fetch_one(cursor)
 
         if result and len(result) > 0:
