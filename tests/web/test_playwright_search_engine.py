@@ -124,8 +124,8 @@ async def test_playwright_google_search_with_suggestions():
             search_page.SEARCH_INPUT, "playwright browser", clear=True
         )
 
-        # Wait a moment for suggestions to appear
-        await asyncio.sleep(1)
+        # Wait for suggestions to appear
+        await playwright_page.page.wait_for_selector(search_page.SUGGESTIONS_LIST, timeout=3000)
 
         # Try to get suggestions (may not always appear due to anti-bot
         # measures)
