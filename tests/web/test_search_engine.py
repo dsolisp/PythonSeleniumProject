@@ -13,22 +13,7 @@ from config.settings import settings
 from pages.base_page import BasePage
 from pages.result_page import ResultPage
 from pages.search_engine_page import SearchEnginePage
-
-
-def require_database_connection(driver):
-    """
-    Helper function to ensure driver fixture provides database connection.
-
-    Args:
-        driver: Driver fixture that should be a tuple (driver, db_connection)
-
-    Raises:
-        pytest.skip: If driver is not a tuple with database connection
-    """
-    if not (isinstance(driver, (tuple, list)) and len(driver) > 1):
-        pytest.skip(
-            "Database connection not available - driver fixture must return (driver, db)"
-        )
+from tests.helpers import require_database_connection
 
 
 @pytest.mark.smoke

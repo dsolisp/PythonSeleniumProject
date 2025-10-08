@@ -124,6 +124,24 @@ class PlaywrightFactory:
             await self.playwright.stop()
             self.playwright = None
 
+    async def safe_cleanup(self):
+        """
+        Safely clean up browser resources with exception handling.
+
+        This method is designed for test teardown where cleanup failures
+        should not cause test failures. All exceptions are caught and logged
+        as warnings rather than being raised.
+
+        Example:
+            >>> factory = PlaywrightFactory()
+            >>> # ... use factory ...
+            >>> await factory.safe_cleanup()  # Won't raise on cleanup errors
+        """
+        try:
+            await self.cleanup()
+        except Exception as e:
+            print(f"Cleanup warning: {e}")
+
 
 class PlaywrightPage:
     """

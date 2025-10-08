@@ -472,16 +472,6 @@ async def test_playwright_performance_metrics():
             await factory.cleanup()
 
 
-# Helper function for test cleanup
-async def cleanup_playwright_session(factory):
-    """Helper function to clean up Playwright sessions safely."""
-    if factory:
-        try:
-            await factory.cleanup()
-        except Exception as e:
-            print(f"Cleanup warning: {e}")
-
-
 # Fixture for Playwright factory cleanup
 @pytest.fixture
 async def playwright_factory():
@@ -494,4 +484,4 @@ async def playwright_factory():
         yield factory
     finally:
         if factory:
-            await factory.cleanup()
+            await factory.safe_cleanup()

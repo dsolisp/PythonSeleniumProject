@@ -64,3 +64,7 @@ flake8>=6.0.0                     # Code linting
 mypy>=1.5.0                       # Static type checking
 bandit>=1.7.5                     # Security vulnerability scanning
 safety>=2.3.0                     # Security dependency checking
+
+# Code Quality Auto-fixers
+autopep8>=2.0.0                   # Auto-fix PEP 8 style violations (flake8 issues)
+autoflake>=2.2.0                  # Remove unused imports and variables

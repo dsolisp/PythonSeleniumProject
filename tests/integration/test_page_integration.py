@@ -44,13 +44,9 @@ class TestPageObjectIntegration:
     @pytest.fixture
     def chrome_driver(self):
         """Create a headless Chrome driver for testing."""
-        options = ChromeOptions()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
+        from utils.webdriver_factory import WebDriverFactory
 
-        driver = webdriver.Chrome(options=options)
+        driver = WebDriverFactory.create_headless_chrome_for_testing()
         yield driver
         driver.quit()
 

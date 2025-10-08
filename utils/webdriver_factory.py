@@ -164,6 +164,29 @@ class WebDriverFactory:
 
         return driver
 
+    @staticmethod
+    def create_headless_chrome_for_testing() -> webdriver.Chrome:
+        """
+        Create a lightweight headless Chrome driver optimized for testing.
+
+        This is a simplified version of create_chrome_driver specifically for
+        unit and integration tests where anti-detection features are not needed.
+
+        Returns:
+            webdriver.Chrome: Configured headless Chrome driver
+
+        Example:
+            >>> driver = WebDriverFactory.create_headless_chrome_for_testing()
+            >>> driver.get("https://example.com")
+            >>> driver.quit()
+        """
+        options = ChromeOptions()
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
+        return webdriver.Chrome(options=options)
+
 
 class DatabaseFactory:
     """
