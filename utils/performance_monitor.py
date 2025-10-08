@@ -13,6 +13,9 @@ import psutil
 
 from utils.structured_logger import get_logger
 
+# Constants
+SECONDS_TO_MILLISECONDS = 1000
+
 
 def _format_locator(by: Any, value: str) -> str:
     """
@@ -125,7 +128,7 @@ class PerformanceMonitor:
                     raise
                 finally:
                     end_time = time.perf_counter()
-                    duration = (end_time - start_time) * 1000  # Convert to milliseconds
+                    duration = (end_time - start_time) * SECONDS_TO_MILLISECONDS
 
                     self.record_metric(
                         metric_name,
@@ -178,7 +181,7 @@ class PerformanceMonitor:
             start_time = time.perf_counter()
             func(*args, **kwargs)
             end_time = time.perf_counter()
-            execution_times.append((end_time - start_time) * 1000)  # Convert to ms
+            execution_times.append((end_time - start_time) * SECONDS_TO_MILLISECONDS)
 
         # Statistical analysis
         stats = {
@@ -270,7 +273,7 @@ class WebDriverPerformanceMonitor(PerformanceMonitor):
         driver.get(url)
         end_time = time.perf_counter()
 
-        load_time = (end_time - start_time) * 1000
+        load_time = (end_time - start_time) * SECONDS_TO_MILLISECONDS
         self.record_metric("page_load_time", load_time, "ms", url=url)
 
         return load_time
@@ -281,7 +284,7 @@ class WebDriverPerformanceMonitor(PerformanceMonitor):
         driver.find_element(by, value)
         end_time = time.perf_counter()
 
-        find_time = (end_time - start_time) * 1000
+        find_time = (end_time - start_time) * SECONDS_TO_MILLISECONDS
         locator_str = _format_locator(by, value)
         self.record_metric("element_find_time", find_time, "ms", locator=locator_str)
 
@@ -307,10 +310,10 @@ class APIPerformanceMonitor(PerformanceMonitor):
         response = getattr(session, method.lower())(url, **kwargs)
         end_time = time.perf_counter()
 
-        total_time = (end_time - start_time) * 1000
+        total_time = (end_time - start_time) * SECONDS_TO_MILLISECONDS
 
         # Extract response timing if available
-        response_time = response.elapsed.total_seconds() * 1000
+        response_time = response.elapsed.total_seconds() * SECONDS_TO_MILLISECONDS
 
         # Record metrics
         self.record_metric(
@@ -373,7 +376,7 @@ def performance_test(threshold_ms: float = None, name: str = None):
             result = func(*args, **kwargs)
             end_time = time.perf_counter()
 
-            execution_time = (end_time - start_time) * 1000
+            execution_time = (end_time - start_time) * SECONDS_TO_MILLISECONDS
             monitor.record_metric(f"{func.__name__}_execution", execution_time, "ms")
 
             if threshold_ms and execution_time > threshold_ms:

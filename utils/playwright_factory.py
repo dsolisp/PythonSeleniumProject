@@ -14,6 +14,9 @@ from playwright.async_api import (
 
 from config.settings import settings
 
+# Constants
+SECONDS_TO_MILLISECONDS = 1000
+
 
 class PlaywrightFactory:
     """Factory for creating Playwright browser instances."""
@@ -44,7 +47,7 @@ class PlaywrightFactory:
 
         browser_options = {
             "headless": headless,
-            "timeout": settings.TIMEOUT * 1000,  # Playwright uses milliseconds
+            "timeout": settings.TIMEOUT * SECONDS_TO_MILLISECONDS,
             **kwargs,
         }
 
@@ -103,7 +106,7 @@ class PlaywrightFactory:
         page = await context.new_page()
 
         # Set default timeout
-        page.set_default_timeout(settings.TIMEOUT * 1000)
+        page.set_default_timeout(settings.TIMEOUT * SECONDS_TO_MILLISECONDS)
 
         return page
 
@@ -171,7 +174,7 @@ class PlaywrightPage:
 
     async def wait_for_element(self, selector: str, timeout: int = None) -> Any:
         """Wait for element to be visible."""
-        timeout_ms = (timeout or settings.TIMEOUT) * 1000
+        timeout_ms = (timeout or settings.TIMEOUT) * SECONDS_TO_MILLISECONDS
         return await self.page.wait_for_selector(selector, timeout=timeout_ms)
 
     async def screenshot(self, path: str = None) -> bytes:

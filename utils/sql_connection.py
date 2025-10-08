@@ -348,15 +348,24 @@ def update_data(
     """
     Update data in a table with dynamic column mapping.
 
+    SECURITY: where_clause MUST use parameterized placeholders (?) to prevent SQL injection.
+    Never use f-strings or concatenation for user input in where_clause.
+
+    Safe:   update_data(conn, "users", {"name": "Jane"}, "id = ?", (1,))
+    UNSAFE: update_data(conn, "users", {"name": "Jane"}, f"id = {user_id}")
+
     Args:
         conn (sqlite3.Connection): Database connection
         table (str): Table name
         data (Dict[str, Any]): Column-value pairs to update
-        where_clause (str): WHERE clause condition
+        where_clause (str): WHERE clause condition (must use ? placeholders)
         where_params (tuple, optional): Parameters for WHERE clause
 
     Returns:
         int: Number of affected rows
+
+    Raises:
+        ValueError: If where_clause contains user input without parameterization
     """
     try:
         # Validate table name to prevent SQL injection
@@ -364,6 +373,11 @@ def update_data(
 
         # Validate all column names to prevent SQL injection
         validated_columns = [_validate_column_name(col) for col in data.keys()]
+
+        # Verify WHERE clause uses parameterized queries
+        if where_clause and "?" in where_clause and not where_params:
+            raise ValueError("WHERE clause contains '?' but no where_params provided")
+
         set_clause = ", ".join([f"{col} = ?" for col in validated_columns])
         # Safe: table/column names validated, values parameterized
         query = f"UPDATE {validated_table} SET {set_clause} WHERE {where_clause}"  # nosec B608
@@ -397,18 +411,31 @@ def delete_data(
     """
     Delete data from a table.
 
+    SECURITY: where_clause MUST use parameterized placeholders (?) to prevent SQL injection.
+    Never use f-strings or concatenation for user input in where_clause.
+
+    Safe:   delete_data(conn, "users", "id = ?", (1,))
+    UNSAFE: delete_data(conn, "users", f"id = {user_id}")
+
     Args:
         conn (sqlite3.Connection): Database connection
         table (str): Table name
-        where_clause (str): WHERE clause condition
+        where_clause (str): WHERE clause condition (must use ? placeholders)
         where_params (tuple, optional): Parameters for WHERE clause
 
     Returns:
         int: Number of deleted rows
+
+    Raises:
+        ValueError: If where_clause contains user input without parameterization
     """
     try:
         # Validate table name to prevent SQL injection
         validated_table = _validate_table_name(table)
+
+        # Verify WHERE clause uses parameterized queries
+        if where_clause and "?" in where_clause and not where_params:
+            raise ValueError("WHERE clause contains '?' but no where_params provided")
 
         # Safe: table name validated via _validate_table_name(), where_params are parameterized
         query = f"DELETE FROM {validated_table} WHERE {where_clause}"  # nosec B608
