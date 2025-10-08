@@ -224,9 +224,7 @@ async def test_playwright_multiple_browsers():
     Test the same search across multiple browsers.
     Demonstrates Playwright's multi-browser capabilities.
     """
-    browsers_to_test = (
-        ["chromium", "firefox"] if not settings.HEADLESS else ["chromium"]
-    )
+    browsers_to_test = ["chromium", "firefox"]
 
     for browser_type in browsers_to_test:
         factory, playwright_page = None, None
