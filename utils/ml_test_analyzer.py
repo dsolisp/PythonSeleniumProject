@@ -17,19 +17,20 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-
-from utils.structured_logger import get_logger
-
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from sklearn.exceptions import UndefinedMetricWarning
+
+from utils.structured_logger import get_logger
 
 # Suppress only sklearn UndefinedMetricWarning for cleaner output
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 # Initialize logger
 logger = get_logger("MLTestAnalyzer")
+
+
 class MLTestAnalyzer:
     """Analyzes test results using machine learning techniques."""
 
