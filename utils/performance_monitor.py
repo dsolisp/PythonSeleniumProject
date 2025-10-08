@@ -14,6 +14,25 @@ import psutil
 from utils.structured_logger import get_logger
 
 
+def _format_locator(by: Any, value: str) -> str:
+    """
+    Format a Selenium locator for logging.
+
+    Args:
+        by: Selenium By locator type (string or By enum)
+        value: Locator value
+
+    Returns:
+        str: Formatted locator string (e.g., "id=username" or "xpath=//div")
+    """
+    if isinstance(by, str):
+        return f"{by}={value}"
+    elif by is not None and hasattr(by, "name"):
+        return f"{by.name}={value}"
+    else:
+        return f"{str(by)}={value}"
+
+
 @dataclass
 class PerformanceMetric:
     """Data class for performance metric storage."""
@@ -263,12 +282,7 @@ class WebDriverPerformanceMonitor(PerformanceMonitor):
         end_time = time.perf_counter()
 
         find_time = (end_time - start_time) * 1000
-        if isinstance(by, str):
-            locator_str = f"{by}={value}"
-        elif by is not None and hasattr(by, "name"):
-            locator_str = f"{by.name}={value}"
-        else:
-            locator_str = f"{str(by)}={value}"
+        locator_str = _format_locator(by, value)
         self.record_metric("element_find_time", find_time, "ms", locator=locator_str)
 
         return find_time

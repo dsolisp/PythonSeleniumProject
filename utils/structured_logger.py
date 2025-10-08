@@ -3,15 +3,31 @@ Enhanced structured logging utilities with JSON output for enterprise reporting.
 """
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 import structlog
 
-# Logger configuration constants
-DEFAULT_LOGGER_NAME = "TestFramework"
-DEFAULT_LOG_LEVEL = "INFO"
-FRAMEWORK_CORE_LOGGER_NAME = "FrameworkCore"
+
+@dataclass(frozen=True)
+class LoggerConfig:
+    """
+    Immutable configuration for structured logging.
+
+    Attributes:
+        default_name: Default logger name for framework components
+        default_level: Default logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        framework_core_name: Name for the core framework logger instance
+    """
+
+    default_name: str = "TestFramework"
+    default_level: str = "INFO"
+    framework_core_name: str = "FrameworkCore"
+
+
+# Global configuration instance
+logger_config = LoggerConfig()
 
 
 class StructuredLogger:
@@ -25,7 +41,11 @@ class StructuredLogger:
     - Integration with existing Python logging
     """
 
-    def __init__(self, name: str = DEFAULT_LOGGER_NAME, level: str = DEFAULT_LOG_LEVEL):
+    def __init__(
+        self,
+        name: str = logger_config.default_name,
+        level: str = logger_config.default_level,
+    ):
         """
         Initialize structured logger with configuration.
 
@@ -337,11 +357,11 @@ class ExecutionLogger:
 
 
 # Global logger instance for framework-wide use
-framework_logger = StructuredLogger(FRAMEWORK_CORE_LOGGER_NAME)
+framework_logger = StructuredLogger(logger_config.framework_core_name)
 
 
 def get_logger(
-    name: str = DEFAULT_LOGGER_NAME, level: str = DEFAULT_LOG_LEVEL
+    name: str = logger_config.default_name, level: str = logger_config.default_level
 ) -> StructuredLogger:
     """
     Factory function to create structured logger instances.

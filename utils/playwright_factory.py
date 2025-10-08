@@ -3,7 +3,7 @@ Playwright factory for modern browser automation.
 Provides async browser automation capabilities alongside existing Selenium support.
 """
 
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 from playwright.async_api import (
     Browser,
@@ -190,7 +190,7 @@ class PlaywrightPage:
 # Utility functions for easy usage
 async def create_playwright_session(
     browser_type: str = "chromium", headless: bool = None
-) -> tuple[PlaywrightFactory, PlaywrightPage]:
+) -> Tuple[PlaywrightFactory, PlaywrightPage]:
     """
     Create a complete Playwright session with factory and page.
 
