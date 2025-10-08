@@ -313,11 +313,20 @@ async def test_playwright_network_interception():
         ), "Should have intercepted network requests"
 
         # Analyze intercepted requests
-        google_requests = [
-            req for req in intercepted_requests if "google" in req["url"]
+        # Dynamically determine the search engine domain for filtering
+        from urllib.parse import urlparse
+        search_engine_url = getattr(settings, "SEARCH_ENGINE_URL", None)
+        if not search_engine_url:
+            # Fallback: try to get from the page object if available
+            search_engine_url = getattr(search_page, "SEARCH_ENGINE_URL", None)
+        if not search_engine_url:
+            raise RuntimeError("Could not determine search engine URL for request filtering")
+        search_engine_domain = urlparse(search_engine_url).netloc
+        search_engine_requests = [
+            req for req in intercepted_requests if search_engine_domain in req["url"]
         ]
         assert_that(
-            len(google_requests), greater_than(0)
+            len(search_engine_requests), greater_than(0)
         ), "Should have Search engine-related requests"
 
         # Check for different resource types
