@@ -195,13 +195,13 @@ class TestPageObjectIntegration:
         """Test element actions integration with real browser."""
         page = BasePage(chrome_driver)
 
-        # Navigate to Google search page
+        # Navigate to DuckDuckGo search page
         page.navigate_to(settings.BASE_URL)
 
         # Test finding elements using locators
         search_elements = page.find_elements(SearchEngineLocators.SEARCH_BOX)
 
-        # Google should have at least one search box (Allow for 0 in case of
+        # DuckDuckGo should have at least one search box (Allow for 0 in case of
         # changes)
         assert_that(len(search_elements), greater_than_or_equal_to(0))
 
@@ -238,21 +238,21 @@ class TestPageObjectIntegration:
         search_title = search_page.get_title()
 
         # Switch to results page object (same driver)
-        result_page.navigate_to(settings.GOOGLE_SEARCH_URL)
+        result_page.navigate_to(settings.SEARCH_URL)
         result_title = result_page.get_title()
 
-        # Both operations should work - titles may vary based on Google's
+        # Both operations should work - titles may vary based on search engine's
         # current layout
         assert_that(search_title is not None and len(search_title), greater_than(0))
         assert_that(result_title is not None and len(result_title), greater_than(0))
-        # Accept various Google page titles (Google, google.com, or
+        # Accept various search page titles (DuckDuckGo, search, or
         # test-related)
         search_valid = any(
-            term in search_title.lower() for term in ["google", "search"]
+            term in search_title.lower() for term in ["duckduckgo", "search", "duck"]
         )
         result_valid = any(
             term in result_title.lower()
-            for term in ["google", "search", "test", "google.com"]
+            for term in ["duckduckgo", "search", "test", "duck"]
         )
         # At least has some title
         assert_that(search_valid or len(search_title), greater_than(0))

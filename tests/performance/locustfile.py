@@ -148,12 +148,12 @@ class WebUILoadTestUser(HttpUser):
         self.logger.info("Web UI load test user stopped", user_id=self.user_id)
 
     @task
-    def test_google_search_flow(self):
-        """Test complete Google search flow."""
+    def test_search_engine_flow(self):
+        """Test complete search engine flow."""
         try:
             start_time = time.time()
 
-            # Navigate to Google
+            # Navigate to search engine
             self.driver.get(settings.BASE_URL)
 
             # Find and interact with search box
@@ -174,7 +174,7 @@ class WebUILoadTestUser(HttpUser):
             total_time = time.time() - start_time
 
             self.logger.info(
-                "Google search flow completed",
+                "Search engine flow completed",
                 user_id=self.user_id,
                 search_term=search_term,
                 duration=total_time,
@@ -182,7 +182,7 @@ class WebUILoadTestUser(HttpUser):
 
         except Exception as e:
             self.logger.error(
-                "Google search flow failed", user_id=self.user_id, error=str(e)
+                "Search engine flow failed", user_id=self.user_id, error=str(e)
             )
 
 

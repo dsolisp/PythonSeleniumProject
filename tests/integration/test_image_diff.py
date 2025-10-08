@@ -28,7 +28,7 @@ def test_visual_comparison(tc_id, driver):
     try:
         os.makedirs("screenshots_diff", exist_ok=True)
 
-        if "google.com" not in base_page.driver.current_url:
+        if "duckduckgo.com" not in base_page.driver.current_url:
             base_page.driver.get(settings.BASE_URL)
             base_page.wait_for_page_load()
 

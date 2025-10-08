@@ -71,12 +71,12 @@ class TestPerformanceBenchmarks:
             stddev=benchmark.stats["stddev"],
         )
 
-    def test_google_search_performance_benchmark(self, benchmark):
-        """Benchmark Google search operation."""
+    def test_search_engine_performance_benchmark(self, benchmark):
+        """Benchmark search engine operation."""
         factory = WebDriverFactory()
         driver = factory.create_chrome_driver(headless=True)
 
-        def perform_google_search():
+        def perform_search_engine_operation():
             try:
                 driver.get(settings.BASE_URL)
                 search_box = WebDriverWait(driver, 10).until(
@@ -100,7 +100,7 @@ class TestPerformanceBenchmarks:
         try:
             # Benchmark the search operation
             result = benchmark.pedantic(
-                perform_google_search, iterations=3, rounds=2, warmup_rounds=1
+                perform_search_engine_operation, iterations=3, rounds=2, warmup_rounds=1
             )
 
             assert_that(result, is_(True))
@@ -119,7 +119,7 @@ class TestPerformanceBenchmarks:
         factory = WebDriverFactory()
         driver = factory.create_chrome_driver(headless=True)
 
-        def find_elements_on_google():
+        def find_elements_on_page():
             driver.get(settings.BASE_URL)
 
             # Find multiple elements
@@ -137,7 +137,7 @@ class TestPerformanceBenchmarks:
             return elements_found
 
         try:
-            result = benchmark(find_elements_on_google)
+            result = benchmark(find_elements_on_page)
             # At least one element should be found
             assert_that(result, greater_than_or_equal_to(1))
 

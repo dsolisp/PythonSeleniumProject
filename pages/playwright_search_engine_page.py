@@ -52,7 +52,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
 
     async def search_for(self, search_term: str, wait_for_results: bool = True) -> bool:
         """
-        Perform a search on Google.
+        Perform a search on the search engine.
 
         Args:
             search_term: The term to search for

@@ -21,9 +21,10 @@ class PlaywrightSearchEngineLocators:
     SEARCH_BUTTON = 'input[name="btnK"], button[type="submit"], button#search_button'
 
     # Search suggestions dropdown
-    # DuckDuckGo: .search__autocomplete .acp
+    # DuckDuckGo: li[role="option"] (in combobox popover)
     # Google: [role="listbox"] [role="option"]
-    SEARCH_SUGGESTIONS = '[role="listbox"] [role="option"], .search__autocomplete .acp'
+    SEARCH_SUGGESTIONS = 'li[role="option"]'
+    SUGGESTIONS_CONTAINER = "[data-reach-combobox-popover]"
 
     # Results container - main results area
     # DuckDuckGo: article[data-testid], [data-area='mainline']
@@ -56,8 +57,8 @@ class PlaywrightSearchEngineLocators:
         ".VwiC3b, .s3v9rd, .result__snippet, " "article [data-result='snippet']"
     )
 
-    # CAPTCHA detection
-    CAPTCHA_CONTAINER = "#captcha-form, [data-google-captcha], .captcha"
+    # CAPTCHA detection (generic selectors)
+    CAPTCHA_CONTAINER = "#captcha-form, .captcha"
 
     # No results message
     NO_RESULTS = (

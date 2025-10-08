@@ -471,6 +471,8 @@ def get_table_info(conn: sqlite3.Connection, table: str) -> List[sqlite3.Row]:
     try:
         # Validate table name to prevent SQL injection
         validated_table = _validate_table_name(table)
+        # Note: PRAGMA statements don't support parameterized queries in SQLite
+        # Using f-string with validated input (alphanumeric + underscore only)
         query = f"PRAGMA table_info({validated_table})"
         return execute_and_fetch_all(conn, query)
     except ValueError as e:

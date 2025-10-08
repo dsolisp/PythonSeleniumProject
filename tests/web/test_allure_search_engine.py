@@ -6,7 +6,7 @@ from hamcrest import (
 )
 
 """
-Google Search tests with Allure reporting and structured logging.
+Search engine tests with Allure reporting and structured logging.
 """
 
 import time
@@ -25,12 +25,12 @@ from utils.webdriver_factory import WebDriverFactory
 
 @allure.epic("Web Automation")
 @allure.feature("Search Functionality")
-class TestAllureGoogleSearch:
+class TestAllureSearchEngine:
 
     def setup_method(self, method):
         self.test_logger = get_test_logger(method.__name__)
         self.test_logger.start_test(
-            browser="chrome", test_suite="Google Search Allure", framework="Selenium"
+            browser="chrome", test_suite="Search Engine Allure", framework="Selenium"
         )
 
     def teardown_method(self):
@@ -68,14 +68,14 @@ class TestAllureGoogleSearch:
                 "WebDriver initialization", "create_chrome_driver"
             )
 
-        with allure.step("Navigate to Google homepage"):
+        with allure.step("Navigate to search engine homepage"):
             search_page = SearchEnginePage(self.driver)
             search_page.open()
             self.test_logger.browser_action("navigate", url=settings.BASE_URL)
 
             allure.attach(
                 self.driver.get_screenshot_as_png(),
-                name="Google Homepage",
+                name="Search Engine Homepage",
                 attachment_type=allure.attachment_type.PNG,
             )
 

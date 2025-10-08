@@ -51,7 +51,7 @@ class WebDriverFactory:
             port = s.getsockname()[1]
         options.add_argument(f"--remote-debugging-port={port}")
 
-        # Anti-detection options to avoid Google CAPTCHA
+        # Anti-detection options for search engines
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-blink-features=AutomationControlled")
@@ -80,7 +80,7 @@ class WebDriverFactory:
         # Store the temp directory path for cleanup
         driver._temp_user_data_dir = temp_user_data_dir
 
-        # Remove webdriver property that Google detects
+        # Remove webdriver property for bot detection
         driver.execute_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )

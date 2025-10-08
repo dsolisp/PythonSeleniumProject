@@ -20,15 +20,15 @@ class SearchEngineLocators:
     # Search suggestions
     SUGGESTIONS_CONTAINER = (
         By.CSS_SELECTOR,
-        ".search__autocomplete",
+        "[data-reach-combobox-popover]",
     )  # Suggestions container
     SUGGESTION_ITEMS = (
         By.CSS_SELECTOR,
-        ".search__autocomplete .acp",
+        "li[role='option']",
     )  # Individual suggestions
     SUGGESTIONS_LISTBOX = (
         By.CSS_SELECTOR,
-        "ul[role='listbox']",
+        "ul[role='list']",
     )  # Suggestions listbox (for waiting)
 
     # Page elements

@@ -36,8 +36,8 @@ class TestBasePage:
 class TestLocators:
     """Test that locators are properly defined with correct structure."""
 
-    def test_google_search_locators_structure(self):
-        """Test that Google search locators have correct tuple structure."""
+    def test_search_engine_locators_structure(self):
+        """Test that search engine locators have correct tuple structure."""
         from locators.search_engine_locators import SearchEngineLocators
 
         # Test key locators exist and are properly structured
@@ -50,8 +50,8 @@ class TestLocators:
         assert_that(SearchEngineLocators.SEARCH_BOX[1], instance_of(str))
         assert_that(len(SearchEngineLocators.SEARCH_BOX[1]), greater_than(0))
 
-    def test_google_result_locators_structure(self):
-        """Test that Google result locators have correct structure."""
+    def test_result_page_locators_structure(self):
+        """Test that result page locators have correct structure."""
         from locators.result_page_locators import ResultPageLocators
 
         assert_that(ResultPageLocators, has_property("RESULTS_CONTAINER"))

@@ -17,7 +17,7 @@ from tests.helpers import require_database_connection
 
 
 @pytest.mark.smoke
-def test_simple_google_search(driver):
+def test_simple_search_engine(driver):
     search_page = SearchEnginePage(driver)
     result_page = ResultPage(driver)
     base_page = BasePage(driver)
@@ -46,7 +46,7 @@ def test_simple_google_search(driver):
 
 
 @pytest.mark.database
-def test_sql_google_search(driver):
+def test_database_search(driver):
     require_database_connection(driver)
 
     search_page = SearchEnginePage(driver)
@@ -82,7 +82,7 @@ def test_sql_google_search(driver):
 
 
 @pytest.mark.smoke
-def test_google_search_with_action_chains(driver):
+def test_search_with_action_chains(driver):
     search_page = SearchEnginePage(driver)
     result_page = ResultPage(driver)
     base_page = BasePage(driver)

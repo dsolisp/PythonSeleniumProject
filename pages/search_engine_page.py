@@ -28,7 +28,7 @@ class SearchEnginePage(BasePage):
         return self.open_search_engine()
 
     def search(self, search_term: str) -> bool:
-        """Perform search without navigating (assumes already on Google)."""
+        """Perform search without navigating (assumes already on search engine page)."""
         # Just search, don't navigate
         if not self.send_keys(SearchEngineLocators.SEARCH_BOX, search_term):
             return False
@@ -51,16 +51,16 @@ class SearchEnginePage(BasePage):
                 return False
         return False
 
-    def navigate_to_google(self) -> bool:
-        """Navigate to Search engine homepage."""
+    def navigate_to_search_engine(self) -> bool:
+        """Navigate to search engine homepage."""
         from config.settings import settings
 
         return self.navigate_to(settings.BASE_URL)
 
     def search_for(self, search_term: str, use_enter: bool = True) -> bool:
         """Perform search with given term."""
-        # Navigate to Google first
-        if not self.navigate_to_google():
+        # Navigate to search engine first
+        if not self.navigate_to_search_engine():
             return False
 
         # Clear and type search term
@@ -115,7 +115,7 @@ class SearchEnginePage(BasePage):
         }
 
         try:
-            # Open Google
+            # Open search engine
             if not self.open_search_engine():
                 return result
 
