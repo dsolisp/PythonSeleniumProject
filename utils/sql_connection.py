@@ -322,7 +322,9 @@ def insert_data(
         # Safe: table and column names have been validated using _validate_table_name() and
         # _validate_column_name() to allow only alphanumeric characters and underscores,
         # preventing SQL injection. Values are parameterized.
-        query = f"INSERT INTO {validated_table} ({columns}) VALUES ({placeholders})"  # nosec B608
+        query = "INSERT INTO {table} ({columns}) VALUES ({placeholders})".format(
+            table=validated_table, columns=columns, placeholders=placeholders
+        )
 
         cursor = execute_query(conn, query, tuple(data.values()))
         conn.commit()
