@@ -166,13 +166,12 @@ class TestValidationIntegration:
     def test_validation_prevents_query_construction_bypass(self):
         """Validation should prevent bypassing query construction."""
         # This simulates how INSERT uses the validation
-        # malicious_data = {"col' OR '1'='1": "value"}  # Removed unused variable
+        malicious_data = {"col' OR '1'='1": "value"}
 
         with pytest.raises(ValueError):
-            # validated_cols = [
-            #     _validate_column_name(col) for col in malicious_data.keys()
-            # ]  # Removed unused variable
-            pass
+            validated_cols = [
+                _validate_column_name(col) for col in malicious_data.keys()
+            ]
 
 
 class TestWhereClauseValidation:
