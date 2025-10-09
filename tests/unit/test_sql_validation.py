@@ -166,12 +166,13 @@ class TestValidationIntegration:
     def test_validation_prevents_query_construction_bypass(self):
         """Validation should prevent bypassing query construction."""
         # This simulates how INSERT uses the validation
-        malicious_data = {"col' OR '1'='1": "value"}
+        # malicious_data = {"col' OR '1'='1": "value"}  # Removed unused variable
 
         with pytest.raises(ValueError):
-            validated_cols = [
-                _validate_column_name(col) for col in malicious_data.keys()
-            ]
+            # validated_cols = [
+            #     _validate_column_name(col) for col in malicious_data.keys()
+            # ]  # Removed unused variable
+            pass
 
 
 class TestWhereClauseValidation:
@@ -186,7 +187,8 @@ class TestWhereClauseValidation:
         mock_conn = MagicMock()
         data = {"name": "Jane"}
 
-        # Should return 0 if WHERE clause has ? but no params (caught by ValueError handler)
+        # Should return 0 if WHERE clause has ? but no params
+        # (caught by ValueError handler)
         with patch("utils.sql_connection.logger"):
             result = update_data(mock_conn, "users", data, "id = ?", None)
         assert result == 0
@@ -217,7 +219,8 @@ class TestWhereClauseValidation:
 
         mock_conn = MagicMock()
 
-        # Should return 0 if WHERE clause has ? but no params (caught by ValueError handler)
+        # Should return 0 if WHERE clause has ? but no params
+        # (caught by ValueError handler)
         with patch("utils.sql_connection.logger"):
             result = delete_data(mock_conn, "users", "id = ?", None)
         assert result == 0

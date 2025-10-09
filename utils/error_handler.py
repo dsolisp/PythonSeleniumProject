@@ -606,7 +606,8 @@ class SmartErrorHandler:
             operation: Function to execute
             max_attempts: Maximum retry attempts
             wait_strategy: Wait strategy ("exponential" or "fixed")
-            retry_exceptions: Specific exceptions to retry (defaults to Selenium exceptions)
+            retry_exceptions: Specific exceptions to retry
+                (defaults to Selenium exceptions)
         """
         # Default to common Selenium exceptions that should trigger retries
         if retry_exceptions is None:

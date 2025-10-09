@@ -1,0 +1,172 @@
+#!/usr/bin/env python3
+"""
+Integrated QA Automation Workflow Script
+
+- Prepares environment (cleans old results, sets up directories)
+- Runs all web and API tests
+- Exports results for analytics/ML
+- Runs analytics and ML modules
+- Prints clear output/report locations
+"""
+import shutil
+import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
+
+# --- VIRTUAL ENVIRONMENT DETECTION ---
+VENV_DIR = Path(__file__).parent / "venv-enhanced"
+VENV_PYTHON = VENV_DIR / "bin" / "python"
+SETUP_SCRIPT = Path(__file__).parent / "setup_env.sh"
+
+
+def ensure_venv():
+    if not VENV_PYTHON.exists():
+        print(
+            f"[WARN] Virtual environment not found at {VENV_PYTHON}. Running setup_env.sh..."
+        )
+        if not SETUP_SCRIPT.exists():
+            print(f"[ERROR] setup_env.sh not found! Please create it.")
+            sys.exit(1)
+        # Run the setup script
+        result = subprocess.run(["bash", str(SETUP_SCRIPT)])
+        if result.returncode != 0 or not VENV_PYTHON.exists():
+            print(f"[ERROR] Failed to create virtual environment. Exiting.")
+            sys.exit(1)
+        print(f"[INFO] Virtual environment created.")
+
+
+ensure_venv()
+
+# --- CONFIGURATION ---
+PROJECT_ROOT = Path(__file__).parent
+RESULTS_DIR = PROJECT_ROOT / "data" / "results"
+REPORTS_DIR = PROJECT_ROOT / "reports"
+WEB_TESTS = PROJECT_ROOT / "tests" / "web"
+API_TESTS = PROJECT_ROOT / "tests" / "api"
+
+
+# --- PRE-TEST: CLEANUP & SETUP ---
+def clean_results():
+    print("[PRE] Cleaning old reports (not results)...")
+    # Do NOT delete data/results/ (preserve historical data)
+    if not RESULTS_DIR.exists():
+        RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    if REPORTS_DIR.exists():
+        for f in REPORTS_DIR.glob("*.html"):
+            f.unlink()
+        for f in REPORTS_DIR.glob("*.csv"):
+            f.unlink()
+        for f in REPORTS_DIR.glob("*.json"):
+            f.unlink()
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    print(f"[PRE] Results dir: {RESULTS_DIR}")
+    print(f"[PRE] Reports dir: {REPORTS_DIR}")
+
+
+def validate_environment():
+    print("[PRE] Validating environment...")
+    # Check for required packages
+    try:
+        pass
+    except ImportError as e:
+        print(f"[ERROR] Missing package: {e.name}. Please install requirements.txt.")
+        sys.exit(1)
+    print("[PRE] All required packages found.")
+
+
+# --- TEST EXECUTION ---
+def run_pytest(test_path, label):
+    print(f"[TEST] Running {label} tests: {test_path}")
+    # Ensure results dir exists and create a timestamped json-report directly in data/results
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    json_file = RESULTS_DIR / f"test_results_{label}_{timestamp}.json"
+    result = subprocess.run(
+        [
+            str(VENV_PYTHON),
+            "-m",
+            "pytest",
+            str(test_path),
+            "-v",
+            "--json-report",
+            f"--json-report-file={json_file}",
+        ]
+    )
+    if result.returncode != 0:
+        print(f"[TEST] {label} tests failed. See output above.")
+    else:
+        print(f"[TEST] {label} tests completed successfully.")
+
+
+def export_results():
+    print("[POST] Exporting test results for analytics/ML...")
+    # If any json reports were created in reports/, copy them to data/results for completeness.
+    for f in REPORTS_DIR.glob("test_results_*.json"):
+        dest = RESULTS_DIR / f.name
+        shutil.copy2(f, dest)
+        print(f"[POST] Exported: {dest}")
+
+    # Also list json reports already in data/results (pytest now writes there directly)
+    for f in RESULTS_DIR.glob("test_results_*.json"):
+        print(f"[POST] Found result: {f}")
+
+
+# --- POST-TEST: ANALYTICS & ML ---
+def run_analytics():
+    print("[POST] Running analytics (pandas reporting)...")
+    try:
+        from utils.test_reporter import AdvancedTestReporter
+
+        reporter = AdvancedTestReporter()
+        # Load all results in data/results/
+        for f in RESULTS_DIR.glob("*.json"):
+            reporter.load_json_report(f)
+        reporter.generate_dataframe_analytics()
+        csv_path = REPORTS_DIR / "analytics_summary.csv"
+        reporter.export_to_csv(csv_path)
+        print(f"[POST] Analytics CSV: {csv_path}")
+    except Exception as e:
+        print(f"[ERROR] Analytics failed: {e}")
+
+
+def run_ml_analysis():
+    print("[POST] Running ML analysis (flaky test detection, predictions)...")
+    result = subprocess.run(
+        [str(VENV_PYTHON), "utils/ml_test_analyzer.py"], capture_output=True, text=True
+    )
+    print(result.stdout)
+    if result.returncode != 0:
+        print(f"[ERROR] ML analysis failed: {result.stderr}")
+    else:
+        print("[POST] ML analysis completed.")
+
+
+def archive_old_results(max_reports=30):
+    print(f"[ARCHIVE] Checking for more than {max_reports} result files to keep...")
+    result_files = sorted(RESULTS_DIR.glob("*.json"), key=lambda f: f.stat().st_mtime)
+    if len(result_files) > max_reports:
+        to_remove = result_files[:-max_reports]
+        for f in to_remove:
+            f.unlink()
+            print(f"[ARCHIVE] Removed old result: {f}")
+    else:
+        print("[ARCHIVE] No removal needed.")
+
+
+# --- MAIN WORKFLOW ---
+def main():
+    clean_results()
+    validate_environment()
+    run_pytest(WEB_TESTS, "web")
+    run_pytest(API_TESTS, "api")
+    export_results()
+    run_analytics()
+    run_ml_analysis()
+    archive_old_results(max_reports=30)
+    print(
+        "\n[COMPLETE] Full workflow finished. See reports/ and data/results/ for outputs."
+    )
+
+
+if __name__ == "__main__":
+    main()

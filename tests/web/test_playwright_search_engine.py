@@ -2,8 +2,6 @@
 Playwright Search engine tests demonstrating modern browser automation.
 """
 
-import asyncio
-
 import pytest
 from hamcrest import (
     assert_that,
@@ -88,7 +86,7 @@ async def test_playwright_search_basic():
             print(f"✅ Found {result_count} results for '{search_term}'")
             print(f"First result: {titles[0][:100]}...")
         else:
-            print("⚠️ No results found - may be blocked by anti-bot measures")
+            pytest.fail("No results found - may be blocked by anti-bot measures")
 
     except Exception as e:
         print(f"Test error: {e}")
@@ -143,7 +141,7 @@ async def test_playwright_search_with_suggestions():
             for i, suggestion in enumerate(suggestions[:3]):
                 print(f"  {i + 1}. {suggestion}")
         else:
-            print("⚠️ No suggestions found - may be disabled for automation")
+            pytest.fail("No suggestions found - common in automated environments")
 
         # Complete the search
         await playwright_page.page.keyboard.press("Enter")
@@ -214,7 +212,7 @@ async def test_playwright_advanced_search():
                 ]
                 print(f"✅ Found {len(github_links)} GitHub links in top 5 results")
         else:
-            print("⚠️ No results found - search engine may not support site: filter")
+            pytest.fail("No results found - search engine may not support site: filter")
 
     finally:
         if factory:
@@ -263,7 +261,7 @@ async def test_playwright_multiple_browsers():
                 result_count = await search_page.get_result_count()
                 print(f"✅ {browser_type}: Found {result_count} results")
             else:
-                print(f"⚠️ {browser_type}: Search blocked or no results")
+                pytest.fail(f"{browser_type}: Search blocked or no results")
 
         except Exception as e:
             print(f"❌ {browser_type}: Error - {e}")
@@ -322,13 +320,54 @@ async def test_playwright_network_interception():
         if not search_engine_url:
             # Fallback: try to get from the page object if available
             search_engine_url = getattr(search_page, "SEARCH_ENGINE_URL", None)
+
+        # Next fallback: try to use the current page URL
+        if not search_engine_url:
+            try:
+                page_url = await playwright_page.page.evaluate("() => location.href")
+                if page_url:
+                    parsed = urlparse(page_url)
+                    if parsed.scheme and parsed.netloc:
+                        search_engine_url = f"{parsed.scheme}://{parsed.netloc}"
+            except Exception:
+                pass
+
+        # Next fallback: inspect intercepted requests for a document/fetch URL
+        if not search_engine_url:
+            for req in intercepted_requests:
+                try:
+                    if req.get("resource_type") in ("document", "fetch") and req.get(
+                        "url"
+                    ):
+                        parsed = urlparse(req["url"])
+                        if parsed.scheme and parsed.netloc:
+                            search_engine_url = f"{parsed.scheme}://{parsed.netloc}"
+                            break
+                except Exception:
+                    continue
+
+        # Final fallback: pick any host from intercepted requests
+        if not search_engine_url:
+            for req in intercepted_requests:
+                try:
+                    if req.get("url"):
+                        parsed = urlparse(req["url"])
+                        if parsed.scheme and parsed.netloc:
+                            search_engine_url = f"{parsed.scheme}://{parsed.netloc}"
+                            break
+                except Exception:
+                    continue
+
         if not search_engine_url:
             raise RuntimeError(
                 "Could not determine search engine URL for request filtering"
             )
+
         search_engine_domain = urlparse(search_engine_url).netloc
         search_engine_requests = [
-            req for req in intercepted_requests if search_engine_domain in req["url"]
+            req
+            for req in intercepted_requests
+            if search_engine_domain in (req.get("url") or "")
         ]
         assert_that(
             len(search_engine_requests), greater_than(0)
@@ -404,7 +443,7 @@ async def test_playwright_mobile_emulation():
             result_count = await search_page.get_result_count()
             print(f"✅ Mobile: Found {result_count} results")
         else:
-            print("⚠️ Mobile search blocked or no results")
+            pytest.fail("Mobile search blocked or no results")
 
         print("✅ Mobile emulation test completed")
 

@@ -31,5 +31,6 @@ def require_database_connection(driver):
     """
     if not (isinstance(driver, (tuple, list)) and len(driver) > 1):
         pytest.skip(
-            "Database connection not available - driver fixture must return (driver, db)"
+            "Database connection not available - driver fixture must return "
+            "(driver, db)"
         )

@@ -58,7 +58,8 @@ class StructuredLogger:
         level_upper = level.upper()
         if level_upper not in allowed_levels:
             raise ValueError(
-                f"Invalid log level '{level}'. Allowed values are: {', '.join(sorted(allowed_levels))}."
+                f"Invalid log level '{level}'. Allowed values are: "
+                f"{', '.join(sorted(allowed_levels))}."
             )
         self.level = getattr(logging, level_upper)
 

@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from jinja2 import Template
 
 
 @dataclass
@@ -69,6 +68,71 @@ class TestTrend:
 
 
 class AdvancedTestReporter:
+    def load_json_report(self, file_path: Union[str, Path]) -> None:
+        """
+        Load test results from a JSON file (pytest-json-report or custom format)
+        and append to self.test_results. Supports both pytest-json-report and this
+        framework's own format.
+        """
+        file_path = Path(file_path)
+        with open(file_path, "r") as f:
+            data = json.load(f)
+
+        # Try to detect pytest-json-report format
+        if "tests" in data:
+            # pytest-json-report format
+            for test in data["tests"]:
+                try:
+                    result = Result(
+                        test_name=test.get("nodeid", test.get("name", "unknown")),
+                        status=test.get(
+                            "outcome", test.get("status", "unknown")
+                        ).upper(),
+                        duration=float(test.get("duration", 0)),
+                        timestamp=datetime.fromisoformat(
+                            test.get("start", datetime.now().isoformat())
+                        ),
+                        environment=test.get("environment", "unknown"),
+                        browser=test.get("browser", "unknown"),
+                        error_message=test.get("longrepr", None),
+                        stack_trace=test.get("longrepr", None),
+                        retries=int(test.get("rerun", 0)),
+                        tags=test.get("keywords", []),
+                    )
+                    self.test_results.append(result)
+                except Exception:
+                    # Skip malformed test entries
+                    continue
+        elif "test_results" in data:
+            # Our own format
+            for test in data["test_results"]:
+                try:
+                    # Convert timestamp if needed
+                    ts = test.get("timestamp", datetime.now().isoformat())
+                    if isinstance(ts, str):
+                        try:
+                            ts = datetime.fromisoformat(ts)
+                        except Exception:
+                            ts = datetime.now()
+                    result = Result(
+                        test_name=test.get("test_name", "unknown"),
+                        status=test.get("status", "unknown").upper(),
+                        duration=float(test.get("duration", 0)),
+                        timestamp=ts,
+                        environment=test.get("environment", "unknown"),
+                        browser=test.get("browser", "unknown"),
+                        error_message=test.get("error_message", None),
+                        stack_trace=test.get("stack_trace", None),
+                        retries=int(test.get("retries", 0)),
+                        tags=test.get("tags", []),
+                    )
+                    self.test_results.append(result)
+                except Exception:
+                    continue
+        else:
+            # Unknown format, skip
+            pass
+
     """
     Advanced test reporting system with analytics and insights.
 
@@ -540,7 +604,10 @@ class AdvancedTestReporter:
         body {{ font-family: Arial, sans-serif; margin: 20px; }}
         .header {{ background-color: #f4f4f4; padding: 20px; border-radius: 5px; }}
         .metrics {{ display: flex; justify-content: space-around; margin: 20px 0; }}
-        .metric {{ text-align: center; padding: 15px; background-color: #e9e9e9; border-radius: 5px; }}
+        .metric {{
+            text-align: center; padding: 15px; background-color: #e9e9e9;
+            border-radius: 5px;
+        }}
         .passed {{ background-color: #d4edda; }}
         .failed {{ background-color: #f8d7da; }}
         .test-results {{ margin-top: 20px; }}
@@ -559,7 +626,7 @@ class AdvancedTestReporter:
         <p>Browser: {self.current_suite.browser}</p>
         <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
     </div>
-    
+
     <div class="metrics">
         <div class="metric passed">
             <h3>Passed</h3>
@@ -578,7 +645,7 @@ class AdvancedTestReporter:
             <p>{self.current_suite.total_duration:.2f}s</p>
         </div>
     </div>
-    
+
     <div class="test-results">
         <h2>Test Results</h2>
         <table>
@@ -620,7 +687,7 @@ class AdvancedTestReporter:
 </head>
 <body>
     <h1>Test Analytics Dashboard</h1>
-    
+
     <div class="dashboard">
         <div class="widget">
             <h2>Current Metrics</h2>
@@ -633,20 +700,22 @@ class AdvancedTestReporter:
                 <p>{trend_data.get('stability_score', 'N/A')}</p>
             </div>
         </div>
-        
+
         <div class="widget">
             <h2>Trends</h2>
             <p>Pass Rate Trend: {trend_data.get('pass_rate_trend', 'N/A')}</p>
             <p>Duration Trend: {trend_data.get('duration_trend', 'N/A')}</p>
         </div>
-        
+
         <div class="widget">
             <h2>Recommendations</h2>
             <ul>
-                {''.join([f'<li>{rec}</li>' for rec in trend_data.get('recommendations', [])])}
+                {''.join([
+                    f'<li>{rec}</li>' for rec in trend_data.get('recommendations', [])
+                ])}
             </ul>
         </div>
-        
+
         <div class="widget">
             <h2>Common Failures</h2>
             <ul>

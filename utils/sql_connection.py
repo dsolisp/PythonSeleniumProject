@@ -319,12 +319,13 @@ def insert_data(
         validated_columns = [_validate_column_name(col) for col in data.keys()]
         columns = ", ".join(validated_columns)
         placeholders = ", ".join(["?" for _ in data])
-        # Safe: table and column names have been validated using _validate_table_name() and
-        # _validate_column_name() to allow only alphanumeric characters and underscores,
-        # preventing SQL injection. Values are parameterized.
-        query = "INSERT INTO {table} ({columns}) VALUES ({placeholders})".format(  # nosec B608
+        # Safe: table and column names have been validated using
+        # _validate_table_name() and _validate_column_name() to allow only
+        # alphanumeric characters and underscores, preventing SQL injection.
+        # Values are parameterized.
+        query = "INSERT INTO {table} ({columns}) VALUES " "({placeholders})".format(
             table=validated_table, columns=columns, placeholders=placeholders
-        )
+        )  # nosec B608
 
         cursor = execute_query(conn, query, tuple(data.values()))
         conn.commit()
@@ -352,8 +353,9 @@ def update_data(
     """
     Update data in a table with dynamic column mapping.
 
-    SECURITY: where_clause MUST use parameterized placeholders (?) to prevent SQL injection.
-    Never use f-strings or concatenation for user input in where_clause.
+    SECURITY: where_clause MUST use parameterized placeholders (?) to prevent
+    SQL injection. Never use f-strings or concatenation for user input in
+    where_clause.
 
     Safe:   update_data(conn, "users", {"name": "Jane"}, "id = ?", (1,))
     UNSAFE: update_data(conn, "users", {"name": "Jane"}, f"id = {user_id}")
@@ -384,7 +386,9 @@ def update_data(
 
         set_clause = ", ".join([f"{col} = ?" for col in validated_columns])
         # Safe: table/column names validated, values parameterized
-        query = f"UPDATE {validated_table} SET {set_clause} WHERE {where_clause}"  # nosec B608
+        query = (
+            f"UPDATE {validated_table} SET {set_clause} " f"WHERE {where_clause}"
+        )  # nosec B608
 
         params = list(data.values())
         if where_params:
@@ -415,8 +419,9 @@ def delete_data(
     """
     Delete data from a table.
 
-    SECURITY: where_clause MUST use parameterized placeholders (?) to prevent SQL injection.
-    Never use f-strings or concatenation for user input in where_clause.
+    SECURITY: where_clause MUST use parameterized placeholders (?) to prevent
+    SQL injection. Never use f-strings or concatenation for user input in
+    where_clause.
 
     Safe:   delete_data(conn, "users", "id = ?", (1,))
     UNSAFE: delete_data(conn, "users", f"id = {user_id}")
@@ -441,7 +446,8 @@ def delete_data(
         if where_clause and "?" in where_clause and not where_params:
             raise ValueError("WHERE clause contains '?' but no where_params provided")
 
-        # Safe: table name validated via _validate_table_name(), where_params are parameterized
+        # Safe: table name validated via _validate_table_name(),
+        # where_params are parameterized
         query = f"DELETE FROM {validated_table} WHERE {where_clause}"  # nosec B608
         cursor = execute_query(conn, query, where_params)
         conn.commit()
