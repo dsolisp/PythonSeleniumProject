@@ -7,13 +7,15 @@ error handling.
 
 import functools
 import logging
+import re
 import time
 import traceback
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 import psutil
 
@@ -23,6 +25,7 @@ from selenium.common.exceptions import (
     NoSuchElementException,
     StaleElementReferenceException,
     TimeoutException,
+    WebDriverException,
 )
 from selenium.webdriver.support.ui import WebDriverWait
 from tenacity import (
@@ -62,10 +65,10 @@ class ErrorContext:
     timestamp: datetime
     test_name: str
     page_url: str
-    screenshot_path: Optional[str] = None
-    stack_trace: Optional[str] = None
-    browser_logs: Optional[List[str]] = None
-    element_info: Optional[Dict[str, Any]] = None
+    screenshot_path: str | None = None
+    stack_trace: str | None = None
+    browser_logs: list[str] | None = None
+    element_info: dict[str, Any] | None = None
     retry_count: int = 0
 
 
@@ -76,8 +79,8 @@ class RecoveryAction:
     strategy: RecoveryStrategy
     max_attempts: int
     wait_time: float
-    custom_action: Optional[Callable] = None
-    success_validation: Optional[Callable] = None
+    custom_action: Callable | None = None
+    success_validation: Callable | None = None
 
 
 class ErrorClassifier:
@@ -157,7 +160,11 @@ class ErrorClassifier:
             },
         }
 
-    def classify_error(self, error: Exception, context: ErrorContext) -> Dict[str, Any]:
+    def classify_error(
+        self,
+        error: Exception,
+        _context: ErrorContext | None = None,
+    ) -> dict[str, Any]:
         """
         Classify error and return detailed information.
 
@@ -168,7 +175,6 @@ class ErrorClassifier:
         Returns:
             Dictionary containing error classification details
         """
-        import re
 
         error_message = str(error).lower()
         error_type = type(error).__name__
@@ -237,7 +243,7 @@ class RecoveryManager:
         """Initialize recovery manager."""
         self.driver_factory = driver_factory
         self.logger = logger or logging.getLogger(__name__)
-        self.recovery_history: List[Dict[str, Any]] = []
+        self.recovery_history: list[dict[str, Any]] = []
 
     def execute_recovery(
         self,
@@ -257,10 +263,11 @@ class RecoveryManager:
             True if recovery was successful, False otherwise
         """
         self.logger.info(
-            f"Executing recovery strategy: {recovery_action.strategy.value}"
+            "Executing recovery strategy: %s",
+            recovery_action.strategy.value,
         )
 
-        recovery_start = datetime.now()
+        recovery_start = datetime.now(UTC)
         success = False
 
         try:
@@ -270,26 +277,30 @@ class RecoveryManager:
                 success = self._refresh_recovery(driver, error_context, recovery_action)
             elif recovery_action.strategy == RecoveryStrategy.NAVIGATE:
                 success = self._navigate_recovery(
-                    driver, error_context, recovery_action
+                    driver,
+                    error_context,
+                    recovery_action,
                 )
             elif recovery_action.strategy == RecoveryStrategy.RESTART_DRIVER:
                 success = self._restart_driver_recovery(
-                    driver, error_context, recovery_action
+                    driver,
+                    error_context,
+                    recovery_action,
                 )
             elif recovery_action.strategy == RecoveryStrategy.SKIP:
                 success = True  # Skip always "succeeds"
             else:
                 success = False
 
-        except Exception as e:
-            self.logger.error(f"Recovery strategy failed: {str(e)}")
+        except Exception:
+            self.logger.exception("Recovery strategy failed")
             success = False
 
         # Record recovery attempt
         recovery_record = {
             "strategy": recovery_action.strategy.value,
             "success": success,
-            "duration": (datetime.now() - recovery_start).total_seconds(),
+            "duration": (datetime.now(UTC) - recovery_start).total_seconds(),
             "error_context": error_context,
             "timestamp": recovery_start,
         }
@@ -300,7 +311,7 @@ class RecoveryManager:
     def _retry_recovery(
         self,
         driver,
-        error_context: ErrorContext,
+        _error_context: ErrorContext,
         recovery_action: RecoveryAction,
     ) -> bool:
         """Execute retry recovery strategy."""
@@ -318,9 +329,9 @@ class RecoveryManager:
                     # Default retry behavior - wait and assume success
                     return True
 
-            except Exception as e:
+            except (WebDriverException, TimeoutException, ValueError, TypeError) as e:
                 attempt_num = attempt + 1
-                self.logger.warning(f"Retry attempt {attempt_num} failed: {str(e)}")
+                self.logger.warning("Retry attempt %d failed: %s", attempt_num, e)
                 continue
 
         return False
@@ -328,7 +339,7 @@ class RecoveryManager:
     def _refresh_recovery(
         self,
         driver,
-        error_context: ErrorContext,
+        _error_context: ErrorContext,
         recovery_action: RecoveryAction,
     ) -> bool:
         """Execute page refresh recovery strategy."""
@@ -338,7 +349,7 @@ class RecoveryManager:
 
             # Wait for page to load
             WebDriverWait(driver, recovery_action.wait_time).until(
-                lambda d: d.execute_script("return document.readyState") == "complete"
+                lambda d: d.execute_script("return document.readyState") == "complete",
             )
 
             # Validate success
@@ -346,11 +357,11 @@ class RecoveryManager:
                 return recovery_action.success_validation(driver)
 
             # Default validation - check if URL is accessible
-            return driver.current_url == current_url
-
-        except Exception as e:
-            self.logger.error(f"Refresh recovery failed: {str(e)}")
+        except Exception:
+            self.logger.exception("Refresh recovery failed")
             return False
+        else:
+            return driver.current_url == current_url
 
     def _navigate_recovery(
         self,
@@ -368,17 +379,17 @@ class RecoveryManager:
 
             # Wait for navigation to complete
             WebDriverWait(driver, recovery_action.wait_time).until(
-                lambda d: d.execute_script("return document.readyState") == "complete"
+                lambda d: d.execute_script("return document.readyState") == "complete",
             )
 
             if recovery_action.success_validation:
                 return recovery_action.success_validation(driver)
 
-            return True
-
-        except Exception as e:
-            self.logger.error(f"Navigate recovery failed: {str(e)}")
+        except Exception:
+            self.logger.exception("Navigate recovery failed")
             return False
+        else:
+            return True
 
     def _restart_driver_recovery(
         self,
@@ -395,8 +406,8 @@ class RecoveryManager:
             # Close current driver
             try:
                 driver.quit()
-            except Exception as e:
-                self.logger.error(f"Exception during driver.quit(): {str(e)}")
+            except Exception:
+                self.logger.exception("Exception during driver.quit()")
 
             # Create new driver
             new_driver = self.driver_factory.create_driver()
@@ -408,13 +419,13 @@ class RecoveryManager:
             if recovery_action.success_validation:
                 return recovery_action.success_validation(new_driver)
 
+        except Exception:
+            self.logger.exception("Driver restart recovery failed")
+            return False
+        else:
             return True
 
-        except Exception as e:
-            self.logger.error(f"Driver restart recovery failed: {str(e)}")
-            return False
-
-    def get_recovery_statistics(self) -> Dict[str, Any]:
+    def get_recovery_statistics(self) -> dict[str, Any]:
         """Get recovery performance statistics."""
         if not self.recovery_history:
             return {"message": "No recovery attempts recorded"}
@@ -448,7 +459,7 @@ class SmartErrorHandler:
     Main error handling coordinator that combines classification and recovery.
     """
 
-    def __init__(self, driver_factory=None, screenshots_dir: str = None):
+    def __init__(self, driver_factory=None, screenshots_dir: str | None = None):
         """Initialize smart error handler."""
         self.classifier = ErrorClassifier()
         self.recovery_manager = RecoveryManager(driver_factory)
@@ -461,7 +472,9 @@ class SmartErrorHandler:
         # Recovery configurations
         self.recovery_configs = {
             RecoveryStrategy.RETRY: RecoveryAction(
-                strategy=RecoveryStrategy.RETRY, max_attempts=3, wait_time=2.0
+                strategy=RecoveryStrategy.RETRY,
+                max_attempts=3,
+                wait_time=2.0,
             ),
             RecoveryStrategy.REFRESH: RecoveryAction(
                 strategy=RecoveryStrategy.REFRESH,
@@ -485,7 +498,7 @@ class SmartErrorHandler:
         error: Exception,
         driver,
         test_name: str,
-        custom_recovery: Optional[RecoveryAction] = None,
+        custom_recovery: RecoveryAction | None = None,
     ) -> bool:
         """
         Main error handling entry point.
@@ -510,8 +523,8 @@ class SmartErrorHandler:
         classification = self.classifier.classify_error(error, error_context)
 
         error_category = classification["classification"]["category"]
-        self.logger.error(f"Error classified as: {error_category}")
-        self.logger.error(f"Error message: {str(error)}")
+        self.logger.error("Error classified as: %s", error_category)
+        self.logger.error("Error message: %s", error)
 
         # Determine recovery strategy
         if custom_recovery:
@@ -526,7 +539,9 @@ class SmartErrorHandler:
 
         # Execute recovery
         recovery_success = self.recovery_manager.execute_recovery(
-            driver, error_context, recovery_action
+            driver,
+            error_context,
+            recovery_action,
         )
 
         if recovery_success:
@@ -537,45 +552,48 @@ class SmartErrorHandler:
         return recovery_success
 
     def _create_error_context(
-        self, error: Exception, driver, test_name: str
+        self,
+        error: Exception,
+        driver,
+        test_name: str,
     ) -> ErrorContext:
         """Create error context with available information."""
         try:
             current_url = driver.current_url
-        except BaseException:
+        except (WebDriverException, AttributeError):
             current_url = "unknown"
 
         try:
             browser_logs = driver.get_log("browser")
-        except BaseException:
+        except (WebDriverException, AttributeError):
             browser_logs = None
 
         return ErrorContext(
             error_type=type(error).__name__,
             error_message=str(error),
-            timestamp=datetime.now(),
+            timestamp=datetime.now(UTC),
             test_name=test_name,
             page_url=current_url,
             stack_trace=traceback.format_exc(),
             browser_logs=browser_logs,
         )
 
-    def _capture_error_screenshot(self, driver, test_name: str) -> Optional[str]:
+    def _capture_error_screenshot(self, driver, test_name: str) -> str | None:
         """Capture screenshot when error occurs."""
         try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             filename = f"error_{test_name}_{timestamp}.png"
             file_path = self.screenshots_dir / filename
 
             driver.save_screenshot(str(file_path))
             return str(file_path)
 
-        except Exception as e:
+        except (OSError, WebDriverException) as e:
             error_msg = str(e)
-            self.logger.warning(f"Failed to capture error screenshot: {error_msg}")
+            self.logger.warning("Failed to capture error screenshot: %s", error_msg)
             return None
 
-    def monitor_memory_usage(self) -> Dict[str, Any]:
+    def monitor_memory_usage(self) -> dict[str, Any]:
         """
         Monitor memory usage during test execution using psutil.
         """
@@ -586,7 +604,7 @@ class SmartErrorHandler:
             "current_memory_mb": round(memory_info.rss / 1024 / 1024, 2),
             "memory_percent": round(process.memory_percent(), 2),
             "cpu_percent": round(process.cpu_percent(), 2),
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def execute_with_tenacity_retry(
@@ -595,7 +613,7 @@ class SmartErrorHandler:
         *args,
         max_attempts: int = 3,
         wait_strategy: str = "exponential",
-        retry_exceptions: tuple = None,
+        retry_exceptions: tuple | None = None,
         **kwargs,
     ) -> Any:
         """
@@ -632,6 +650,7 @@ class SmartErrorHandler:
         ):
             with attempt:
                 return operation(*args, **kwargs)
+        return None
 
 
 def smart_retry(
@@ -667,8 +686,9 @@ def smart_retry(
                     if attempt < max_attempts - 1:
                         time.sleep(wait_time)
                         continue
-                    else:
-                        raise last_exception
+            if last_exception:
+                # Use `from last_exception` to preserve the original error context
+                raise last_exception from last_exception
 
             return None
 
@@ -679,7 +699,7 @@ def smart_retry(
 
 def with_error_recovery(
     error_handler: SmartErrorHandler,
-    recovery_strategy: Optional[RecoveryStrategy] = None,
+    recovery_strategy: RecoveryStrategy | None = None,
 ):
     """
     Decorator for automatic error recovery.
@@ -706,19 +726,21 @@ def with_error_recovery(
                 custom_recovery = None
                 if recovery_strategy:
                     custom_recovery = error_handler.recovery_configs.get(
-                        recovery_strategy
+                        recovery_strategy,
                     )
 
                 recovery_success = error_handler.handle_error(
-                    e, self.driver, test_name, custom_recovery
+                    e,
+                    self.driver,
+                    test_name,
+                    custom_recovery,
                 )
 
                 if recovery_success:
                     # Retry the original function after recovery
                     return func(self, *args, **kwargs)
-                else:
-                    # Re-raise the original exception if recovery failed
-                    raise e
+                # Re-raise the original exception if recovery failed
+                raise
 
         return wrapper
 

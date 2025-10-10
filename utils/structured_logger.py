@@ -4,7 +4,7 @@ Enhanced structured logging utilities with JSON output for enterprise reporting.
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -57,10 +57,11 @@ class StructuredLogger:
         allowed_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         level_upper = level.upper()
         if level_upper not in allowed_levels:
-            raise ValueError(
+            message = (
                 f"Invalid log level '{level}'. Allowed values are: "
                 f"{', '.join(sorted(allowed_levels))}."
             )
+            raise ValueError(message)
         self.level = getattr(logging, level_upper)
 
         # Configure structlog
@@ -81,28 +82,41 @@ class StructuredLogger:
         # Create logger instance with bound context
         self.logger = structlog.get_logger(name).bind(logger_name=name)
 
-    def debug(self, message: str, **context: Any) -> None:
+    def debug(self, message: str, *args: Any, **context: Any) -> None:
         """Log debug message with context."""
+        if args:
+            message = message % args
         self.logger.debug(message, **context)
 
-    def info(self, message: str, **context: Any) -> None:
+    def info(self, message: str, *args: Any, **context: Any) -> None:
         """Log info message with context."""
+        if args:
+            message = message % args
         self.logger.info(message, **context)
 
-    def warning(self, message: str, **context: Any) -> None:
+    def warning(self, message: str, *args: Any, **context: Any) -> None:
         """Log warning message with context."""
+        if args:
+            message = message % args
         self.logger.warning(message, **context)
 
-    def error(self, message: str, **context: Any) -> None:
+    def error(self, message: str, *args: Any, **context: Any) -> None:
         """Log error message with context."""
+        if args:
+            message = message % args
         self.logger.error(message, **context)
 
-    def critical(self, message: str, **context: Any) -> None:
+    def critical(self, message: str, *args: Any, **context: Any) -> None:
         """Log critical message with context."""
+        if args:
+            message = message % args
         self.logger.critical(message, **context)
 
     def test_start(
-        self, test_name: str, test_class: str = None, **context: Any
+        self,
+        test_name: str,
+        test_class: str | None = None,
+        **context: Any,
     ) -> None:
         """Log test start with structured context."""
         self.info(
@@ -117,7 +131,7 @@ class StructuredLogger:
         self,
         test_name: str,
         result: str,
-        duration: float = None,
+        duration: float | None = None,
         **context: Any,
     ) -> None:
         """Log test completion with results."""
@@ -141,7 +155,11 @@ class StructuredLogger:
         )
 
     def performance_metric(
-        self, metric_name: str, value: float, unit: str = "ms", **context: Any
+        self,
+        metric_name: str,
+        value: float,
+        unit: str = "ms",
+        **context: Any,
     ) -> None:
         """Log performance metrics for analysis."""
         self.info(
@@ -156,8 +174,8 @@ class StructuredLogger:
     def browser_action(
         self,
         action: str,
-        element: str = None,
-        value: str = None,
+        element: str | None = None,
+        value: str | None = None,
         **context: Any,
     ) -> None:
         """Log browser interactions for debugging."""
@@ -174,8 +192,8 @@ class StructuredLogger:
         self,
         method: str,
         url: str,
-        status_code: int = None,
-        response_time: float = None,
+        status_code: int | None = None,
+        response_time: float | None = None,
         **context: Any,
     ) -> None:
         """Log API requests for tracking."""
@@ -192,8 +210,8 @@ class StructuredLogger:
     def database_operation(
         self,
         operation: str,
-        table: str = None,
-        rows_affected: int = None,
+        table: str | None = None,
+        rows_affected: int | None = None,
         **context: Any,
     ) -> None:
         """Log database operations for auditing."""
@@ -207,6 +225,7 @@ class StructuredLogger:
         )
 
     def assertion_result(
+        *,
         self,
         assertion: str,
         result: bool,
@@ -235,7 +254,10 @@ class StructuredLogger:
         )
 
     def exception_caught(
-        self, exception: Exception, context_info: str = None, **context: Any
+        self,
+        exception: Exception,
+        context_info: str | None = None,
+        **context: Any,
     ) -> None:
         """Log caught exceptions with full context."""
         self.error(
@@ -262,7 +284,7 @@ class ExecutionLogger:
 
     def start_test(self, **context: Any) -> None:
         """Mark test start and begin timing."""
-        self.start_time = datetime.now()
+        self.start_time = datetime.now(UTC)
         self.step_count = 0
         self.logger.test_start(
             test_name=self.test_name,
@@ -273,7 +295,7 @@ class ExecutionLogger:
     def end_test(self, result: str, **context: Any) -> None:
         """Mark test end with duration and results."""
         if self.start_time:
-            duration = (datetime.now() - self.start_time).total_seconds()
+            duration = (datetime.now(UTC) - self.start_time).total_seconds()
         else:
             duration = None
 
@@ -295,7 +317,7 @@ class ExecutionLogger:
             **context,
         )
 
-    def log_assertion(self, assertion: str, result: bool, **context: Any) -> None:
+    def log_assertion(*, self, assertion: str, result: bool, **context: Any) -> None:
         """Log assertion with test context."""
         self.logger.assertion_result(
             assertion=assertion,
@@ -309,8 +331,8 @@ class ExecutionLogger:
         self,
         method: str,
         url: str,
-        status_code: int = None,
-        response_time: float = None,
+        status_code: int | None = None,
+        response_time: float | None = None,
         **context: Any,
     ) -> None:
         """Log API request with test context."""
@@ -324,7 +346,11 @@ class ExecutionLogger:
         )
 
     def performance_metric(
-        self, metric_name: str, value: float, unit: str = "ms", **context: Any
+        self,
+        metric_name: str,
+        value: float,
+        unit: str = "ms",
+        **context: Any,
     ) -> None:
         """Log performance metric with test context."""
         self.logger.performance_metric(
@@ -338,7 +364,8 @@ class ExecutionLogger:
     def browser_action(self, action: str, **context: Any) -> None:
         """Log browser action with test context."""
         self.logger.info(
-            f"Browser action: {action}",
+            "Browser action: %s",
+            action,
             event_type="browser_action",
             action=action,
             test_name=self.test_name,
@@ -353,7 +380,8 @@ class ExecutionLogger:
     ) -> None:
         """Log exception with test context."""
         self.logger.error(
-            f"Exception caught: {context_description}",
+            "Exception caught: %s",
+            context_description,
             event_type="exception",
             exception_type=type(exception).__name__,
             exception_message=str(exception),
@@ -368,7 +396,8 @@ framework_logger = StructuredLogger(logger_config.framework_core_name)
 
 
 def get_logger(
-    name: str = logger_config.default_name, level: str = logger_config.default_level
+    name: str = logger_config.default_name,
+    level: str = logger_config.default_level,
 ) -> StructuredLogger:
     """
     Factory function to create structured logger instances.

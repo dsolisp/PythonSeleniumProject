@@ -1,3 +1,4 @@
+import pytest
 from hamcrest import (
     assert_that,
     contains_string,
@@ -6,15 +7,18 @@ from hamcrest import (
     not_none,
 )
 
+from locators.test_framework_locators import TestFrameworkLocators
+from pages.base_page import BasePage
+from utils.webdriver_factory import (
+    DatabaseFactory,
+    WebDriverFactory,
+    cleanup_driver_and_database,
+    get_driver,
+)
+
 """
 Framework functionality tests without external dependencies.
 """
-
-import pytest
-
-from locators.test_framework_locators import TestFrameworkLocators
-from pages.base_page import BasePage
-from utils.webdriver_factory import DatabaseFactory, WebDriverFactory, get_driver
 
 
 @pytest.mark.framework
@@ -80,15 +84,20 @@ def test_base_page_functionality(driver):
     assert_that(title_element, is_(not_none())), "Should find title element"
 
     title_text = base_page.get_text(TestFrameworkLocators.TITLE_ELEMENT)
-    assert_that(
-        title_text, contains_string("Test Framework")
-    ), f"Should get correct text, got: {title_text}"
+    (
+        assert_that(
+            title_text,
+            contains_string("Test Framework"),
+        ),
+        f"Should get correct text, got: {title_text}",
+    )
 
     is_visible = base_page.is_element_visible(TestFrameworkLocators.TEST_INPUT_1)
     assert_that(is_visible, is_(True)), "Input element should be visible"
 
     type_success = base_page.send_keys(
-        TestFrameworkLocators.TEST_INPUT_1, "Hello Framework!"
+        TestFrameworkLocators.TEST_INPUT_1,
+        "Hello Framework!",
     )
     assert_that(type_success, is_(True)), "Should be able to type in input"
 
@@ -119,7 +128,8 @@ def test_base_page_element_actions_integration():
         assert_that(element, is_(not_none())), "Should find element"
 
         success = base_page.send_keys(
-            TestFrameworkLocators.TEST_ELEMENT_ID, "new value"
+            TestFrameworkLocators.TEST_ELEMENT_ID,
+            "new value",
         )
         assert_that(success, is_(True)), "Should be able to type"
 
@@ -147,9 +157,13 @@ def test_framework_integration():
         assert_that(success, is_(True)), "Should be able to navigate"
 
         current_url = base_page.get_current_url()
-        assert_that(
-            current_url, contains_string("data:text/html")
-        ), "Should be on test page"
+        (
+            assert_that(
+                current_url,
+                contains_string("data:text/html"),
+            ),
+            "Should be on test page",
+        )
 
         if db:
             query_result = base_page.execute_query("SELECT 1 as test")
@@ -158,8 +172,6 @@ def test_framework_integration():
         print("✅ Framework integration test passed!")
 
     finally:
-        from utils.webdriver_factory import cleanup_driver_and_database
-
         cleanup_driver_and_database(driver, db)
 
 

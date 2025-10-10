@@ -3,10 +3,10 @@ SQL connection utilities with comprehensive database operations and error handli
 """
 
 import logging
-import os
 import sqlite3
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,14 +28,16 @@ def _validate_table_name(table: str) -> str:
         ValueError: If table name contains invalid characters
     """
     if not table:
-        raise ValueError("Table name cannot be empty")
+        message = "Table name cannot be empty"
+        raise ValueError(message)
 
     # Only allow alphanumeric and underscores (no spaces, quotes, or special chars)
     if not table.replace("_", "").isalnum():
-        raise ValueError(
+        message = (
             f"Invalid table name '{table}'. Only alphanumeric characters and "
             "underscores are allowed."
         )
+        raise ValueError(message)
 
     return table
 
@@ -55,14 +57,16 @@ def _validate_column_name(column: str) -> str:
         ValueError: If column name contains invalid characters
     """
     if not column:
-        raise ValueError("Column name cannot be empty")
+        message = "Column name cannot be empty"
+        raise ValueError(message)
 
     # Only allow alphanumeric and underscores (no spaces, quotes, or special chars)
     if not column.replace("_", "").isalnum():
-        raise ValueError(
+        message = (
             f"Invalid column name '{column}'. Only alphanumeric characters and "
             "underscores are allowed."
         )
+        raise ValueError(message)
 
     return column
 
@@ -81,10 +85,12 @@ def get_connection(db_file: str) -> sqlite3.Connection:
         FileNotFoundError: If database file doesn't exist
         sqlite3.Error: If connection fails
     """
-    try:
-        if not os.path.exists(db_file):
-            raise FileNotFoundError(f"Database file not found: {db_file}")
+    # Validate database file exists before attempting connection
+    if not Path.exists(db_file):
+        message = f"Database file not found: {db_file}"
+        raise FileNotFoundError(message)
 
+    try:
         # Connection with row factory for better data access
         conn = sqlite3.connect(db_file)
         conn.row_factory = sqlite3.Row  # Enables column access by name
@@ -92,15 +98,15 @@ def get_connection(db_file: str) -> sqlite3.Connection:
         # Enable foreign key constraints
         conn.execute("PRAGMA foreign_keys = ON")
 
-        logger.info(f"Database connection established: {db_file}")
+        logger.info("Database connection established: %s", db_file)
+    except sqlite3.Error:
+        logger.exception("Failed to connect to database %s", db_file)
+        raise
+    except Exception:
+        logger.exception("Unexpected error connecting to database")
+        raise
+    else:
         return conn
-
-    except sqlite3.Error as e:
-        logger.error(f"Failed to connect to database {db_file}: {str(e)}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error connecting to database: {str(e)}")
-        raise
 
 
 @contextmanager
@@ -118,10 +124,10 @@ def get_connection_context(db_file: str):
     try:
         conn = get_connection(db_file)
         yield conn
-    except Exception as e:
+    except Exception:
         if conn:
             conn.rollback()
-        logger.error(f"Database operation failed: {str(e)}")
+        logger.exception("Database operation failed")
         raise
     finally:
         if conn:
@@ -130,7 +136,9 @@ def get_connection_context(db_file: str):
 
 
 def execute_query(
-    conn: sqlite3.Connection, query: str, params: tuple = None
+    conn: sqlite3.Connection,
+    query: str,
+    params: tuple | None = None,
 ) -> sqlite3.Cursor:
     """
     Execute a query on the given connection with error handling.
@@ -152,28 +160,31 @@ def execute_query(
         if params:
             cursor.execute(query, params)
             logger.info(
-                f"Executed parameterized query: {query[:50]}... with params: {params}"
+                "Executed parameterized query: %s... with params: %s",
+                query[:50],
+                params,
             )
         else:
             cursor.execute(query)
-            logger.info(f"Executed query: {query[:50]}...")
-
-        return cursor
-
-    except sqlite3.Error as e:
-        logger.error(f"Query execution failed: {str(e)}")
-        logger.error(f"Query: {query}")
+            logger.info("Executed query: %s...", query[:50])
+    except sqlite3.Error:
+        logger.exception("Query execution failed")
+        logger.exception("Query: %s", query)
         if params:
-            logger.error(f"Parameters: {params}")
+            logger.exception("Parameters: %s", params)
         raise
-    except Exception as e:
-        logger.error(f"Unexpected error during query execution: {str(e)}")
+    except Exception:
+        logger.exception("Unexpected error during query execution")
         raise
+    else:
+        return cursor
 
 
 def execute_query_safe(
-    conn: sqlite3.Connection, query: str, params: tuple = None
-) -> Optional[sqlite3.Cursor]:
+    conn: sqlite3.Connection,
+    query: str,
+    params: tuple | None = None,
+) -> sqlite3.Cursor | None:
     """
     Safely execute a query with exception handling that returns None on failure.
 
@@ -187,12 +198,12 @@ def execute_query_safe(
     """
     try:
         return execute_query(conn, query, params)
-    except Exception as e:
-        logger.warning(f"Safe query execution failed, returning None: {str(e)}")
+    except (sqlite3.Error, ValueError, TypeError) as e:
+        logger.warning("Safe query execution failed, returning None: %s", e)
         return None
 
 
-def fetch_one(cursor: sqlite3.Cursor) -> Optional[sqlite3.Row]:
+def fetch_one(cursor: sqlite3.Cursor) -> sqlite3.Row | None:
     """
     Fetch a single result from the cursor with error handling.
 
@@ -208,13 +219,14 @@ def fetch_one(cursor: sqlite3.Cursor) -> Optional[sqlite3.Row]:
             logger.info("Fetched one row successfully")
         else:
             logger.info("No rows found")
-        return result
-    except Exception as e:
-        logger.error(f"Error fetching single row: {str(e)}")
+    except Exception:
+        logger.exception("Error fetching single row")
         return None
+    else:
+        return result
 
 
-def fetch_all(cursor: sqlite3.Cursor) -> List[sqlite3.Row]:
+def fetch_all(cursor: sqlite3.Cursor) -> list[sqlite3.Row]:
     """
     Fetch all results from the cursor with error handling.
 
@@ -226,14 +238,15 @@ def fetch_all(cursor: sqlite3.Cursor) -> List[sqlite3.Row]:
     """
     try:
         results = cursor.fetchall()
-        logger.info(f"Fetched {len(results)} rows successfully")
-        return results
-    except Exception as e:
-        logger.error(f"Error fetching all rows: {str(e)}")
+        logger.info("Fetched %d rows successfully", len(results))
+    except Exception:
+        logger.exception("Error fetching all rows")
         return []
+    else:
+        return results
 
 
-def fetch_many(cursor: sqlite3.Cursor, size: int) -> List[sqlite3.Row]:
+def fetch_many(cursor: sqlite3.Cursor, size: int) -> list[sqlite3.Row]:
     """
     Fetch a specified number of results from the cursor.
 
@@ -246,16 +259,19 @@ def fetch_many(cursor: sqlite3.Cursor, size: int) -> List[sqlite3.Row]:
     """
     try:
         results = cursor.fetchmany(size)
-        logger.info(f"Fetched {len(results)} rows (requested: {size})")
-        return results
-    except Exception as e:
-        logger.error(f"Error fetching {size} rows: {str(e)}")
+        logger.info("Fetched %d rows (requested: %d)", len(results), size)
+    except Exception:
+        logger.exception("Error fetching %d rows", size)
         return []
+    else:
+        return results
 
 
 def execute_and_fetch_one(
-    conn: sqlite3.Connection, query: str, params: tuple = None
-) -> Optional[sqlite3.Row]:
+    conn: sqlite3.Connection,
+    query: str,
+    params: tuple | None = None,
+) -> sqlite3.Row | None:
     """
     Execute query and fetch single result in one operation.
 
@@ -270,14 +286,16 @@ def execute_and_fetch_one(
     try:
         cursor = execute_query(conn, query, params)
         return fetch_one(cursor)
-    except Exception as e:
-        logger.error(f"Execute and fetch one failed: {str(e)}")
+    except Exception:
+        logger.exception("Execute and fetch one failed")
         return None
 
 
 def execute_and_fetch_all(
-    conn: sqlite3.Connection, query: str, params: tuple = None
-) -> List[sqlite3.Row]:
+    conn: sqlite3.Connection,
+    query: str,
+    params: tuple | None = None,
+) -> list[sqlite3.Row]:
     """
     Execute query and fetch all results in one operation.
 
@@ -292,14 +310,16 @@ def execute_and_fetch_all(
     try:
         cursor = execute_query(conn, query, params)
         return fetch_all(cursor)
-    except Exception as e:
-        logger.error(f"Execute and fetch all failed: {str(e)}")
+    except Exception:
+        logger.exception("Execute and fetch all failed")
         return []
 
 
 def insert_data(
-    conn: sqlite3.Connection, table: str, data: Dict[str, Any]
-) -> Optional[int]:
+    conn: sqlite3.Connection,
+    table: str,
+    data: dict[str, Any],
+) -> int | None:
     """
     Insert data into a table with dynamic column mapping.
 
@@ -316,39 +336,37 @@ def insert_data(
         validated_table = _validate_table_name(table)
 
         # Validate all column names to prevent SQL injection
-        validated_columns = [_validate_column_name(col) for col in data.keys()]
+        validated_columns = [_validate_column_name(col) for col in data]
         columns = ", ".join(validated_columns)
         placeholders = ", ".join(["?" for _ in data])
         # Safe: table and column names have been validated using
         # _validate_table_name() and _validate_column_name() to allow only
         # alphanumeric characters and underscores, preventing SQL injection.
         # Values are parameterized.
-        query = "INSERT INTO {table} ({columns}) VALUES " "({placeholders})".format(
-            table=validated_table, columns=columns, placeholders=placeholders
-        )  # nosec B608
+        query = f"INSERT INTO {validated_table} ({columns}) VALUES ({placeholders})"  # nosec B608
 
         cursor = execute_query(conn, query, tuple(data.values()))
         conn.commit()
 
         row_id = cursor.lastrowid
-        logger.info(f"Inserted data into {table}, row ID: {row_id}")
-        return row_id
-
-    except ValueError as e:
-        logger.error(f"Invalid table or column name: {str(e)}")
+        logger.info("Inserted data into %s, row ID: %s", table, row_id)
+    except ValueError:
+        logger.exception("Invalid table or column name")
         return None
-    except Exception as e:
-        logger.error(f"Failed to insert data into {table}: {str(e)}")
+    except Exception:
+        logger.exception("Failed to insert data into %s", table)
         conn.rollback()
         return None
+    else:
+        return row_id
 
 
 def update_data(
     conn: sqlite3.Connection,
     table: str,
-    data: Dict[str, Any],
+    data: dict[str, Any],
     where_clause: str,
-    where_params: tuple = None,
+    where_params: tuple | None = None,
 ) -> int:
     """
     Update data in a table with dynamic column mapping.
@@ -373,22 +391,25 @@ def update_data(
     Raises:
         ValueError: If where_clause contains user input without parameterization
     """
+
+    def _validate_params():
+        if where_clause and "?" in where_clause and not where_params:
+            message = "WHERE clause contains '?' but no where_params provided"
+            raise ValueError(message)
+
     try:
         # Validate table name to prevent SQL injection
         validated_table = _validate_table_name(table)
 
         # Validate all column names to prevent SQL injection
-        validated_columns = [_validate_column_name(col) for col in data.keys()]
+        validated_columns = [_validate_column_name(col) for col in data]
 
         # Verify WHERE clause uses parameterized queries
-        if where_clause and "?" in where_clause and not where_params:
-            raise ValueError("WHERE clause contains '?' but no where_params provided")
+        _validate_params()
 
         set_clause = ", ".join([f"{col} = ?" for col in validated_columns])
         # Safe: table/column names validated, values parameterized
-        query = (
-            f"UPDATE {validated_table} SET {set_clause} " f"WHERE {where_clause}"
-        )  # nosec B608
+        query = f"UPDATE {validated_table} SET {set_clause} WHERE {where_clause}"  # nosec B608
 
         params = list(data.values())
         if where_params:
@@ -398,23 +419,23 @@ def update_data(
         conn.commit()
 
         affected_rows = cursor.rowcount
-        logger.info(f"Updated {affected_rows} rows in {table}")
-        return affected_rows
-
-    except ValueError as e:
-        logger.error(f"Invalid table or column name: {str(e)}")
+        logger.info("Updated %d rows in %s", affected_rows, table)
+    except ValueError:
+        logger.exception("Invalid table or column name")
         return 0
-    except Exception as e:
-        logger.error(f"Failed to update data in {table}: {str(e)}")
+    except Exception:
+        logger.exception("Failed to update data in %s", table)
         conn.rollback()
         return 0
+    else:
+        return affected_rows
 
 
 def delete_data(
     conn: sqlite3.Connection,
     table: str,
     where_clause: str,
-    where_params: tuple = None,
+    where_params: tuple | None = None,
 ) -> int:
     """
     Delete data from a table.
@@ -438,13 +459,18 @@ def delete_data(
     Raises:
         ValueError: If where_clause contains user input without parameterization
     """
+
+    def _validate_params():
+        if where_clause and "?" in where_clause and not where_params:
+            message = "WHERE clause contains '?' but no where_params provided"
+            raise ValueError(message)
+
     try:
         # Validate table name to prevent SQL injection
         validated_table = _validate_table_name(table)
 
         # Verify WHERE clause uses parameterized queries
-        if where_clause and "?" in where_clause and not where_params:
-            raise ValueError("WHERE clause contains '?' but no where_params provided")
+        _validate_params()
 
         # Safe: table name validated via _validate_table_name(),
         # where_params are parameterized
@@ -453,19 +479,19 @@ def delete_data(
         conn.commit()
 
         deleted_rows = cursor.rowcount
-        logger.info(f"Deleted {deleted_rows} rows from {table}")
-        return deleted_rows
-
-    except ValueError as e:
-        logger.error(f"Invalid table name: {str(e)}")
+        logger.info("Deleted %d rows from %s", deleted_rows, table)
+    except ValueError:
+        logger.exception("Invalid table name")
         return 0
-    except Exception as e:
-        logger.error(f"Failed to delete data from {table}: {str(e)}")
+    except Exception:
+        logger.exception("Failed to delete data from %s", table)
         conn.rollback()
         return 0
+    else:
+        return deleted_rows
 
 
-def get_table_info(conn: sqlite3.Connection, table: str) -> List[sqlite3.Row]:
+def get_table_info(conn: sqlite3.Connection, table: str) -> list[sqlite3.Row]:
     """
     Get table schema information.
 
@@ -483,15 +509,15 @@ def get_table_info(conn: sqlite3.Connection, table: str) -> List[sqlite3.Row]:
         # Using f-string with validated input (alphanumeric + underscore only)
         query = f"PRAGMA table_info({validated_table})"
         return execute_and_fetch_all(conn, query)
-    except ValueError as e:
-        logger.error(f"Invalid table name: {str(e)}")
+    except ValueError:
+        logger.exception("Invalid table name")
         return []
-    except Exception as e:
-        logger.error(f"Failed to get table info for {table}: {str(e)}")
+    except Exception:
+        logger.exception("Failed to get table info for %s", table)
         return []
 
 
-def get_table_names(conn: sqlite3.Connection) -> List[str]:
+def get_table_names(conn: sqlite3.Connection) -> list[str]:
     """
     Get all table names in the database.
 
@@ -505,8 +531,8 @@ def get_table_names(conn: sqlite3.Connection) -> List[str]:
         query = "SELECT name FROM sqlite_master WHERE type='table'"
         rows = execute_and_fetch_all(conn, query)
         return [row["name"] for row in rows]
-    except Exception as e:
-        logger.error(f"Failed to get table names: {str(e)}")
+    except Exception:
+        logger.exception("Failed to get table names")
         return []
 
 
@@ -521,8 +547,8 @@ def close_connection(conn: sqlite3.Connection) -> None:
         if conn:
             conn.close()
             logger.info("Database connection closed successfully")
-    except Exception as e:
-        logger.error(f"Error closing database connection: {str(e)}")
+    except Exception:
+        logger.exception("Error closing database connection")
 
 
 def validate_connection(db_file: str) -> bool:
@@ -544,32 +570,32 @@ def validate_connection(db_file: str) -> bool:
             if version:
                 sqlite_version = version[0]
                 logger.info(
-                    f"Database connection test passed. SQLite version: {sqlite_version}"
+                    "Database connection test passed. SQLite version: %s",
+                    sqlite_version,
                 )
                 return True
-            else:
-                logger.error("Database connection test failed - no version returned")
-                return False
+            logger.error("Database connection test failed - no version returned")
+            return False
 
-    except Exception as e:
-        logger.error(f"Database connection test failed: {str(e)}")
+    except Exception:
+        logger.exception("Database connection test failed")
         return False
 
 
 # Convenience functions for common Chinook database operations
-def get_artists(conn: sqlite3.Connection, limit: int = 10) -> List[sqlite3.Row]:
+def get_artists(conn: sqlite3.Connection, limit: int = 10) -> list[sqlite3.Row]:
     """Get artists from Chinook database."""
     query = "SELECT ArtistId, Name FROM artists LIMIT ?"
     return execute_and_fetch_all(conn, query, (limit,))
 
 
-def get_albums_by_artist(conn: sqlite3.Connection, artist_id: int) -> List[sqlite3.Row]:
+def get_albums_by_artist(conn: sqlite3.Connection, artist_id: int) -> list[sqlite3.Row]:
     """Get albums by specific artist from Chinook database."""
     query = "SELECT AlbumId, Title FROM albums WHERE ArtistId = ?"
     return execute_and_fetch_all(conn, query, (artist_id,))
 
 
-def get_tracks_by_album(conn: sqlite3.Connection, album_id: int) -> List[sqlite3.Row]:
+def get_tracks_by_album(conn: sqlite3.Connection, album_id: int) -> list[sqlite3.Row]:
     """Get tracks by specific album from Chinook database."""
     query = "SELECT TrackId, Name, Milliseconds FROM tracks WHERE AlbumId = ?"
     return execute_and_fetch_all(conn, query, (album_id,))

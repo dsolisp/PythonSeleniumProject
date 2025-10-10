@@ -3,9 +3,16 @@ Comprehensive tests for SQL validation functions to prevent injection attacks.
 Tests ensure _validate_table_name and _validate_column_name cannot be bypassed.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 
-from utils.sql_connection import _validate_column_name, _validate_table_name
+from utils.sql_connection import (
+    _validate_column_name,
+    _validate_table_name,
+    delete_data,
+    update_data,
+)
 
 
 class TestTableNameValidation:
@@ -28,7 +35,7 @@ class TestTableNameValidation:
         assert _validate_table_name(valid_name) == valid_name
 
     @pytest.mark.parametrize(
-        "invalid_name,description",
+        ("invalid_name", "description"),
         [
             ("users; DROP TABLE users--", "SQL injection with semicolon"),
             ("users' OR '1'='1", "SQL injection with quotes"),
@@ -66,9 +73,9 @@ class TestTableNameValidation:
             ("table\x00name", "Null byte injection"),
         ],
     )
-    def test_invalid_table_names(self, invalid_name, description):
+    def test_invalid_table_names(self, invalid_name):
         """Invalid table names should raise ValueError."""
-        with pytest.raises(ValueError, match="Invalid table name|cannot be empty"):
+        with pytest.raises(ValueError, match=r"Invalid table name|cannot be empty"):
             _validate_table_name(invalid_name)
 
     def test_empty_string_explicit_message(self):
@@ -98,7 +105,7 @@ class TestColumnNameValidation:
         assert _validate_column_name(valid_name) == valid_name
 
     @pytest.mark.parametrize(
-        "invalid_name,description",
+        ("invalid_name", "description"),
         [
             ("col; DROP TABLE users--", "SQL injection with semicolon"),
             ("col' OR '1'='1", "SQL injection with quotes"),
@@ -136,9 +143,9 @@ class TestColumnNameValidation:
             ("col\x00name", "Null byte injection"),
         ],
     )
-    def test_invalid_column_names(self, invalid_name, description):
+    def test_invalid_column_names(self, invalid_name):
         """Invalid column names should raise ValueError."""
-        with pytest.raises(ValueError, match="Invalid column name|cannot be empty"):
+        with pytest.raises(ValueError, match=r"Invalid column name|cannot be empty"):
             _validate_column_name(invalid_name)
 
     def test_empty_string_explicit_message(self):
@@ -168,10 +175,8 @@ class TestValidationIntegration:
         # This simulates how INSERT uses the validation
         malicious_data = {"col' OR '1'='1": "value"}
 
-        with pytest.raises(ValueError):
-            validated_cols = [
-                _validate_column_name(col) for col in malicious_data.keys()
-            ]
+        with pytest.raises(ValueError, match="Invalid column name"):
+            [_validate_column_name(col) for col in malicious_data]
 
 
 class TestWhereClauseValidation:
@@ -179,10 +184,6 @@ class TestWhereClauseValidation:
 
     def test_update_data_requires_params_for_placeholders(self):
         """update_data should return 0 if WHERE clause has ? but no params."""
-        from unittest.mock import MagicMock, patch
-
-        from utils.sql_connection import update_data
-
         mock_conn = MagicMock()
         data = {"name": "Jane"}
 
@@ -194,10 +195,6 @@ class TestWhereClauseValidation:
 
     def test_update_data_accepts_params_with_placeholders(self):
         """update_data should accept properly parameterized WHERE clauses."""
-        from unittest.mock import MagicMock, patch
-
-        from utils.sql_connection import update_data
-
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.rowcount = 1
@@ -212,10 +209,6 @@ class TestWhereClauseValidation:
 
     def test_delete_data_requires_params_for_placeholders(self):
         """delete_data should return 0 if WHERE clause has ? but no params."""
-        from unittest.mock import MagicMock, patch
-
-        from utils.sql_connection import delete_data
-
         mock_conn = MagicMock()
 
         # Should return 0 if WHERE clause has ? but no params
@@ -226,10 +219,6 @@ class TestWhereClauseValidation:
 
     def test_delete_data_accepts_params_with_placeholders(self):
         """delete_data should accept properly parameterized WHERE clauses."""
-        from unittest.mock import MagicMock, patch
-
-        from utils.sql_connection import delete_data
-
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.rowcount = 1

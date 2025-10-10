@@ -1,6 +1,6 @@
 import logging
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 
 from config.settings import settings
 
@@ -25,14 +25,15 @@ class TestLogger:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.INFO)
         console_format = logging.Formatter(
-            "%(asctime)s | %(levelname)-8s | %(message)s", datefmt="%H:%M:%S"
+            "%(asctime)s | %(levelname)-8s | %(message)s",
+            datefmt="%H:%M:%S",
         )
         console_handler.setFormatter(console_format)
         self.logger.addHandler(console_handler)
 
         log_file = (
             settings.LOGS_DIR
-            / f"test_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+            / f"test_run_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.log"
         )
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
@@ -50,47 +51,44 @@ class TestLogger:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
-    def info(self, message: str):
-        self.logger.info(message)
+    def info(self, message: str, *args):
+        self.logger.info(message, *args)
 
-    def debug(self, message: str):
-        self.logger.debug(message)
+    def debug(self, message: str, *args):
+        self.logger.debug(message, *args)
 
-    def warning(self, message: str):
-        self.logger.warning(message)
+    def warning(self, message: str, *args):
+        self.logger.warning(message, *args)
 
-    def error(self, message: str):
-        self.logger.error(message)
+    def error(self, message: str, *args):
+        self.logger.error(message, *args)
 
     def test_start(self, test_name: str):
-        self.info(f"🚀 STARTING TEST: {test_name}")
+        self.info("🚀 STARTING TEST: %s", test_name)
 
     def test_end(self, test_name: str, status: str, duration: float):
         emoji = "✅" if status == "PASSED" else "❌"
-        msg = (
-            f"{emoji} TEST COMPLETED: {test_name} | "
-            f"Status: {status} | Duration: {duration:.2f}s"
-        )
-        self.info(msg)
+        msg = "%s TEST COMPLETED: %s | Status: %s | Duration: %.2fs"
+        self.info(msg, emoji, test_name, status, duration)
 
     def step(self, description: str):
-        self.info(f"  📋 STEP: {description}")
+        self.info("  📋 STEP: %s", description)
 
     def separator(self):
         self.info("=" * 80)
 
     def exception(self, message: str, exception: Exception):
-        self.logger.exception(f"{message}: {str(exception)}")
+        self.logger.exception("%s: %s", message, exception)
 
     def screenshot(self, path: str):
-        self.info(f"Screenshot saved: {path}")
+        self.info("Screenshot saved: %s", path)
 
     def api_call(self, method: str, url: str, status_code: int):
-        self.info(f"API {method} {url} -> {status_code}")
+        self.info("API %s %s -> %d", method, url, status_code)
 
     def database_query(self, query_type: str, table: str = ""):
         table_info = f" on {table}" if table else ""
-        self.info(f"Database {query_type}{table_info}")
+        self.info("Database %s%s", query_type, table_info)
 
 
 logger = TestLogger()

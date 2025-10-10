@@ -60,7 +60,8 @@ class APILoadTestUser(HttpUser):
             else:
                 response.failure(f"Unexpected status code: {response.status_code}")
                 self.logger.warning(
-                    "GET request failed", status_code=response.status_code
+                    "GET request failed",
+                    status_code=response.status_code,
                 )
 
     @task(2)  # Weight 2 - common operation
@@ -88,7 +89,8 @@ class APILoadTestUser(HttpUser):
             else:
                 response.failure(f"POST failed: {response.status_code}")
                 self.logger.warning(
-                    "POST request failed", status_code=response.status_code
+                    "POST request failed",
+                    status_code=response.status_code,
                 )
 
     @task(1)  # Weight 1 - less common operation
@@ -98,7 +100,8 @@ class APILoadTestUser(HttpUser):
         search_term = random.choice(search_terms)
 
         with self.client.get(
-            f"/api/search?q={search_term}", catch_response=True
+            f"/api/search?q={search_term}",
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 try:
@@ -115,7 +118,7 @@ class APILoadTestUser(HttpUser):
                         self.logger.warning("Search response invalid format")
                 except Exception as e:
                     response.failure(f"JSON parsing failed: {e}")
-                    self.logger.error("Search JSON parsing failed", error=str(e))
+                    self.logger.exception("Search JSON parsing failed", error=str(e))
             else:
                 response.failure(f"Search failed: {response.status_code}")
 
@@ -158,7 +161,7 @@ class WebUILoadTestUser(HttpUser):
 
             # Find and interact with search box
             search_box = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.NAME, "q"))
+                EC.presence_of_element_located((By.NAME, "q")),
             )
 
             search_term = f"selenium testing {random.randint(1, 100)}"
@@ -168,7 +171,7 @@ class WebUILoadTestUser(HttpUser):
 
             # Wait for results
             WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.ID, "search"))
+                EC.presence_of_element_located((By.ID, "search")),
             )
 
             total_time = time.time() - start_time
@@ -181,15 +184,21 @@ class WebUILoadTestUser(HttpUser):
             )
 
         except Exception as e:
-            self.logger.error(
-                "Search engine flow failed", user_id=self.user_id, error=str(e)
+            self.logger.exception(
+                "Search engine flow failed",
+                user_id=self.user_id,
+                error=str(e),
             )
 
 
 # Locust event handlers for advanced monitoring
 @events.request.add_listener
 def request_handler(
-    request_type, name, response_time, response_length, exception, context, **kwargs
+    request_type,
+    name,
+    response_time,
+    response_length,
+    exception,
 ):
     """Log all requests for detailed monitoring."""
     logger = get_logger("LoadTest.Events")
@@ -213,7 +222,7 @@ def request_handler(
 
 
 @events.user_error.add_listener
-def user_error_handler(user_instance, exception, tb, **kwargs):
+def user_error_handler(user_instance, exception, tb):
     """Handle and log user errors."""
     logger = get_logger("LoadTest.Errors")
     logger.error(
@@ -225,7 +234,7 @@ def user_error_handler(user_instance, exception, tb, **kwargs):
 
 
 @events.test_start.add_listener
-def test_start_handler(environment, **kwargs):
+def test_start_handler(environment):
     """Log test start with configuration."""
     logger = get_logger("LoadTest.Lifecycle")
     logger.info(
@@ -237,7 +246,7 @@ def test_start_handler(environment, **kwargs):
 
 
 @events.test_stop.add_listener
-def test_stop_handler(environment, **kwargs):
+def test_stop_handler(environment):
     """Log test completion with summary statistics."""
     logger = get_logger("LoadTest.Lifecycle")
 

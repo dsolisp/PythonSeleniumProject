@@ -4,7 +4,7 @@ Compatible interface with existing Selenium BasePage but with async capabilities
 """
 
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any
 
 from playwright.async_api import ElementHandle, Page
 
@@ -29,7 +29,7 @@ class PlaywrightBasePage(PlaywrightPage):
         """Navigate to the base URL from settings."""
         await self.navigate_to(settings.BASE_URL)
 
-    async def wait_for_page_load(self, timeout: int = None) -> None:
+    async def wait_for_page_load(self, timeout: int | None = None) -> None:
         """Wait for page to be fully loaded."""
         timeout_ms = (timeout or settings.TIMEOUT) * 1000
         await self.page.wait_for_load_state("networkidle", timeout=timeout_ms)
@@ -61,7 +61,7 @@ class PlaywrightElementActions:
         """Hover over an element."""
         await self.page.hover(selector)
 
-    async def send_keys(self, selector: str, text: str, clear: bool = True) -> None:
+    async def send_keys(*, self, selector: str, text: str, clear: bool = True) -> None:
         """Send keys to an input element."""
         if clear:
             await self.page.fill(selector, text)
@@ -78,8 +78,10 @@ class PlaywrightElementActions:
         return await element.text_content() or ""
 
     async def get_element_attribute(
-        self, selector: str, attribute: str
-    ) -> Optional[str]:
+        self,
+        selector: str,
+        attribute: str,
+    ) -> str | None:
         """Get element attribute value."""
         return await self.page.get_attribute(selector, attribute)
 
@@ -87,15 +89,16 @@ class PlaywrightElementActions:
         """Check if element is visible."""
         try:
             await self.page.wait_for_selector(selector, state="visible", timeout=5000)
-            return True
-        except Exception:
+        except TimeoutError:
             return False
+        else:
+            return True
 
     async def is_element_enabled(self, selector: str) -> bool:
         """Check if element is enabled."""
         return await self.page.is_enabled(selector)
 
-    async def get_elements(self, selector: str) -> List[ElementHandle]:
+    async def get_elements(self, selector: str) -> list[ElementHandle]:
         """Get all elements matching selector."""
         return await self.page.query_selector_all(selector)
 
@@ -142,12 +145,12 @@ class PlaywrightNavigationActions:
         """Get page title."""
         return await self.page.title()
 
-    async def wait_for_url_change(self, timeout: int = None) -> None:
+    async def wait_for_url_change(self, timeout: int | None = None) -> None:
         """Wait for URL to change."""
         timeout_ms = (timeout or settings.TIMEOUT) * 1000
         await self.page.wait_for_url("**", timeout=timeout_ms)
 
-    async def wait_for_navigation(self, timeout: int = None) -> None:
+    async def wait_for_navigation(self, timeout: int | None = None) -> None:
         """Wait for navigation to complete."""
         timeout_ms = (timeout or settings.TIMEOUT) * 1000
         await self.page.wait_for_load_state("networkidle", timeout=timeout_ms)
@@ -160,7 +163,10 @@ class PlaywrightScreenshotActions:
         self.page = page
 
     async def take_screenshot(
-        self, filename: str = None, full_page: bool = True
+        *,
+        self,
+        filename: str | None = None,
+        full_page: bool = True,
     ) -> bytes:
         """Take a screenshot of the page."""
         if filename:
@@ -168,11 +174,12 @@ class PlaywrightScreenshotActions:
             screenshot_path.parent.mkdir(parents=True, exist_ok=True)
             await self.page.screenshot(path=str(screenshot_path), full_page=full_page)
             return b""
-        else:
-            return await self.page.screenshot(full_page=full_page)
+        return await self.page.screenshot(full_page=full_page)
 
     async def take_element_screenshot(
-        self, selector: str, filename: str = None
+        self,
+        selector: str,
+        filename: str | None = None,
     ) -> bytes:
         """Take a screenshot of a specific element."""
         element = await self.page.wait_for_selector(selector)
@@ -181,11 +188,11 @@ class PlaywrightScreenshotActions:
             screenshot_path.parent.mkdir(parents=True, exist_ok=True)
             await element.screenshot(path=str(screenshot_path))
             return b""
-        else:
-            return await element.screenshot()
+        return await element.screenshot()
 
     async def compare_screenshot(
-        self, selector: str, expected_path: str, threshold: float = 0.2
+        self,
+        selector: str,
     ) -> bool:
         """Compare element screenshot with expected image."""
         # This is a placeholder for visual comparison functionality
@@ -200,7 +207,7 @@ class PlaywrightScreenshotActions:
         # Playwright video recording is configured at context level
         # This is a placeholder for video control
 
-    async def record_video_stop(self) -> Optional[str]:
+    async def record_video_stop(self) -> str | None:
         """Stop video recording and return path."""
         # Video recording control would be implemented here
         return None

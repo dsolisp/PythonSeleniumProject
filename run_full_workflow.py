@@ -8,11 +8,14 @@ Integrated QA Automation Workflow Script
 - Runs analytics and ML modules
 - Prints clear output/report locations
 """
+
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
+
+from utils.test_reporter import AdvancedTestReporter
 
 # --- VIRTUAL ENVIRONMENT DETECTION ---
 VENV_DIR = Path(__file__).parent / "venv-enhanced"
@@ -23,17 +26,18 @@ SETUP_SCRIPT = Path(__file__).parent / "setup_env.sh"
 def ensure_venv():
     if not VENV_PYTHON.exists():
         print(
-            f"[WARN] Virtual environment not found at {VENV_PYTHON}. Running setup_env.sh..."
+            f"[WARN] Virtual environment not found at {VENV_PYTHON}. "
+            "Running setup_env.sh...",
         )
         if not SETUP_SCRIPT.exists():
-            print(f"[ERROR] setup_env.sh not found! Please create it.")
+            print("[ERROR] setup_env.sh not found! Please create it.")
             sys.exit(1)
         # Run the setup script
-        result = subprocess.run(["bash", str(SETUP_SCRIPT)])
+        result = subprocess.run(["bash", str(SETUP_SCRIPT)], check=False)
         if result.returncode != 0 or not VENV_PYTHON.exists():
-            print(f"[ERROR] Failed to create virtual environment. Exiting.")
+            print("[ERROR] Failed to create virtual environment. Exiting.")
             sys.exit(1)
-        print(f"[INFO] Virtual environment created.")
+        print("[INFO] Virtual environment created.")
 
 
 ensure_venv()
@@ -78,8 +82,9 @@ def validate_environment():
 # --- TEST EXECUTION ---
 def run_pytest(test_path, label):
     print(f"[TEST] Running {label} tests: {test_path}")
-    # Ensure results dir exists and create a timestamped json-report directly in data/results
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Ensure results dir exists and create a timestamped json-report
+    # directly in data/results
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     json_file = RESULTS_DIR / f"test_results_{label}_{timestamp}.json"
     result = subprocess.run(
         [
@@ -90,7 +95,8 @@ def run_pytest(test_path, label):
             "-v",
             "--json-report",
             f"--json-report-file={json_file}",
-        ]
+        ],
+        check=False,
     )
     if result.returncode != 0:
         print(f"[TEST] {label} tests failed. See output above.")
@@ -100,7 +106,8 @@ def run_pytest(test_path, label):
 
 def export_results():
     print("[POST] Exporting test results for analytics/ML...")
-    # If any json reports were created in reports/, copy them to data/results for completeness.
+    # If any json reports were created in reports/, copy them to
+    # data/results for completeness.
     for f in REPORTS_DIR.glob("test_results_*.json"):
         dest = RESULTS_DIR / f.name
         shutil.copy2(f, dest)
@@ -115,8 +122,6 @@ def export_results():
 def run_analytics():
     print("[POST] Running analytics (pandas reporting)...")
     try:
-        from utils.test_reporter import AdvancedTestReporter
-
         reporter = AdvancedTestReporter()
         # Load all results in data/results/
         for f in RESULTS_DIR.glob("*.json"):
@@ -125,14 +130,17 @@ def run_analytics():
         csv_path = REPORTS_DIR / "analytics_summary.csv"
         reporter.export_to_csv(csv_path)
         print(f"[POST] Analytics CSV: {csv_path}")
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         print(f"[ERROR] Analytics failed: {e}")
 
 
 def run_ml_analysis():
     print("[POST] Running ML analysis (flaky test detection, predictions)...")
     result = subprocess.run(
-        [str(VENV_PYTHON), "utils/ml_test_analyzer.py"], capture_output=True, text=True
+        [str(VENV_PYTHON), "utils/ml_test_analyzer.py"],
+        check=False,
+        capture_output=True,
+        text=True,
     )
     print(result.stdout)
     if result.returncode != 0:
@@ -164,7 +172,8 @@ def main():
     run_ml_analysis()
     archive_old_results(max_reports=30)
     print(
-        "\n[COMPLETE] Full workflow finished. See reports/ and data/results/ for outputs."
+        "\n[COMPLETE] Full workflow finished. See reports/ and " \
+        "data/results/ for outputs.",
     )
 
 

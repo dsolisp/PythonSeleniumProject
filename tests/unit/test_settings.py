@@ -1,3 +1,9 @@
+import os
+import shutil
+from pathlib import Path
+from unittest.mock import patch
+
+import pytest
 from hamcrest import (
     assert_that,
     equal_to,
@@ -5,19 +11,12 @@ from hamcrest import (
     is_,
 )
 
+from config.settings import Settings
+
 """
 Real Unit Tests for Settings Class
 Testing configuration logic and edge cases.
 """
-
-import os
-import shutil
-from pathlib import Path
-from unittest.mock import patch
-
-import pytest
-
-from config.settings import Settings
 
 
 class TestSettingsClass:
@@ -34,7 +33,8 @@ class TestSettingsClass:
         assert_that(settings.SCREENSHOT_ON_FAILURE, is_(True))
         assert_that(settings.BASE_URL, equal_to("https://duckduckgo.com"))
         assert_that(
-            settings.API_BASE_URL, equal_to("https://jsonplaceholder.typicode.com")
+            settings.API_BASE_URL,
+            equal_to("https://jsonplaceholder.typicode.com"),
         )
         assert_that(settings.DB_PATH, equal_to("resources/chinook.db"))
         assert_that(settings.ENVIRONMENT, equal_to("local"))
@@ -88,13 +88,13 @@ class TestSettingsClass:
     @patch.dict(os.environ, {"TIMEOUT": "invalid"})
     def test_settings_invalid_timeout(self):
         """Test Settings handles invalid timeout value."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="invalid literal for int"):
             Settings()
 
     @patch.dict(os.environ, {"VISUAL_THRESHOLD": "not_a_number"})
     def test_settings_invalid_visual_threshold(self):
         """Test Settings handles invalid visual threshold."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="invalid literal for int"):
             Settings()
 
     @patch.dict(os.environ, {"HEADLESS": "invalid_boolean"})
@@ -166,7 +166,8 @@ class TestSettingsClass:
 
         assert_that(settings.REPORTS_DIR, equal_to(settings.PROJECT_ROOT / "reports"))
         assert_that(
-            settings.SCREENSHOTS_DIR, equal_to(settings.PROJECT_ROOT / "screenshots")
+            settings.SCREENSHOTS_DIR,
+            equal_to(settings.PROJECT_ROOT / "screenshots"),
         )
         assert_that(settings.LOGS_DIR, equal_to(settings.PROJECT_ROOT / "logs"))
 
@@ -176,7 +177,8 @@ class TestSettingsClass:
         settings = Settings()
 
         assert_that(
-            settings.REPORTS_DIR, equal_to(settings.PROJECT_ROOT / "test_reports")
+            settings.REPORTS_DIR,
+            equal_to(settings.PROJECT_ROOT / "test_reports"),
         )
 
     def test_settings_pathlib_objects(self):

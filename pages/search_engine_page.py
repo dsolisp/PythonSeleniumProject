@@ -2,10 +2,16 @@
 Search engine page implementation using the page object pattern.
 """
 
-from typing import Dict, List
+import contextlib
+import time
 
+from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
+from config.settings import settings
 from locators.search_engine_locators import SearchEngineLocators
 from pages.base_page import BasePage
 
@@ -16,10 +22,14 @@ class SearchEnginePage(BasePage):
     Provides methods for search operations and result handling.
     """
 
-    def __init__(self, driver_and_db, test_name: str = None, environment: str = "test"):
+    def __init__(
+        self,
+        driver_and_db,
+        test_name: str | None = None,
+        environment: str = "test",
+    ):
         """Initialize Search engine page with enhanced features."""
         super().__init__(driver_and_db, test_name=test_name, environment=environment)
-        from config.settings import settings
 
         self.page_url = settings.BASE_URL
 
@@ -45,19 +55,18 @@ class SearchEnginePage(BasePage):
         if self.navigate_to(self.page_url):
             try:
                 return self.wait_for_element(
-                    SearchEngineLocators.SEARCH_BOX, timeout=10
+                    SearchEngineLocators.SEARCH_BOX,
+                    timeout=10,
                 )
-            except Exception:
+            except TimeoutException:
                 return False
         return False
 
     def navigate_to_search_engine(self) -> bool:
         """Navigate to search engine homepage."""
-        from config.settings import settings
-
         return self.navigate_to(settings.BASE_URL)
 
-    def search_for(self, search_term: str, use_enter: bool = True) -> bool:
+    def search_for(*, self, search_term: str, use_enter: bool = True) -> bool:
         """Perform search with given term."""
         # Navigate to search engine first
         if not self.navigate_to_search_engine():
@@ -74,20 +83,20 @@ class SearchEnginePage(BasePage):
                 element.send_keys(Keys.RETURN)
                 return True
             return False
-        else:
-            return self.click(SearchEngineLocators.SEARCH_BUTTON)
+        return self.click(SearchEngineLocators.SEARCH_BUTTON)
 
     def has_results(self) -> bool:
         """Check if search results are visible."""
         return self.is_element_visible(
-            SearchEngineLocators.RESULTS_CONTAINER, timeout=10
+            SearchEngineLocators.RESULTS_CONTAINER,
+            timeout=10,
         )
 
     def get_results_stats(self) -> str:
         """Get search results statistics text."""
         return self.get_text(SearchEngineLocators.RESULT_STATS)
 
-    def get_result_titles(self, max_count: int = 5) -> List[str]:
+    def get_result_titles(self, max_count: int = 5) -> list[str]:
         """Get list of search result titles."""
         elements = self.driver.find_elements(*SearchEngineLocators.RESULT_TITLES)
         titles = []
@@ -97,12 +106,12 @@ class SearchEnginePage(BasePage):
                 title = element.text.strip()
                 if title:
                     titles.append(title)
-            except Exception:
+            except WebDriverException:
                 continue
 
         return titles
 
-    def perform_search_workflow(self, search_term: str) -> Dict[str, any]:
+    def perform_search_workflow(self, search_term: str) -> dict[str, any]:
         """
         Complete search workflow that orchestrates the search process.
         """
@@ -133,7 +142,7 @@ class SearchEnginePage(BasePage):
             # Take screenshot for verification
             self.take_screenshot(f"search_{search_term.replace(' ', '_')}")
 
-        except Exception as e:
+        except RuntimeError as e:
             result["error"] = str(e)
 
         return result
@@ -152,14 +161,11 @@ class SearchEnginePage(BasePage):
         if not element:
             return False
 
-        try:
+        with contextlib.suppress(WebDriverException):
             self.driver.execute_script(
                 "arguments[0].focus();",
                 element,
             )
-        except Exception:
-            # Focus is helpful but not required for JS value injection
-            pass
 
         try:
             self.driver.execute_script(
@@ -171,7 +177,7 @@ class SearchEnginePage(BasePage):
                 element,
                 search_term,
             )
-        except Exception:
+        except WebDriverException:
             return False
 
         current_value = (element.get_attribute("value") or "").strip()
@@ -191,8 +197,6 @@ class SearchEnginePage(BasePage):
 
     def submit_search_with_enter(self) -> bool:
         """Submit search using Enter key (more reliable in headless mode)."""
-        from selenium.webdriver.common.keys import Keys
-
         element = self.find_element(SearchEngineLocators.SEARCH_BOX)
         if element:
             element.send_keys(Keys.RETURN)
@@ -215,29 +219,26 @@ class SearchEnginePage(BasePage):
         try:
             element = self.find_element(SearchEngineLocators.SEARCH_BOX)
             if element:
-                from selenium.webdriver.common.action_chains import (
-                    ActionChains,
-                )
-
                 actions = ActionChains(self.driver)
                 actions.move_to_element(element).click().send_keys(text).perform()
                 return True
+        except WebDriverException:
             return False
-        except Exception:
+        else:
             return False
 
     def wait_for_suggestions(self, timeout: int = 5) -> bool:
         """Wait for search suggestions to appear."""
         try:
-            from selenium.webdriver.support import expected_conditions as EC
-            from selenium.webdriver.support.ui import WebDriverWait
-
             WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located(SearchEngineLocators.SUGGESTIONS_LISTBOX)
+                EC.presence_of_element_located(
+                    SearchEngineLocators.SUGGESTIONS_LISTBOX,
+                ),
             )
-            return True
-        except Exception:
+        except TimeoutException:
             return False
+        else:
+            return True
 
     def get_search_input_health(self) -> dict:
         """Get health information about the search input element."""
@@ -283,11 +284,13 @@ class SearchEnginePage(BasePage):
         """Wait until search input is clickable."""
         try:
             element = self.wait_for_clickable(
-                SearchEngineLocators.SEARCH_BOX, timeout=timeout
+                SearchEngineLocators.SEARCH_BOX,
+                timeout=timeout,
             )
-            return element is not None
-        except Exception:
+        except TimeoutException:
             return False
+        else:
+            return element is not None
 
     def wait_for_search_input_visible(self, timeout: int = 10) -> bool:
         """Wait until search input is visible."""
@@ -296,7 +299,7 @@ class SearchEnginePage(BasePage):
                 self.wait_for_element(SearchEngineLocators.SEARCH_BOX, timeout=timeout)
                 is not None
             )
-        except Exception:
+        except TimeoutException:
             return False
 
     def click_search_input(self) -> bool:
@@ -309,8 +312,6 @@ class SearchEnginePage(BasePage):
             element = self.find_element(SearchEngineLocators.SEARCH_BOX)
             if element:
                 # Check if element has focus using JavaScript
-                import time
-
                 start_time = time.time()
                 while time.time() - start_time < timeout:
                     has_focus = self.driver.execute_script(
@@ -320,15 +321,14 @@ class SearchEnginePage(BasePage):
                     if has_focus:
                         return True
                     time.sleep(0.1)
+        except WebDriverException:
             return False
-        except Exception:
+        else:
             return False
 
     def wait_for_text_in_search_input(self, text: str, timeout: int = 10) -> bool:
         """Wait for specific text (or containing text) to appear in search input."""
         try:
-            import time
-
             normalized_expected = (text or "").strip().lower()
             start_time = time.time()
             while time.time() - start_time < timeout:
@@ -339,38 +339,31 @@ class SearchEnginePage(BasePage):
                 if normalized_expected in current_value.lower():
                     return True
                 time.sleep(0.1)
+        except RuntimeError:
             return False
-        except Exception:
+        else:
             return False
 
     def open_search_engine_with_timing(self) -> float:
         """Open search engine and return time taken."""
-        import time
-
         start_time = time.time()
         self.open_search_engine()
         return time.time() - start_time
 
     def get_search_input_timing(self) -> float:
         """Find search input and return time taken."""
-        import time
-
         start_time = time.time()
         self.find_element(SearchEngineLocators.SEARCH_BOX)
         return time.time() - start_time
 
     def enter_search_term_with_timing(self, search_term: str) -> float:
         """Enter search term and return time taken."""
-        import time
-
         start_time = time.time()
         self.enter_search_term(search_term)
         return time.time() - start_time
 
     def clear_and_retype_with_timing(self, search_term: str) -> float:
         """Clear input, retype text, and return time taken."""
-        import time
-
         start_time = time.time()
         element = self.find_element(SearchEngineLocators.SEARCH_BOX)
         if element:

@@ -8,7 +8,7 @@ Run with:
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
@@ -16,10 +16,10 @@ RESULTS_DIR = ROOT / "data" / "results"
 
 
 def normalize_custom_file(path: Path) -> Path:
-    with open(path, "r") as f:
+    with Path.open(path) as f:
         try:
             data = json.load(f)
-        except Exception:
+        except (json.JSONDecodeError, ValueError):
             print(f"[SKIP] Unable to parse JSON: {path}")
             return None
 
@@ -39,21 +39,22 @@ def normalize_custom_file(path: Path) -> Path:
                 # common ISO
                 dt = datetime.fromisoformat(created)
                 created_ts = dt.timestamp()
-            except Exception:
+            except (ValueError, OSError):
                 try:
-                    created_ts = datetime.now().timestamp()
-                except Exception:
+                    created_ts = datetime.now(UTC).timestamp()
+                except OSError:
                     created_ts = None
         elif isinstance(created, (int, float)):
             created_ts = float(created)
         else:
-            created_ts = datetime.now().timestamp()
+            created_ts = datetime.now(UTC).timestamp()
 
         norm["created"] = created_ts
         norm["duration"] = data.get("duration", 0)
         # environment: keep as-is (string or dict)
         norm["environment"] = data.get(
-            "environment", data["results"].get("environment", "unknown")
+            "environment",
+            data["results"].get("environment", "unknown"),
         )
         # metadata: map browser
         norm["metadata"] = {"Browser": data["results"].get("browser", "unknown")}
@@ -75,7 +76,7 @@ def normalize_custom_file(path: Path) -> Path:
 
         # write normalized file
         dest = path.with_name(path.stem + "_normalized.json")
-        with open(dest, "w") as df:
+        with Path.open(dest, "w") as df:
             json.dump(norm, df, indent=2)
         return dest
 

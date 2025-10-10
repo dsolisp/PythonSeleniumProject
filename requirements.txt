@@ -59,12 +59,9 @@ mkdocs-material
 allure-pytest
 memory-profiler
 PyHamcrest
-black
-isort
-autoflake
+# Development Tools (optional for local development)
+ruff
 mypy
-autopep8
-flake8
 bandit
 safety
 locust

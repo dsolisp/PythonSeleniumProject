@@ -3,8 +3,6 @@ Playwright Search Engine page implementation.
 Modern async alternative to Selenium SearchEnginePage.
 """
 
-from typing import List, Optional
-
 from playwright.async_api import Page
 
 from config.settings import settings
@@ -44,13 +42,18 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
 
             # Wait for search input to be ready
             await self.page.wait_for_selector(self.locators.SEARCH_INPUT, timeout=10000)
-            return True
-
-        except Exception as e:
+        except TimeoutError as e:
             print(f"Failed to open search engine: {e}")
             return False
+        else:
+            return True
 
-    async def search_for(self, search_term: str, wait_for_results: bool = True) -> bool:
+    async def search_for(
+        *,
+        self,
+        search_term: str,
+        wait_for_results: bool = True,
+    ) -> bool:
         """
         Perform a search on the search engine.
 
@@ -64,7 +67,8 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         try:
             # Clear and type search term
             await self.element_actions.send_keys(
-                self.locators.SEARCH_INPUT, search_term
+                self.locators.SEARCH_INPUT,
+                search_term,
             )
 
             # Submit search (Enter key is more reliable than clicking button)
@@ -89,22 +93,22 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                         selector,
                         timeout=15000,
                     )
-                except Exception as e:
+                except TimeoutError as e:
                     print(f"Results wait timed out: {e}")
                     # Even if timeout, search may have completed
                     # Check if URL changed to indicate search happened
                     current_url = await self.navigation_actions.get_current_url()
-                    if "q=" in current_url or "search" in current_url.lower():
-                        return True
-                    return False
+                    return bool("q=" in current_url or "search" in current_url.lower())
 
             return True
 
-        except Exception as e:
+        except TimeoutError as e:
             print(f"Search failed: {e}")
             return False
+        else:
+            return True
 
-    async def get_search_input(self) -> Optional[str]:
+    async def get_search_input(self) -> str | None:
         """
         Get the search input element value.
 
@@ -113,13 +117,14 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         """
         try:
             element = await self.page.wait_for_selector(
-                self.locators.SEARCH_INPUT, timeout=5000
+                self.locators.SEARCH_INPUT,
+                timeout=5000,
             )
             return await element.input_value()
-        except Exception:
+        except TimeoutError:
             return None
 
-    async def get_search_suggestions(self) -> List[str]:
+    async def get_search_suggestions(self) -> list[str]:
         """
         Get search suggestions from dropdown.
 
@@ -129,11 +134,12 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         try:
             # Type in search input to trigger suggestions
             await self.page.wait_for_selector(
-                self.locators.SEARCH_SUGGESTIONS, timeout=5000
+                self.locators.SEARCH_SUGGESTIONS,
+                timeout=5000,
             )
 
             suggestions = await self.page.query_selector_all(
-                self.locators.SEARCH_SUGGESTIONS
+                self.locators.SEARCH_SUGGESTIONS,
             )
             suggestion_texts = []
 
@@ -142,10 +148,10 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                 if text:
                     suggestion_texts.append(text.strip())
 
-            return suggestion_texts
-
-        except Exception:
+        except TimeoutError:
             return []
+        else:
+            return suggestion_texts
 
     async def get_result_count(self) -> int:
         """
@@ -156,14 +162,15 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         """
         try:
             await self.page.wait_for_selector(
-                self.locators.RESULT_TITLES, timeout=10000
+                self.locators.RESULT_TITLES,
+                timeout=10000,
             )
             results = await self.page.query_selector_all(self.locators.RESULT_TITLES)
             return len(results)
-        except Exception:
+        except TimeoutError:
             return 0
 
-    async def get_result_titles(self) -> List[str]:
+    async def get_result_titles(self) -> list[str]:
         """
         Get titles of search results.
 
@@ -172,10 +179,11 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         """
         try:
             await self.page.wait_for_selector(
-                self.locators.RESULT_TITLES, timeout=10000
+                self.locators.RESULT_TITLES,
+                timeout=10000,
             )
             title_elements = await self.page.query_selector_all(
-                self.locators.RESULT_TITLES
+                self.locators.RESULT_TITLES,
             )
 
             titles = []
@@ -184,12 +192,12 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                 if text:
                     titles.append(text.strip())
 
+        except TimeoutError:
+            return []
+        else:
             return titles
 
-        except Exception:
-            return []
-
-    async def get_result_links(self) -> List[str]:
+    async def get_result_links(self) -> list[str]:
         """
         Get URLs of search result links.
 
@@ -199,7 +207,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         try:
             await self.page.wait_for_selector(self.locators.RESULT_LINKS, timeout=10000)
             link_elements = await self.page.query_selector_all(
-                self.locators.RESULT_LINKS
+                self.locators.RESULT_LINKS,
             )
 
             links = []
@@ -211,10 +219,10 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                     if href:
                         links.append(href)
 
-            return links
-
-        except Exception:
+        except TimeoutError:
             return []
+        else:
+            return links
 
     async def click_first_result(self) -> bool:
         """
@@ -225,7 +233,8 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         """
         try:
             first_result = await self.page.wait_for_selector(
-                f"{self.locators.RESULT_LINKS}:first-child", timeout=10000
+                f"{self.locators.RESULT_LINKS}:first-child",
+                timeout=10000,
             )
 
             if first_result:
@@ -233,7 +242,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                 await self.navigation_actions.wait_for_navigation()
                 return True
 
-        except Exception as e:
+        except TimeoutError as e:
             print(f"Failed to click first result: {e}")
 
         return False
@@ -256,12 +265,12 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
 
             # Check for CAPTCHA elements
             captcha_element = await self.page.query_selector(
-                self.locators.CAPTCHA_CONTAINER
+                self.locators.CAPTCHA_CONTAINER,
             )
-            return captcha_element is not None
-
-        except Exception:
+        except TimeoutError:
             return False
+        else:
+            return captcha_element is not None
 
     async def has_results(self) -> bool:
         """
@@ -273,23 +282,22 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         try:
             # Check for results container
             results_present = await self.page.query_selector(
-                self.locators.RESULTS_CONTAINER
+                self.locators.RESULTS_CONTAINER,
             )
 
             # Check for "no results" message
             no_results = await self.page.query_selector(self.locators.NO_RESULTS)
-
-            return results_present is not None and no_results is None
-
-        except Exception:
+        except TimeoutError:
             return False
+        else:
+            return results_present is not None and no_results is None
 
     async def perform_advanced_search(
         self,
         search_term: str,
-        site_filter: Optional[str] = None,
-        file_type: Optional[str] = None,
-        date_range: Optional[str] = None,
+        site_filter: str | None = None,
+        file_type: str | None = None,
+        date_range: str | None = None,
     ) -> bool:
         """
         Perform advanced search with filters.
@@ -329,7 +337,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             elif file_type and site_filter:
                 print(
                     f"⚠️ Skipping filetype:{file_type} - "
-                    "DuckDuckGo limited support with site: filter"
+                    "DuckDuckGo limited support with site: filter",
                 )
 
             if date_range:
@@ -340,7 +348,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
 
             return await self.search_for(advanced_query)
 
-        except Exception as e:
+        except TimeoutError as e:
             print(f"Advanced search failed: {e}")
             return False
 
@@ -356,9 +364,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         """
         try:
             # Wait for either results or no-results message
-            selector = (
-                f"{self.locators.RESULTS_CONTAINER}, " f"{self.locators.NO_RESULTS}"
-            )
+            selector = f"{self.locators.RESULTS_CONTAINER}, {self.locators.NO_RESULTS}"
             await self.page.wait_for_selector(
                 selector,
                 timeout=timeout * 1000,
@@ -366,8 +372,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
 
             # Additional wait for dynamic content
             await self.page.wait_for_load_state("networkidle", timeout=5000)
-
-            return True
-
-        except Exception:
+        except TimeoutError:
             return False
+        else:
+            return True

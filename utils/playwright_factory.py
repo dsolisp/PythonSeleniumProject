@@ -3,7 +3,7 @@ Playwright factory for modern browser automation.
 Provides async browser automation capabilities alongside existing Selenium support.
 """
 
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from playwright.async_api import (
     Browser,
@@ -27,7 +27,11 @@ class PlaywrightFactory:
         self.context = None
 
     async def create_browser(
-        self, browser_type: str = "chromium", headless: bool = None, **kwargs
+        *,
+        self,
+        browser_type: str = "chromium",
+        headless: bool | None = None,
+        **kwargs,
     ) -> Browser:
         """
         Create a Playwright browser instance.
@@ -58,7 +62,8 @@ class PlaywrightFactory:
         elif browser_type.lower() == "webkit":
             self.browser = await self.playwright.webkit.launch(**browser_options)
         else:
-            raise ValueError(f"Unsupported browser type: {browser_type}")
+            message = f"Unsupported browser type: {browser_type}"
+            raise ValueError(message)
 
         return self.browser
 
@@ -77,7 +82,8 @@ class PlaywrightFactory:
             browser = self.browser
 
         if browser is None:
-            raise ValueError("No browser instance available")
+            message = "No browser instance available"
+            raise ValueError(message)
 
         context_options = {
             "viewport": {"width": 1920, "height": 1080},
@@ -101,7 +107,8 @@ class PlaywrightFactory:
             context = self.context
 
         if context is None:
-            raise ValueError("No browser context available")
+            message = "No browser context available"
+            raise ValueError(message)
 
         page = await context.new_page()
 
@@ -139,7 +146,7 @@ class PlaywrightFactory:
         """
         try:
             await self.cleanup()
-        except Exception as e:
+        except (AttributeError, ValueError, TypeError) as e:
             print(f"Cleanup warning: {e}")
 
 
@@ -162,11 +169,11 @@ class PlaywrightPage:
         """Navigate to URL."""
         await self.page.goto(url)
 
-    async def find_element(self, selector: str) -> Optional[Any]:
+    async def find_element(self, selector: str) -> Any | None:
         """Find element by selector."""
         try:
             return await self.page.wait_for_selector(selector, timeout=5000)
-        except Exception:
+        except (TimeoutError, ValueError, TypeError):
             return None
 
     async def click(self, selector: str) -> None:
@@ -190,18 +197,17 @@ class PlaywrightPage:
         """Get current URL."""
         return self.page.url
 
-    async def wait_for_element(self, selector: str, timeout: int = None) -> Any:
+    async def wait_for_element(self, selector: str, timeout: int | None = None) -> Any:
         """Wait for element to be visible."""
         timeout_ms = (timeout or settings.TIMEOUT) * SECONDS_TO_MILLISECONDS
         return await self.page.wait_for_selector(selector, timeout=timeout_ms)
 
-    async def screenshot(self, path: str = None) -> bytes:
+    async def screenshot(self, path: str | None = None) -> bytes:
         """Take screenshot."""
         if path:
             await self.page.screenshot(path=path)
             return b""
-        else:
-            return await self.page.screenshot()
+        return await self.page.screenshot()
 
     async def evaluate_script(self, script: str) -> Any:
         """Execute JavaScript on the page."""
@@ -210,8 +216,10 @@ class PlaywrightPage:
 
 # Utility functions for easy usage
 async def create_playwright_session(
-    browser_type: str = "chromium", headless: bool = None
-) -> Tuple[PlaywrightFactory, PlaywrightPage]:
+    *,
+    browser_type: str = "chromium",
+    headless: bool | None = None,
+) -> tuple[PlaywrightFactory, PlaywrightPage]:
     """
     Create a complete Playwright session with factory and page.
 

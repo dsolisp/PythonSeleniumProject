@@ -409,7 +409,8 @@ class TestCreatePlaywrightSession:
             mock_context.new_page = AsyncMock(return_value=mock_page)
 
             factory, page_wrapper = await create_playwright_session(
-                browser_type="firefox", headless=True
+                browser_type="firefox",
+                headless=True,
             )
 
             assert_that(factory, is_(not_none()))
