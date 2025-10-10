@@ -65,9 +65,7 @@ def driver(request, test_config) -> tuple[webdriver.Chrome, object]:
             and settings.SCREENSHOT_ON_FAILURE
         ):
             try:
-                screenshot_path = (
-                    settings.SCREENSHOTS_DIR / f"{test_name}_failure.png"
-                )
+                screenshot_path = settings.SCREENSHOTS_DIR / f"{test_name}_failure.png"
                 driver.save_screenshot(str(screenshot_path))
                 print(f"Failure screenshot: {screenshot_path}")
             except OSError as e:

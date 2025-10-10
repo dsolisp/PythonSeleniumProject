@@ -172,7 +172,7 @@ def main():
     run_ml_analysis()
     archive_old_results(max_reports=30)
     print(
-        "\n[COMPLETE] Full workflow finished. See reports/ and " \
+        "\n[COMPLETE] Full workflow finished. See reports/ and "
         "data/results/ for outputs.",
     )
 
