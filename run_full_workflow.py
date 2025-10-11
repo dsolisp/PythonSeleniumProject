@@ -12,7 +12,7 @@ Integrated QA Automation Workflow Script
 import shutil
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from utils.test_reporter import AdvancedTestReporter
@@ -84,7 +84,7 @@ def run_pytest(test_path, label):
     print(f"[TEST] Running {label} tests: {test_path}")
     # Ensure results dir exists and create a timestamped json-report
     # directly in data/results
-    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     json_file = RESULTS_DIR / f"test_results_{label}_{timestamp}.json"
     result = subprocess.run(
         [

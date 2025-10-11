@@ -1,5 +1,5 @@
 import tempfile
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import jinja2
@@ -54,9 +54,9 @@ class TestPandasIntegration:
 
         # Add test results
         results = [
-            Result("test1", "passed", 1.5, datetime.now(UTC), "test", "chrome"),
-            Result("test2", "failed", 2.3, datetime.now(UTC), "test", "chrome"),
-            Result("test3", "passed", 0.8, datetime.now(UTC), "test", "chrome"),
+            Result("test1", "passed", 1.5, datetime.now(timezone.utc), "test", "chrome"),
+            Result("test2", "failed", 2.3, datetime.now(timezone.utc), "test", "chrome"),
+            Result("test3", "passed", 0.8, datetime.now(timezone.utc), "test", "chrome"),
         ]
 
         for result in results:
@@ -92,13 +92,13 @@ class TestPandasIntegration:
         reporter.start_test_suite("csv_test", "test", "chrome")
 
         # Add test result
-        result = Result("test_csv", "passed", 1.2, datetime.now(UTC), "test", "chrome")
+        result = Result("test_csv", "passed", 1.2, datetime.now(timezone.utc), "test", "chrome")
         reporter.add_test_result(result)
 
         # Export to CSV
         csv_file = reporter.export_to_csv()
         assert_that(csv_file, is_(not_none()))
-        assert_that(Path.exists(csv_file), is_(True))
+        assert_that(Path(csv_file).exists(), is_(True))
         assert_that(csv_file, ends_with(".csv"))
 
         # Verify CSV content
@@ -119,7 +119,7 @@ class TestPandasIntegration:
                 f"test_{i}",
                 "passed",
                 duration,
-                datetime.now(UTC),
+                datetime.now(timezone.utc),
                 "test",
                 "chrome",
             )
@@ -172,11 +172,11 @@ class TestYAMLIntegration:
         # Export to YAML
         yaml_file = manager.save_test_results_yaml(test_data)
         assert_that(yaml_file, is_(not_none()))
-        assert_that(Path.exists(yaml_file), is_(True))
+        assert_that(Path(yaml_file).exists(), is_(True))
         assert_that(yaml_file, ends_with(".yml"))
 
         # Verify YAML content
-        with Path.open(yaml_file) as f:
+        with Path(yaml_file).open() as f:
             loaded_data = yaml.safe_load(f)
 
         assert_that(loaded_data, is_(not_none()))

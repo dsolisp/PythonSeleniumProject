@@ -4,8 +4,8 @@ Enhanced structured logging utilities with JSON output for enterprise reporting.
 
 import logging
 from dataclasses import dataclass
-from datetime import UTC, datetime
-from typing import Any
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 import structlog
 
@@ -115,7 +115,7 @@ class StructuredLogger:
     def test_start(
         self,
         test_name: str,
-        test_class: str | None = None,
+        test_class: Optional[str] = None,
         **context: Any,
     ) -> None:
         """Log test start with structured context."""
@@ -131,7 +131,7 @@ class StructuredLogger:
         self,
         test_name: str,
         result: str,
-        duration: float | None = None,
+        duration: Optional[float] = None,
         **context: Any,
     ) -> None:
         """Log test completion with results."""
@@ -174,8 +174,8 @@ class StructuredLogger:
     def browser_action(
         self,
         action: str,
-        element: str | None = None,
-        value: str | None = None,
+        element: Optional[str] = None,
+        value: Optional[str] = None,
         **context: Any,
     ) -> None:
         """Log browser interactions for debugging."""
@@ -192,8 +192,8 @@ class StructuredLogger:
         self,
         method: str,
         url: str,
-        status_code: int | None = None,
-        response_time: float | None = None,
+        status_code: Optional[int] = None,
+        response_time: Optional[float] = None,
         **context: Any,
     ) -> None:
         """Log API requests for tracking."""
@@ -210,8 +210,8 @@ class StructuredLogger:
     def database_operation(
         self,
         operation: str,
-        table: str | None = None,
-        rows_affected: int | None = None,
+        table: Optional[str] = None,
+        rows_affected: Optional[int] = None,
         **context: Any,
     ) -> None:
         """Log database operations for auditing."""
@@ -225,8 +225,8 @@ class StructuredLogger:
         )
 
     def assertion_result(
-        *,
         self,
+        *,
         assertion: str,
         result: bool,
         expected: Any = None,
@@ -256,7 +256,7 @@ class StructuredLogger:
     def exception_caught(
         self,
         exception: Exception,
-        context_info: str | None = None,
+        context_info: Optional[str] = None,
         **context: Any,
     ) -> None:
         """Log caught exceptions with full context."""
@@ -284,7 +284,7 @@ class ExecutionLogger:
 
     def start_test(self, **context: Any) -> None:
         """Mark test start and begin timing."""
-        self.start_time = datetime.now(UTC)
+        self.start_time = datetime.now(timezone.utc)
         self.step_count = 0
         self.logger.test_start(
             test_name=self.test_name,
@@ -295,7 +295,7 @@ class ExecutionLogger:
     def end_test(self, result: str, **context: Any) -> None:
         """Mark test end with duration and results."""
         if self.start_time:
-            duration = (datetime.now(UTC) - self.start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - self.start_time).total_seconds()
         else:
             duration = None
 
@@ -317,7 +317,7 @@ class ExecutionLogger:
             **context,
         )
 
-    def log_assertion(*, self, assertion: str, result: bool, **context: Any) -> None:
+    def log_assertion(self, *, assertion: str, result: bool, **context: Any) -> None:
         """Log assertion with test context."""
         self.logger.assertion_result(
             assertion=assertion,
@@ -331,8 +331,8 @@ class ExecutionLogger:
         self,
         method: str,
         url: str,
-        status_code: int | None = None,
-        response_time: float | None = None,
+        status_code: Optional[int] = None,
+        response_time: Optional[float] = None,
         **context: Any,
     ) -> None:
         """Log API request with test context."""

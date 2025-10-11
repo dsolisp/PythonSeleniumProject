@@ -70,19 +70,16 @@ class TestRegressionProtection:
 
     def test_requirements_file_exists(self):
         """Test that requirements.txt exists and contains expected dependencies."""
-        requirements_path = Path.join(
-            Path.dirname(Path.dirname(Path.dirname(__file__))),
-            "requirements.txt",
-        )
+        requirements_path = Path(__file__).parent.parent.parent / "requirements.txt"
         (
             assert_that(
-                Path.exists(requirements_path),
+                requirements_path.exists(),
                 is_(True),
             ),
             "requirements.txt file not found",
         )
 
-        with Path.open(requirements_path) as f:
+        with requirements_path.open() as f:
             content = f.read()
             (
                 assert_that(
@@ -101,14 +98,14 @@ class TestRegressionProtection:
 
     def test_config_directory_structure(self):
         """Test that essential directories exist."""
-        base_dir = Path.dirname(Path.dirname(Path.dirname(__file__)))
+        base_dir = Path(__file__).parent.parent.parent
 
         essential_dirs = ["pages", "utils", "tests", "locators"]
         for dir_name in essential_dirs:
-            dir_path = Path.join(base_dir, dir_name)
+            dir_path = base_dir / dir_name
             (
                 assert_that(
-                    Path.exists(dir_path),
+                    dir_path.exists(),
                     is_(True),
                 ),
                 f"Essential directory '{dir_name}' not found",
@@ -116,13 +113,10 @@ class TestRegressionProtection:
 
     def test_pytest_configuration(self):
         """Test that pytest configuration exists."""
-        pytest_ini_path = Path.join(
-            Path.dirname(Path.dirname(Path.dirname(__file__))),
-            "pytest.ini",
-        )
+        pytest_ini_path = Path(__file__).parent.parent.parent / "pytest.ini"
         (
             assert_that(
-                Path.exists(pytest_ini_path),
+                pytest_ini_path.exists(),
                 is_(True),
             ),
             "pytest.ini configuration file not found",

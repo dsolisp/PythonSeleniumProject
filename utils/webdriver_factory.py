@@ -10,6 +10,7 @@ import sqlite3
 import tempfile
 import uuid
 from pathlib import Path
+from typing import Optional, Union
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -34,7 +35,7 @@ class WebDriverFactory:
     def create_chrome_driver(
         *,
         headless: bool = False,
-        window_size: tuple[int, int] | None = None,
+        window_size: Optional[tuple[int, int]] = None,
     ) -> webdriver.Chrome:
         """Create Chrome driver with anti-detection configuration."""
         options = ChromeOptions()
@@ -96,7 +97,7 @@ class WebDriverFactory:
     def create_firefox_driver(
         *,
         headless: bool = False,
-        window_size: tuple[int, int] | None = None,
+        window_size: Optional[tuple[int, int]] = None,
     ) -> webdriver.Firefox:
         """Create Firefox driver with configuration."""
         options = FirefoxOptions()
@@ -131,7 +132,7 @@ class WebDriverFactory:
     def create_edge_driver(
         *,
         headless: bool = False,
-        window_size: tuple[int, int] | None = None,
+        window_size: Optional[tuple[int, int]] = None,
     ) -> webdriver.Edge:
         """Create Edge driver with configuration."""
         options = EdgeOptions()
@@ -201,8 +202,8 @@ class DatabaseFactory:
 
     @staticmethod
     def create_database_connection(
-        db_path: str | None = None,
-    ) -> sqlite3.Connection | None:
+        db_path: Optional[str] = None,
+    ) -> Optional[sqlite3.Connection]:
         """Create database connection with error handling."""
         try:
             db_file = db_path or os.getenv("DB_PATH", "resources/chinook.db")
@@ -210,19 +211,19 @@ class DatabaseFactory:
             # For custom paths (like in tests), attempt connection directly
             if db_path:
                 connection = sqlite3.connect(db_file)
+                connection.row_factory = sqlite3.Row  # Match test expectations
                 logger.info("Database connected: %s", db_file)
                 return connection
 
-            # For default path, use sqlite3.connect directly (for test
-            # compatibility)
-            if not Path.exists(db_file):
+            # For default path, use sqlite3.connect directly (for test compatibility)
+            if not os.path.exists(db_file):
                 logger.warning("Database file not found: %s", db_file)
                 return None
 
-            # Use sqlite3 directly for test compatibility
             connection = sqlite3.connect(db_file)
             connection.row_factory = sqlite3.Row  # Match test expectations
             logger.info("Database connected: %s", db_file)
+            return connection
 
         except sqlite3.Error:
             # Re-raise SQL errors for test compatibility
@@ -230,17 +231,14 @@ class DatabaseFactory:
         except Exception:
             logger.exception("Database connection failed")
             return None
-        else:
-            return connection
 
 
 def get_driver(
-    *,
     browser: str = "chrome",
     headless: bool = False,
-    window_size: tuple[int, int] | None = None,
-    db_path: str | None = None,
-) -> tuple[object, object | None]:
+    window_size: Optional[tuple[int, int]] = None,
+    db_path: Optional[str] = None,
+) -> tuple[object, Optional[object]]:
     """
     Factory function that creates WebDriver and Database instances.
     """
@@ -271,14 +269,14 @@ def get_driver(
     return driver, database
 
 
-def create_headless_driver() -> tuple[webdriver.Chrome, object | None]:
+def create_headless_driver() -> tuple[webdriver.Chrome, Optional[object]]:
     """Convenience method for creating headless drivers."""
     return get_driver(headless=True)
 
 
 def cleanup_driver_and_database(
     driver: webdriver.Chrome,
-    database: object | None,
+    database: Optional[object],
 ) -> None:
     """Clean resource cleanup following DRY principle."""
     temp_dir = None

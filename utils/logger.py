@@ -1,6 +1,6 @@
 import logging
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from config.settings import settings
 
@@ -33,7 +33,7 @@ class TestLogger:
 
         log_file = (
             settings.LOGS_DIR
-            / f"test_run_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.log"
+            / f"test_run_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.log"
         )
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)

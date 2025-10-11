@@ -4,6 +4,7 @@ Search engine page implementation using the page object pattern.
 
 import contextlib
 import time
+from typing import Optional
 
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.common.action_chains import ActionChains
@@ -25,7 +26,7 @@ class SearchEnginePage(BasePage):
     def __init__(
         self,
         driver_and_db,
-        test_name: str | None = None,
+        test_name: Optional[str] = None,
         environment: str = "test",
     ):
         """Initialize Search engine page with enhanced features."""

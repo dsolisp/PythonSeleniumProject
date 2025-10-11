@@ -6,13 +6,14 @@ from selenium.common.exceptions import (
 
 from locators.result_page_locators import ResultPageLocators
 from pages.base_page import BasePage
+from typing import Optional
 
 
 class ResultPage(BasePage):
     def __init__(
         self,
         driver_and_db,
-        test_name: str | None = None,
+        test_name: Optional[str] = None,
         environment: str = "test",
     ):
         """Initialize search engine result page with enhanced features."""

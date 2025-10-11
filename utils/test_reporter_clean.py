@@ -6,7 +6,7 @@ Provides detailed test execution analysis and multiple report formats.
 import json
 import logging
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -78,8 +78,8 @@ class TestReporter:
         """Start a new test suite."""
         self.current_suite = TestSuite(
             name=suite_name,
-            start_time=datetime.now(UTC),
-            end_time=datetime.now(UTC),  # Will be updated when finished
+            start_time=datetime.now(timezone.utc),
+            end_time=datetime.now(timezone.utc),  # Will be updated when finished
             total_tests=0,
             passed_tests=0,
             failed_tests=0,
@@ -93,10 +93,10 @@ class TestReporter:
     def generate_json_report(self, filename: str | None = None) -> str:
         """Generate JSON format report."""
         if filename is None:
-            filename = f"test_report_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
+            filename = f"test_report_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
 
         report_data = {
-            "generated_at": datetime.now(UTC).isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "summary": {
                 "total_tests": len(self.test_results),
                 "passed_tests": sum(
@@ -125,7 +125,7 @@ class TestReporter:
     def generate_html_report(self, filename: str | None = None) -> str:
         """Generate HTML format report."""
         if filename is None:
-            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             filename = f"test_report_{timestamp}.html"
 
         html_content = self._generate_html_content()
@@ -150,7 +150,7 @@ class TestReporter:
         passed_count = sum(1 for r in self.test_results if r.status == "passed")
         failed_count = sum(1 for r in self.test_results if r.status == "failed")
         success_rate = self._calculate_success_rate()
-        current_time = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
+        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
         return (
             """<!DOCTYPE html>

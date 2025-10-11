@@ -6,7 +6,7 @@ import logging
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -86,7 +86,8 @@ def get_connection(db_file: str) -> sqlite3.Connection:
         sqlite3.Error: If connection fails
     """
     # Validate database file exists before attempting connection
-    if not Path.exists(db_file):
+    import os
+    if not os.path.exists(db_file):
         message = f"Database file not found: {db_file}"
         raise FileNotFoundError(message)
 
@@ -138,7 +139,7 @@ def get_connection_context(db_file: str):
 def execute_query(
     conn: sqlite3.Connection,
     query: str,
-    params: tuple | None = None,
+    params: Optional[tuple] = None,
 ) -> sqlite3.Cursor:
     """
     Execute a query on the given connection with error handling.
@@ -183,8 +184,8 @@ def execute_query(
 def execute_query_safe(
     conn: sqlite3.Connection,
     query: str,
-    params: tuple | None = None,
-) -> sqlite3.Cursor | None:
+    params: Optional[tuple] = None,
+) -> Optional[sqlite3.Cursor]:
     """
     Safely execute a query with exception handling that returns None on failure.
 
@@ -203,7 +204,7 @@ def execute_query_safe(
         return None
 
 
-def fetch_one(cursor: sqlite3.Cursor) -> sqlite3.Row | None:
+def fetch_one(cursor: sqlite3.Cursor) -> Optional[sqlite3.Row]:
     """
     Fetch a single result from the cursor with error handling.
 
@@ -270,8 +271,8 @@ def fetch_many(cursor: sqlite3.Cursor, size: int) -> list[sqlite3.Row]:
 def execute_and_fetch_one(
     conn: sqlite3.Connection,
     query: str,
-    params: tuple | None = None,
-) -> sqlite3.Row | None:
+    params: Optional[tuple] = None,
+) -> Optional[sqlite3.Row]:
     """
     Execute query and fetch single result in one operation.
 
@@ -294,7 +295,7 @@ def execute_and_fetch_one(
 def execute_and_fetch_all(
     conn: sqlite3.Connection,
     query: str,
-    params: tuple | None = None,
+    params: Optional[tuple] = None,
 ) -> list[sqlite3.Row]:
     """
     Execute query and fetch all results in one operation.
@@ -319,7 +320,7 @@ def insert_data(
     conn: sqlite3.Connection,
     table: str,
     data: dict[str, Any],
-) -> int | None:
+) -> Optional[int]:
     """
     Insert data into a table with dynamic column mapping.
 
@@ -366,7 +367,7 @@ def update_data(
     table: str,
     data: dict[str, Any],
     where_clause: str,
-    where_params: tuple | None = None,
+    where_params: Optional[tuple] = None,
 ) -> int:
     """
     Update data in a table with dynamic column mapping.
@@ -435,7 +436,7 @@ def delete_data(
     conn: sqlite3.Connection,
     table: str,
     where_clause: str,
-    where_params: tuple | None = None,
+    where_params: Optional[tuple] = None,
 ) -> int:
     """
     Delete data from a table.

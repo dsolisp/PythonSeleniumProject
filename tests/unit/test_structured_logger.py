@@ -77,7 +77,7 @@ class TestStructuredLogger:
             logger.browser_action("click", element="button#submit")
             logger.api_request("GET", "http://example.com", status_code=200)
             logger.database_operation("SELECT", table="users", rows_affected=5)
-            logger.assertion_result("equals", result=True, expected=5, actual=5)
+            logger.assertion_result(assertion="equals", result=True, expected=5, actual=5)
         except (ValueError, TypeError, OSError) as e:
             pytest.fail(f"Logging method failed: {e}")
 
@@ -105,7 +105,7 @@ class TestExecutionLogger:
         try:
             test_logger.start_test(browser="chrome")
             test_logger.log_step("Navigate to page", "navigate")
-            test_logger.log_assertion("Page title correct", result=True)
+            test_logger.log_assertion(assertion="Page title correct", result=True)
             test_logger.end_test("PASS")
         except (ValueError, TypeError, OSError) as e:
             pytest.fail(f"Test execution logging failed: {e}")
@@ -200,10 +200,10 @@ class TestSpecializedLogging:
         logger = StructuredLogger("AssertLogger")
 
         try:
-            logger.assertion_result("equals", success=True, expected=5, actual=5)
+            logger.assertion_result(assertion="equals", result=True, expected=5, actual=5)
             logger.assertion_result(
-                "contains",
-                success=False,
+                assertion="contains",
+                result=False,
                 expected="text",
                 actual="other",
             )

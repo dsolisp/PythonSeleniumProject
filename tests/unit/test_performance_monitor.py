@@ -1,6 +1,6 @@
 import threading
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
 import pytest
@@ -38,7 +38,7 @@ class TestPerformanceMetric:
 
     def test_performance_metric_creation(self):
         """Test creating performance metric with all fields."""
-        timestamp = datetime.now(UTC)
+        timestamp = datetime.now(timezone.utc)
         context = {"test": "data"}
 
         metric = PerformanceMetric(
@@ -61,7 +61,7 @@ class TestPerformanceMetric:
             name="simple_metric",
             value=100.0,
             unit="s",
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
         )
 
         assert_that(metric.name, equal_to("simple_metric"))
@@ -427,8 +427,9 @@ class TestDecorators:
             time.sleep(0.05)  # 50ms - exceeds 10ms threshold
             return "completed"
 
-        with pytest.raises(AssertionError, match="Performance threshold exceeded"):
-            slow_function()
+        with patch.dict("os.environ", {"PERFORMANCE_FAIL_ON_THRESHOLD": "true"}):
+            with pytest.raises(AssertionError, match="Performance threshold exceeded"):
+                slow_function()
 
     def test_performance_test_decorator_without_threshold(self):
         """Test performance test decorator without threshold."""

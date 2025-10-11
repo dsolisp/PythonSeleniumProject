@@ -39,8 +39,8 @@ class TestDatabaseConnectionFunctions:
         with pytest.raises(FileNotFoundError, match="Database file not found"):
             get_connection("nonexistent_file.db")
 
-    @patch("utils.sql_connection.os.path.exists")
-    @patch("utils.sql_connection.sqlite3.connect")
+    @patch("os.path.exists")
+    @patch("sqlite3.connect")
     def test_get_connection_sqlite_error(self, mock_connect, mock_exists):
         """Test get_connection handles sqlite3.Error properly."""
         mock_exists.return_value = True
@@ -49,8 +49,8 @@ class TestDatabaseConnectionFunctions:
         with pytest.raises(sqlite3.Error, match="Connection failed"):
             get_connection("test.db")
 
-    @patch("utils.sql_connection.os.path.exists")
-    @patch("utils.sql_connection.sqlite3.connect")
+    @patch("os.path.exists")
+    @patch("sqlite3.connect")
     def test_get_connection_success(self, mock_connect, mock_exists):
         """Test successful connection setup."""
         mock_exists.return_value = True
@@ -346,7 +346,7 @@ class TestValidationFunctions:
     @patch("utils.sql_connection.get_connection_context")
     @patch("utils.sql_connection.execute_query")
     @patch("utils.sql_connection.fetch_one")
-    def test_validate_connection_success(self, mock_fetch, mock_context):
+    def test_validate_connection_success(self, mock_fetch, mock_execute, mock_context):
         """Test validate_connection returns True on success."""
         mock_conn = Mock()
         mock_context.return_value.__enter__.return_value = mock_conn

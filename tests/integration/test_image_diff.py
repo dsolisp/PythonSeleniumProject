@@ -29,7 +29,7 @@ def test_visual_comparison(tc_id, driver):
     diff_output_path = f"screenshots_diff/{tc_id}_diff.png"
 
     try:
-        Path.makedirs("screenshots_diff", exist_ok=True)
+        Path("screenshots_diff").mkdir(parents=True, exist_ok=True)
 
         if "duckduckgo.com" not in base_page.driver.current_url:
             base_page.driver.get(settings.BASE_URL)
@@ -47,12 +47,12 @@ def test_visual_comparison(tc_id, driver):
         search_page.capture_search_input_screenshot(actual_image)
 
         assert_that(
-            Path.exists(expected_image),
+            Path(expected_image).exists(),
             is_(True),
             f"Expected screenshot not found: {expected_image}",
         )
         assert_that(
-            Path.exists(actual_image),
+            Path(actual_image).exists(),
             is_(True),
             f"Actual screenshot not found: {actual_image}",
         )
@@ -79,7 +79,7 @@ def test_visual_comparison(tc_id, driver):
                     f"Significant visual differences found: {visual_difference} pixels "
                     f"(tolerance: {tolerance})"
                 )
-                if Path.exists(diff_output_path):
+                if Path(diff_output_path).exists():
                     error_msg += f"\nDifference image saved: {diff_output_path}"
 
                 print(f"❌ {error_msg}")
@@ -97,11 +97,11 @@ def test_visual_comparison(tc_id, driver):
         error_msg = f"Visual comparison test failed: {e!s}"
         print(f"❌ {error_msg}")
 
-        if Path.exists(expected_image):
+        if Path(expected_image).exists():
             print(f"Expected image exists: {expected_image}")
-        if Path.exists(actual_image):
+        if Path(actual_image).exists():
             print(f"Actual image exists: {actual_image}")
-        if Path.exists(diff_output_path):
+        if Path(diff_output_path).exists():
             print(f"Diff image exists: {diff_output_path}")
 
         pytest.fail(error_msg)
@@ -129,20 +129,20 @@ def test_screenshot_functionality():
             "Screenshot method should return a path",
         )
         assert_that(
-            Path.exists(screenshot_path),
+            Path(screenshot_path).exists(),
             is_(True),
             f"Test screenshot not created: {screenshot_path}",
         )
         assert_that(
-            Path.getsize(screenshot_path),
+            Path(screenshot_path).stat().st_size,
             greater_than(0),
             "Screenshot file should not be empty",
         )
 
         print("✅ Screenshot functionality test passed")
 
-        if Path.exists(screenshot_path):
-            Path.remove(screenshot_path)
+        if Path(screenshot_path).exists():
+            Path(screenshot_path).unlink()
 
     except (WebDriverException, OSError, AssertionError) as e:
         pytest.fail(f"Screenshot functionality test failed: {e!s}")

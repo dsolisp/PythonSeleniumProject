@@ -4,7 +4,7 @@ Compatible interface with existing Selenium BasePage but with async capabilities
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from playwright.async_api import ElementHandle, Page
 
@@ -29,7 +29,7 @@ class PlaywrightBasePage(PlaywrightPage):
         """Navigate to the base URL from settings."""
         await self.navigate_to(settings.BASE_URL)
 
-    async def wait_for_page_load(self, timeout: int | None = None) -> None:
+    async def wait_for_page_load(self, timeout: Optional[int] = None) -> None:
         """Wait for page to be fully loaded."""
         timeout_ms = (timeout or settings.TIMEOUT) * 1000
         await self.page.wait_for_load_state("networkidle", timeout=timeout_ms)
@@ -61,7 +61,7 @@ class PlaywrightElementActions:
         """Hover over an element."""
         await self.page.hover(selector)
 
-    async def send_keys(*, self, selector: str, text: str, clear: bool = True) -> None:
+    async def send_keys(self, selector: str, text: str, clear: bool = True) -> None:
         """Send keys to an input element."""
         if clear:
             await self.page.fill(selector, text)
@@ -81,7 +81,7 @@ class PlaywrightElementActions:
         self,
         selector: str,
         attribute: str,
-    ) -> str | None:
+    ) -> Optional[str]:
         """Get element attribute value."""
         return await self.page.get_attribute(selector, attribute)
 
@@ -145,12 +145,12 @@ class PlaywrightNavigationActions:
         """Get page title."""
         return await self.page.title()
 
-    async def wait_for_url_change(self, timeout: int | None = None) -> None:
+    async def wait_for_url_change(self, timeout: Optional[int] = None) -> None:
         """Wait for URL to change."""
         timeout_ms = (timeout or settings.TIMEOUT) * 1000
         await self.page.wait_for_url("**", timeout=timeout_ms)
 
-    async def wait_for_navigation(self, timeout: int | None = None) -> None:
+    async def wait_for_navigation(self, timeout: Optional[int] = None) -> None:
         """Wait for navigation to complete."""
         timeout_ms = (timeout or settings.TIMEOUT) * 1000
         await self.page.wait_for_load_state("networkidle", timeout=timeout_ms)
@@ -165,7 +165,7 @@ class PlaywrightScreenshotActions:
     async def take_screenshot(
         *,
         self,
-        filename: str | None = None,
+        filename: Optional[str] = None,
         full_page: bool = True,
     ) -> bytes:
         """Take a screenshot of the page."""
@@ -179,7 +179,7 @@ class PlaywrightScreenshotActions:
     async def take_element_screenshot(
         self,
         selector: str,
-        filename: str | None = None,
+        filename: Optional[str] = None,
     ) -> bytes:
         """Take a screenshot of a specific element."""
         element = await self.page.wait_for_selector(selector)
@@ -207,7 +207,7 @@ class PlaywrightScreenshotActions:
         # Playwright video recording is configured at context level
         # This is a placeholder for video control
 
-    async def record_video_stop(self) -> str | None:
+    async def record_video_stop(self) -> Optional[str]:
         """Stop video recording and return path."""
         # Video recording control would be implemented here
         return None

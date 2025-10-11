@@ -73,7 +73,7 @@ class TestPageObjectIntegration:
 
         # Cleanup
         conn.close()
-        Path.unlink(temp_db.name)
+        Path(temp_db.name).unlink()
 
     def test_base_page_integration(self, chrome_driver, temp_database):
         """Test BasePage integration with solid design."""
@@ -125,9 +125,8 @@ class TestPageObjectIntegration:
         mock_chrome.return_value = mock_driver
 
         # Test driver creation and page object initialization
-        driver = get_driver("chrome")
+        driver, _ = get_driver(browser="chrome")
         page = BasePage(driver)
-
         assert_that(page.driver, equal_to(mock_driver))
 
     def test_database_integration_with_page_actions(self, temp_database):
@@ -184,13 +183,13 @@ class TestPageObjectIntegration:
 
         # Create temporary directory for screenshots
         with tempfile.TemporaryDirectory() as temp_dir:
-            Path.join(temp_dir, "integration_test.png")
+            screenshot_path = str(Path(temp_dir) / "integration_test.png")
 
             # Take screenshot
             saved_path = page.take_screenshot("integration_test.png")
             assert_that(saved_path, is_(not_none()))
-            assert_that(Path.exists(saved_path), is_(True))
-            assert_that(Path.getsize(saved_path), greater_than(0))
+            assert_that(Path(saved_path).exists(), is_(True))
+            assert_that(Path(saved_path).stat().st_size, greater_than(0))
 
     def test_element_actions_integration(self, chrome_driver):
         """Test element actions integration with real browser."""
@@ -325,8 +324,8 @@ class TestConfigurationIntegration:
 
         finally:
             # Cleanup
-            if Path.exists(temp_db.name):
-                Path.unlink(temp_db.name)
+            if Path(temp_db.name).exists():
+                Path(temp_db.name).unlink()
 
 
 class TestEndToEndWorkflow:
@@ -393,11 +392,11 @@ class TestEndToEndWorkflow:
             assert_that(final_result[0][0], is_in(["completed", "failed"]))
 
             if screenshot_success:
-                assert_that(Path.exists(screenshot_path), is_(True))
+                assert_that(Path(screenshot_path).exists(), is_(True))
 
         finally:
             # Cleanup
             chrome_driver.quit()
             conn.close()
-            if Path.exists(temp_db.name):
-                Path.unlink(temp_db.name)
+            if Path(temp_db.name).exists():
+                Path(temp_db.name).unlink()

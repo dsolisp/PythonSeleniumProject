@@ -7,9 +7,9 @@ import csv
 import json
 import random
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional, Union
 
 import yaml
 
@@ -37,7 +37,7 @@ class DataManager:
     - Test data versioning
     """
 
-    def __init__(self, data_directory: str | Path | None = None):
+    def __init__(self, data_directory: Optional[Union[str, Path]] = None):
         """Initialize test data manager."""
         self.data_dir = (
             Path(data_directory)
@@ -156,14 +156,14 @@ class DataManager:
     def save_test_results_yaml(
         self,
         results: dict[str, Any],
-        filename: str | None = None,
+        filename: Optional[str] = None,
     ) -> str:
         """
         Save test results in YAML format for human-readable reports.
         Demonstrates YAML output functionality.
         """
         if filename is None:
-            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             filename = f"test_results_{timestamp}.yml"
 
         filepath = self.data_dir / "results" / filename
@@ -172,7 +172,7 @@ class DataManager:
         # Format results for YAML output
         yaml_results = {
             "test_execution": {
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "total_tests": results.get("total_tests", 0),
                 "passed": results.get("passed", 0),
                 "failed": results.get("failed", 0),
@@ -198,7 +198,7 @@ class DataManager:
 
     def get_user_accounts(
         self,
-        role: str | None = None,
+        role: Optional[str] = None,
         environment: str = "default",
     ) -> list[dict[str, Any]]:
         """
@@ -221,7 +221,7 @@ class DataManager:
 
     def get_api_endpoints(
         self,
-        method: str | None = None,
+        method: Optional[str] = None,
         environment: str = "default",
     ) -> list[dict[str, Any]]:
         """
@@ -247,8 +247,8 @@ class DataManager:
     def get_browser_configurations(
         *,
         self,
-        browser: str | None = None,
-        mobile: bool | None = None,
+        browser: Optional[str] = None,
+        mobile: Optional[bool] = None,
         environment: str = "default",
     ) -> list[dict[str, Any]]:
         """
@@ -282,7 +282,7 @@ class DataManager:
         Returns:
             Dictionary with generated user data
         """
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         user_id = random.randint(1000, 9999)
 
         base_permissions = {
@@ -297,7 +297,7 @@ class DataManager:
             "email": f"{role}{user_id}@testdomain.com",
             "role": role,
             "permissions": base_permissions.get(role, ["read"]),
-            "created_at": datetime.now(UTC).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "active": True,
             "user_id": user_id,
         }
@@ -336,7 +336,7 @@ class DataManager:
                     "expected_title_contains": term.split()[0],
                     "timeout": random.randint(10, 20),
                     "generated": True,
-                    "created_at": datetime.now(UTC).isoformat(),
+                    "created_at": datetime.now(timezone.utc).isoformat(),
                 },
             )
 
@@ -359,7 +359,7 @@ class DataManager:
         results_dir = self.data_dir / "results" / environment
         results_dir.mkdir(parents=True, exist_ok=True)
 
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"{test_name}_{timestamp}.json"
         file_path = results_dir / filename
 
@@ -368,7 +368,7 @@ class DataManager:
             "test_name": test_name,
             "environment": environment,
             "timestamp": timestamp,
-            "execution_time": datetime.now(UTC).isoformat(),
+            "execution_time": datetime.now(timezone.utc).isoformat(),
             "results": results,
         }
 
@@ -382,7 +382,7 @@ class DataManager:
         Args:
             days_to_keep: Number of days to keep results (default: 30)
         """
-        cutoff_date = datetime.now(UTC) - timedelta(days=days_to_keep)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
         results_dir = self.data_dir / "results"
 
         if not results_dir.exists():
@@ -390,7 +390,7 @@ class DataManager:
 
         for file_path in results_dir.rglob("*.json"):
             try:
-                file_date = datetime.fromtimestamp(file_path.stat().st_mtime, tz=UTC)
+                file_date = datetime.fromtimestamp(file_path.stat().st_mtime, tz=timezone.utc)
                 if file_date < cutoff_date:
                     file_path.unlink()
             except (OSError, ValueError):

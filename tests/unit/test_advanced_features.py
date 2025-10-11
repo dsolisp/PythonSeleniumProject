@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -54,10 +54,8 @@ class TestTestDataManager:
         # Create test JSON file
         test_data = {"test_key": "test_value", "number": 42}
         json_file = Path(self.temp_dir) / "test_data.json"
-
-        with Path.open(json_file, "w") as f:
+        with Path(json_file).open("w") as f:
             json.dump(test_data, f)
-
         # Load and verify
         loaded_data = self.data_manager.load_test_data("test_data")
         assert_that(loaded_data, equal_to(test_data))
@@ -68,7 +66,8 @@ class TestTestDataManager:
         test_data = {"cached": True}
         json_file = Path(self.temp_dir) / "test_data.json"
 
-        with Path.open(json_file, "w") as f:
+
+        with Path(json_file).open("w") as f:
             json.dump(test_data, f)
 
         # Load twice
@@ -89,7 +88,8 @@ class TestTestDataManager:
         }
         json_file = Path(self.temp_dir) / "test_data.json"
 
-        with Path.open(json_file, "w") as f:
+
+        with Path(json_file).open("w") as f:
             json.dump(test_data, f)
 
         scenarios = self.data_manager.get_search_scenarios()
@@ -108,7 +108,7 @@ class TestTestDataManager:
         }
         json_file = Path(self.temp_dir) / "test_data.json"
 
-        with Path.open(json_file, "w") as f:
+        with Path(json_file).open("w") as f:
             json.dump(test_data, f)
 
         admin_accounts = self.data_manager.get_user_accounts("admin")
@@ -175,7 +175,7 @@ class TestTestDataManager:
         old_file.write_text('{"old": true}')
 
         # Modify file timestamp to be 35 days old
-        old_time = datetime.now(UTC) - timedelta(days=35)
+        old_time = datetime.now(timezone.utc) - timedelta(days=35)
 
         os.utime(old_file, (old_time.timestamp(), old_time.timestamp()))
 
@@ -225,7 +225,7 @@ class TestAdvancedTestReporter:
             test_name="test_pass",
             status="PASSED",
             duration=2.5,
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             environment="local",
             browser="chrome",
         )
@@ -236,7 +236,7 @@ class TestAdvancedTestReporter:
             test_name="test_fail",
             status="FAILED",
             duration=1.8,
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             environment="local",
             browser="chrome",
             error_message="Test assertion failed",
@@ -259,7 +259,7 @@ class TestAdvancedTestReporter:
             test_name="test_json",
             status="PASSED",
             duration=1.5,
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             environment="local",
             browser="chrome",
         )
@@ -271,7 +271,7 @@ class TestAdvancedTestReporter:
         # Verify file exists and contains expected data
         assert_that(Path(report_path).exists(), is_(True))
 
-        with Path.open(report_path) as f:
+        with Path(report_path).open() as f:
             report_data = json.load(f)
 
         assert_that(report_data, has_key("suite_summary"))
@@ -289,7 +289,7 @@ class TestAdvancedTestReporter:
             test_name="test_html",
             status="PASSED",
             duration=2.0,
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             environment="local",
             browser="chrome",
         )
@@ -301,7 +301,7 @@ class TestAdvancedTestReporter:
         # Verify file exists and contains HTML content
         assert_that(Path(report_path).exists(), is_(True))
 
-        with Path.open(report_path) as f:
+        with Path(report_path).open() as f:
             html_content = f.read()
 
         assert_that(html_content, contains_string("<!DOCTYPE html>"))
@@ -317,7 +317,7 @@ class TestAdvancedTestReporter:
             test_name="test_timeout",
             status="FAILED",
             duration=30.0,
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             environment="local",
             browser="chrome",
             error_message="TimeoutException: Element not found within timeout",
@@ -327,7 +327,7 @@ class TestAdvancedTestReporter:
             test_name="test_element",
             status="FAILED",
             duration=5.0,
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             environment="local",
             browser="chrome",
             error_message="NoSuchElementException: Unable to locate element",
@@ -357,7 +357,7 @@ class TestErrorClassifier:
         context = ErrorContext(
             error_type="TimeoutException",
             error_message="Element not found within timeout",
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             test_name="test_timeout",
             page_url="https://example.com",
         )
@@ -377,7 +377,7 @@ class TestErrorClassifier:
         context = ErrorContext(
             error_type="NoSuchElementException",
             error_message="Unable to locate element",
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             test_name="test_element",
             page_url="https://example.com",
         )
@@ -400,7 +400,7 @@ class TestErrorClassifier:
         context = ErrorContext(
             error_type="ValueError",
             error_message="Unknown error type",
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             test_name="test_unknown",
             page_url="https://example.com",
         )
@@ -431,7 +431,7 @@ class TestRecoveryManager:
         error_context = ErrorContext(
             error_type="TimeoutException",
             error_message="Timeout occurred",
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             test_name="test_retry",
             page_url="https://example.com",
         )
@@ -462,7 +462,7 @@ class TestRecoveryManager:
         error_context = ErrorContext(
             error_type="TimeoutException",
             error_message="Timeout occurred",
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             test_name="test_retry_fail",
             page_url="https://example.com",
         )
@@ -502,7 +502,7 @@ class TestRecoveryManager:
         error_context = ErrorContext(
             error_type="StaleElementReferenceException",
             error_message="Element is stale",
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             test_name="test_refresh",
             page_url="https://example.com",
         )
@@ -534,19 +534,19 @@ class TestRecoveryManager:
                 "strategy": "retry",
                 "success": True,
                 "duration": 1.5,
-                "timestamp": datetime.now(UTC),
+                "timestamp": datetime.now(timezone.utc),
             },
             {
                 "strategy": "retry",
                 "success": False,
                 "duration": 2.0,
-                "timestamp": datetime.now(UTC),
+                "timestamp": datetime.now(timezone.utc),
             },
             {
                 "strategy": "refresh",
                 "success": True,
                 "duration": 3.0,
-                "timestamp": datetime.now(UTC),
+                "timestamp": datetime.now(timezone.utc),
             },
         ]
 
@@ -630,12 +630,12 @@ class TestSmartErrorHandler:
         mock_driver.save_screenshot.return_value = True
 
         # Create a dummy image file to simulate screenshot
-        with Path.open(screenshot_path, "w") as f:
+        with Path(screenshot_path).open("w") as f:
             f.write("fake image data")
 
         # Mock the save_screenshot to create the file
         def mock_save_screenshot(path):
-            with Path.open(path, "w") as f:
+            with Path(path).open("w") as f:
                 f.write("fake image data")
             return True
 

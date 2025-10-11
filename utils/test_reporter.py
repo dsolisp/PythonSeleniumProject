@@ -8,9 +8,9 @@ import json
 import statistics
 from collections import Counter
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -26,11 +26,11 @@ class Result:
     timestamp: datetime
     environment: str
     browser: str
-    error_message: str | None = None
-    screenshot_path: str | None = None
-    stack_trace: str | None = None
-    test_data: dict[str, Any] | None = None
-    performance_metrics: dict[str, float] | None = None
+    error_message: Optional[str] = None
+    screenshot_path: Optional[str] = None
+    stack_trace: Optional[str] = None
+    test_data: Optional[dict[str, Any]] = None
+    performance_metrics: Optional[dict[str, float]] = None
     retries: int = 0
     tags: list[str] = None
 
@@ -68,7 +68,7 @@ class TestTrend:
 
 
 class AdvancedTestReporter:
-    def load_json_report(self, file_path: str | Path) -> None:
+    def load_json_report(self, file_path: Union[str, Path]) -> None:
         """
         Load test results from a JSON file (pytest-json-report or custom format)
         and append to self.test_results. Supports both pytest-json-report and this
@@ -91,7 +91,7 @@ class AdvancedTestReporter:
                         ).upper(),
                         duration=float(test.get("duration", 0)),
                         timestamp=datetime.fromisoformat(
-                            test.get("start", datetime.now(UTC).isoformat()),
+                            test.get("start", datetime.now(timezone.utc).isoformat()),
                         ),
                         environment=test.get("environment", "unknown"),
                         browser=test.get("browser", "unknown"),
@@ -109,12 +109,12 @@ class AdvancedTestReporter:
             for test in data["test_results"]:
                 try:
                     # Convert timestamp if needed
-                    ts = test.get("timestamp", datetime.now(UTC).isoformat())
+                    ts = test.get("timestamp", datetime.now(timezone.utc).isoformat())
                     if isinstance(ts, str):
                         try:
                             ts = datetime.fromisoformat(ts)
                         except (ValueError, TypeError):
-                            ts = datetime.now(UTC)
+                            ts = datetime.now(timezone.utc)
                     result = Result(
                         test_name=test.get("test_name", "unknown"),
                         status=test.get("status", "unknown").upper(),
@@ -146,7 +146,7 @@ class AdvancedTestReporter:
     - Integration with external tools
     """
 
-    def __init__(self, reports_dir: str | Path | None = None):
+    def __init__(self, reports_dir: Optional[Union[str, Path]] = None):
         """Initialize the advanced test reporter."""
         self.reports_dir = (
             Path(reports_dir)
@@ -161,7 +161,7 @@ class AdvancedTestReporter:
         (self.reports_dir / "trends").mkdir(exist_ok=True)
         (self.reports_dir / "analytics").mkdir(exist_ok=True)
 
-        self.current_suite: Suite | None = None
+        self.current_suite: Optional[Suite] = None
         self.test_results: list[Result] = []
 
     def start_test_suite(
@@ -179,8 +179,8 @@ class AdvancedTestReporter:
             skipped=0,
             errors=0,
             total_duration=0.0,
-            start_time=datetime.now(UTC),
-            end_time=datetime.now(UTC),
+            start_time=datetime.now(timezone.utc),
+            end_time=datetime.now(timezone.utc),
             environment=environment,
             browser=browser,
         )
@@ -212,10 +212,10 @@ class AdvancedTestReporter:
             message = "No active test suite."
             raise ValueError(message)
 
-        self.current_suite.end_time = datetime.now(UTC)
+        self.current_suite.end_time = datetime.now(timezone.utc)
         return self.current_suite
 
-    def generate_json_report(self, filename: str | None = None) -> str:
+    def generate_json_report(self, filename: Optional[str] = None) -> str:
         """
         Generate comprehensive JSON report.
 
@@ -229,7 +229,7 @@ class AdvancedTestReporter:
             message = "No test suite data available."
             raise ValueError(message)
 
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = filename or f"test_report_{timestamp}.json"
         file_path = self.reports_dir / "json" / filename
 
@@ -256,7 +256,7 @@ class AdvancedTestReporter:
             "test_results": [asdict(result) for result in self.test_results],
             "failure_analysis": self._analyze_failures(),
             "performance_analysis": self._analyze_performance(),
-            "generated_at": datetime.now(UTC).isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
         with Path.open(file_path, "w") as f:
@@ -264,7 +264,7 @@ class AdvancedTestReporter:
 
         return str(file_path)
 
-    def generate_html_report(self, filename: str | None = None) -> str:
+    def generate_html_report(self, filename: Optional[str] = None) -> str:
         """
         Generate interactive HTML report.
 
@@ -278,7 +278,7 @@ class AdvancedTestReporter:
             message = "No test suite data available."
             raise ValueError(message)
 
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = filename or f"test_report_{timestamp}.html"
         file_path = self.reports_dir / "html" / filename
 
@@ -331,7 +331,7 @@ class AdvancedTestReporter:
         trend_file = (
             self.reports_dir
             / "trends"
-            / f"trend_analysis_{datetime.now(UTC).strftime('%Y%m%d')}.json"
+            / f"trend_analysis_{datetime.now(timezone.utc).strftime('%Y%m%d')}.json"
         )
         with Path.open(trend_file, "w") as f:
             json.dump(analysis, f, indent=2, default=str)
@@ -358,7 +358,7 @@ class AdvancedTestReporter:
 
         return str(dashboard_path)
 
-    def export_to_junit(self, filename: str | None = None) -> str:
+    def export_to_junit(self, filename: Optional[str] = None) -> str:
         """
         Export results to JUnit XML format for CI/CD integration.
 
@@ -372,7 +372,7 @@ class AdvancedTestReporter:
             message = "No test suite data available."
             raise ValueError(message)
 
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = filename or f"junit_report_{timestamp}.xml"
         file_path = self.reports_dir / "xml" / filename
 
@@ -631,7 +631,7 @@ class AdvancedTestReporter:
         <p>Suite: {self.current_suite.suite_name}</p>
         <p>Environment: {self.current_suite.environment}</p>
         <p>Browser: {self.current_suite.browser}</p>
-        <p>Generated: {datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")}</p>
+        <p>Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}</p>
     </div>
 
     <div class="metrics">
@@ -777,7 +777,7 @@ class AdvancedTestReporter:
 
             test_cases.append(case_xml)
 
-    def generate_dataframe_analytics(self) -> dict[str, Any] | None:
+    def generate_dataframe_analytics(self) -> Optional[dict[str, Any]]:
         """
         Generate pandas DataFrame for advanced analytics.
         Leverages pandas for statistical analysis and numpy for computations.
@@ -844,7 +844,7 @@ class AdvancedTestReporter:
             },
         }
 
-    def export_to_csv(self, filename: str | None = None) -> str:
+    def export_to_csv(self, filename: Optional[str] = None) -> str:
         """
         Export test results to CSV using pandas for efficient processing.
         """
@@ -855,7 +855,7 @@ class AdvancedTestReporter:
         df = pd.DataFrame(df_data)
 
         if filename is None:
-            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             filename = f"test_results_{timestamp}.csv"
 
         filepath = self.reports_dir / filename

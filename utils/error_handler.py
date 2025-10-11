@@ -12,10 +12,10 @@ import time
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Optional, Optional
 
 import psutil
 
@@ -65,10 +65,10 @@ class ErrorContext:
     timestamp: datetime
     test_name: str
     page_url: str
-    screenshot_path: str | None = None
-    stack_trace: str | None = None
-    browser_logs: list[str] | None = None
-    element_info: dict[str, Any] | None = None
+    screenshot_path: Optional[str] = None
+    stack_trace: Optional[str] = None
+    browser_logs: Optional[list[str]] = None
+    element_info: Optional[dict[str, Any]] = None
     retry_count: int = 0
 
 
@@ -79,8 +79,8 @@ class RecoveryAction:
     strategy: RecoveryStrategy
     max_attempts: int
     wait_time: float
-    custom_action: Callable | None = None
-    success_validation: Callable | None = None
+    custom_action: Optional[Callable] = None
+    success_validation: Optional[Callable] = None
 
 
 class ErrorClassifier:
@@ -163,7 +163,7 @@ class ErrorClassifier:
     def classify_error(
         self,
         error: Exception,
-        _context: ErrorContext | None = None,
+        _context: Optional[ErrorContext] = None,
     ) -> dict[str, Any]:
         """
         Classify error and return detailed information.
@@ -267,7 +267,7 @@ class RecoveryManager:
             recovery_action.strategy.value,
         )
 
-        recovery_start = datetime.now(UTC)
+        recovery_start = datetime.now(timezone.utc)
         success = False
 
         try:
@@ -300,7 +300,7 @@ class RecoveryManager:
         recovery_record = {
             "strategy": recovery_action.strategy.value,
             "success": success,
-            "duration": (datetime.now(UTC) - recovery_start).total_seconds(),
+            "duration": (datetime.now(timezone.utc) - recovery_start).total_seconds(),
             "error_context": error_context,
             "timestamp": recovery_start,
         }
@@ -459,7 +459,7 @@ class SmartErrorHandler:
     Main error handling coordinator that combines classification and recovery.
     """
 
-    def __init__(self, driver_factory=None, screenshots_dir: str | None = None):
+    def __init__(self, driver_factory=None, screenshots_dir: Optional[str] = None):
         """Initialize smart error handler."""
         self.classifier = ErrorClassifier()
         self.recovery_manager = RecoveryManager(driver_factory)
@@ -498,7 +498,7 @@ class SmartErrorHandler:
         error: Exception,
         driver,
         test_name: str,
-        custom_recovery: RecoveryAction | None = None,
+        custom_recovery: Optional[RecoveryAction] = None,
     ) -> bool:
         """
         Main error handling entry point.
@@ -571,24 +571,24 @@ class SmartErrorHandler:
         return ErrorContext(
             error_type=type(error).__name__,
             error_message=str(error),
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.now(timezone.utc),
             test_name=test_name,
             page_url=current_url,
             stack_trace=traceback.format_exc(),
             browser_logs=browser_logs,
         )
 
-    def _capture_error_screenshot(self, driver, test_name: str) -> str | None:
+    def _capture_error_screenshot(self, driver, test_name: str) -> Optional[str]:
         """Capture screenshot when error occurs."""
         try:
-            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             filename = f"error_{test_name}_{timestamp}.png"
             file_path = self.screenshots_dir / filename
 
             driver.save_screenshot(str(file_path))
             return str(file_path)
 
-        except (OSError, WebDriverException) as e:
+        except Exception as e:
             error_msg = str(e)
             self.logger.warning("Failed to capture error screenshot: %s", error_msg)
             return None
@@ -604,7 +604,7 @@ class SmartErrorHandler:
             "current_memory_mb": round(memory_info.rss / 1024 / 1024, 2),
             "memory_percent": round(process.memory_percent(), 2),
             "cpu_percent": round(process.cpu_percent(), 2),
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def execute_with_tenacity_retry(
@@ -613,7 +613,7 @@ class SmartErrorHandler:
         *args,
         max_attempts: int = 3,
         wait_strategy: str = "exponential",
-        retry_exceptions: tuple | None = None,
+        retry_exceptions: Optional[tuple] = None,
         **kwargs,
     ) -> Any:
         """
@@ -699,7 +699,7 @@ def smart_retry(
 
 def with_error_recovery(
     error_handler: SmartErrorHandler,
-    recovery_strategy: RecoveryStrategy | None = None,
+    recovery_strategy: Optional[RecoveryStrategy] = None,
 ):
     """
     Decorator for automatic error recovery.

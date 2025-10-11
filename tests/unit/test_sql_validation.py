@@ -73,7 +73,7 @@ class TestTableNameValidation:
             ("table\x00name", "Null byte injection"),
         ],
     )
-    def test_invalid_table_names(self, invalid_name):
+    def test_invalid_table_names(self, invalid_name, description):
         """Invalid table names should raise ValueError."""
         with pytest.raises(ValueError, match=r"Invalid table name|cannot be empty"):
             _validate_table_name(invalid_name)
@@ -143,7 +143,7 @@ class TestColumnNameValidation:
             ("col\x00name", "Null byte injection"),
         ],
     )
-    def test_invalid_column_names(self, invalid_name):
+    def test_invalid_column_names(self, invalid_name, description):
         """Invalid column names should raise ValueError."""
         with pytest.raises(ValueError, match=r"Invalid column name|cannot be empty"):
             _validate_column_name(invalid_name)

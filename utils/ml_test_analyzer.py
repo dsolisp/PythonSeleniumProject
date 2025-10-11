@@ -17,7 +17,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 import json  # noqa: E402
-from datetime import UTC, datetime  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
 from pathlib import Path  # noqa: E402
 from typing import Any  # noqa: E402
 
@@ -100,7 +100,7 @@ class MLTestAnalyzer:
                             try:
                                 run_ts = datetime.fromtimestamp(
                                     float(data["created"]),
-                                    UTC,
+                                    timezone.utc,
                                 )
                             except (ValueError, TypeError, OSError):
                                 run_ts = None
@@ -129,7 +129,7 @@ class MLTestAnalyzer:
                                 if isinstance(test_ts, (int, float)):
                                     test_ts = datetime.fromtimestamp(
                                         float(test_ts),
-                                        UTC,
+                                        timezone.utc,
                                     )
                             except (ValueError, TypeError, OSError):
                                 pass
@@ -516,7 +516,7 @@ class MLTestAnalyzer:
         report_lines.append("=" * 70)
         report_lines.append("ML TEST ANALYSIS REPORT")
         report_lines.append(
-            f"Generated: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
         )
         report_lines.append("=" * 70)
         report_lines.append("")

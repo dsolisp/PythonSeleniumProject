@@ -9,9 +9,9 @@ import json
 import statistics
 import time
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional, Optional
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -54,7 +54,7 @@ class BasePage:
         driver,
         database=None,
         timeout: int = 10,
-        test_name: str | None = None,
+        test_name: Optional[str] = None,
         environment: str = "test",
     ):
         """
@@ -104,8 +104,8 @@ class BasePage:
     def find_element(
         self,
         locator: tuple[str, str],
-        timeout: int | None = None,
-    ) -> Any | None:
+        timeout: Optional[int] = None,
+    ) -> Optional[Any]:
         """
         Find element with optional timeout and enhanced error handling.
 
@@ -166,8 +166,8 @@ class BasePage:
     def wait_for_element(
         self,
         locator: tuple[str, str],
-        timeout: int | None = None,
-    ) -> Any | None:
+        timeout: Optional[int] = None,
+    ) -> Optional[Any]:
         """
         Wait for element to be visible.
 
@@ -189,8 +189,8 @@ class BasePage:
     def wait_for_clickable(
         self,
         locator: tuple[str, str],
-        timeout: int | None = None,
-    ) -> Any | None:
+        timeout: Optional[int] = None,
+    ) -> Optional[Any]:
         """
         Wait for element to be clickable.
 
@@ -210,10 +210,10 @@ class BasePage:
             return None
 
     def click(
-        *,
         self,
         locator: tuple[str, str],
-        timeout: int | None = None,
+        *,
+        timeout: Optional[int] = None,
         scroll_to_element: bool = True,
         force_click: bool = False,
     ) -> bool:
@@ -291,14 +291,14 @@ class BasePage:
             return False
 
     def send_keys(
-        *,
         self,
         locator: tuple[str, str],
         text: str,
+        *,
         clear_first: bool = True,
-        timeout: int | None = None,
+        timeout: Optional[int] = None,
         use_test_data: bool = False,
-        data_key: str | None = None,
+        data_key: Optional[str] = None,
     ) -> bool:
         """
         Send keys to element with enhanced features.
@@ -331,8 +331,42 @@ class BasePage:
             element = self.wait_for_element(locator, timeout)
             if element:
                 if clear_first:
-                    element.clear()
-                element.send_keys(actual_text)
+                    # Use JavaScript to clear first (more reliable across sites)
+                    try:
+                        self.driver.execute_script("arguments[0].value = '';", element)
+                    except Exception:
+                        # Fallback to element.clear()
+                        try:
+                            element.clear()
+                        except Exception:
+                            # Last-resort: attempt keyboard-based clear
+                            try:
+                                element.send_keys("\ue009a\ue003")  # CTRL+A, DEL (may vary)
+                            except Exception:
+                                pass
+                # Try to send keys; if the value doesn't match after typing, attempt JS set
+                try:
+                    element.send_keys(actual_text)
+                except Exception:
+                    # If send_keys fails, set value via JS
+                    try:
+                        self.driver.execute_script(
+                            "arguments[0].value = arguments[1];", element, actual_text
+                        )
+                    except Exception:
+                        pass
+
+                # Post-type verification: if the entered value doesn't match, try JS set as fallback
+                entered_value = element.get_attribute("value")
+                if entered_value != actual_text:
+                    try:
+                        self.driver.execute_script(
+                            "arguments[0].value = arguments[1];" "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));",
+                            element,
+                            actual_text,
+                        )
+                    except Exception:
+                        pass
 
                 # Verify text was entered correctly
                 entered_value = element.get_attribute("value")
@@ -369,7 +403,7 @@ class BasePage:
                 self._end_performance_tracking("send_keys")
             return False
 
-    def get_text(self, locator: tuple[str, str], timeout: int | None = None) -> str:
+    def get_text(self, locator: tuple[str, str], timeout: Optional[int] = None) -> str:
         """
         Get element text.
 
@@ -392,7 +426,7 @@ class BasePage:
         self,
         locator: tuple[str, str],
         attribute: str,
-        timeout: int | None = None,
+        timeout: Optional[int] = None,
     ) -> str:
         """
         Get element attribute.
@@ -483,7 +517,7 @@ class BasePage:
         except WebDriverException:
             return ""
 
-    def get_title(self, timeout: int | None = None) -> str:
+    def get_title(self, timeout: Optional[int] = None) -> str:
         """
         Get page title with optional wait for non-empty title.
 
@@ -531,7 +565,7 @@ class BasePage:
         else:
             return True
 
-    def wait_for_page_load(self, timeout: int | None = None) -> bool:
+    def wait_for_page_load(self, timeout: Optional[int] = None) -> bool:
         """
         Wait for page to load (document ready state).
 
@@ -554,7 +588,7 @@ class BasePage:
 
     # === UTILITY METHODS ===
 
-    def take_screenshot(self, filename: str | None = None) -> str:
+    def take_screenshot(self, filename: Optional[str] = None) -> str:
         """
         Take screenshot of current page.
 
@@ -571,9 +605,9 @@ class BasePage:
 
             # Ensure screenshots directory exists
             screenshot_dir = "screenshots"
-            Path.makedirs(screenshot_dir, exist_ok=True)
+            Path(screenshot_dir).mkdir(parents=True, exist_ok=True)
 
-            filepath = Path.join(screenshot_dir, filename)
+            filepath = str(Path(screenshot_dir) / filename)
             self.driver.save_screenshot(filepath)
         except (WebDriverException, TimeoutException):
             return ""
@@ -599,7 +633,7 @@ class BasePage:
     def scroll_to_element(
         self,
         locator: tuple[str, str],
-        timeout: int | None = None,
+        timeout: Optional[int] = None,
     ) -> bool:
         """
         Scroll element into view.
@@ -623,7 +657,7 @@ class BasePage:
 
     # === DATABASE METHODS (if database connection provided) ===
 
-    def execute_query(self, query: str, parameters: tuple | None = None) -> list[dict]:
+    def execute_query(self, query: str, parameters: Optional[tuple] = None) -> list[dict]:
         """
         Execute database query if database connection available.
 
@@ -653,7 +687,7 @@ class BasePage:
         self,
         locator: tuple[str, str],
         condition: str = "visible",
-        timeout: int | None = None,
+        timeout: Optional[int] = None,
         poll_frequency: float = 0.5,
     ) -> Any:
         """
@@ -726,7 +760,7 @@ class BasePage:
         """
         health_report = {
             "locator": locator,
-            "timestamp": datetime.now(UTC),
+            "timestamp": datetime.now(timezone.utc),
             "checks": {},
             "overall_health": "unknown",
             "recommendations": [],
@@ -921,7 +955,7 @@ class BasePage:
             ],
         }
 
-    def take_screenshot_with_context(self, name: str | None = None) -> str:
+    def take_screenshot_with_context(self, name: Optional[str] = None) -> str:
         """
         Take screenshot with additional context information.
 
@@ -931,7 +965,7 @@ class BasePage:
         Returns:
             Path to the saved screenshot
         """
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = name or f"{self.test_name}_{timestamp}"
 
         # Take the screenshot
@@ -1044,7 +1078,7 @@ class BasePage:
                 "memory_before_mb": memory_before.get("memory_usage_mb", 0),
                 "memory_after_mb": memory_after.get("memory_usage_mb", 0),
                 "success": True,
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
             self.performance_data.append(performance_data)
@@ -1095,14 +1129,14 @@ class BasePage:
         action: str,
         locator: tuple[str, str],
         status: str,
-        details: str | None = None,
+        details: Optional[str] = None,
     ) -> None:
         """Record interaction for analysis and debugging."""
         if not ADVANCED_FEATURES_AVAILABLE:
             return
 
         interaction = {
-            "timestamp": datetime.now(UTC),
+            "timestamp": datetime.now(timezone.utc),
             "action": action,
             "locator": locator,
             "status": status,
