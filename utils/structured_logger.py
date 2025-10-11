@@ -5,7 +5,8 @@ Enhanced structured logging utilities with JSON output for enterprise reporting.
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
+from typing import Any, Optional, Union
 
 import structlog
 
@@ -115,7 +116,7 @@ class StructuredLogger:
     def test_start(
         self,
         test_name: str,
-        test_class: Optional[str] = None,
+    test_class: Optional[str] = None,
         **context: Any,
     ) -> None:
         """Log test start with structured context."""
@@ -131,7 +132,7 @@ class StructuredLogger:
         self,
         test_name: str,
         result: str,
-        duration: Optional[float] = None,
+    duration: Optional[float] = None,
         **context: Any,
     ) -> None:
         """Log test completion with results."""
@@ -174,8 +175,8 @@ class StructuredLogger:
     def browser_action(
         self,
         action: str,
-        element: Optional[str] = None,
-        value: Optional[str] = None,
+    element: Optional[str] = None,
+    value: Optional[str] = None,
         **context: Any,
     ) -> None:
         """Log browser interactions for debugging."""
@@ -192,8 +193,8 @@ class StructuredLogger:
         self,
         method: str,
         url: str,
-        status_code: Optional[int] = None,
-        response_time: Optional[float] = None,
+    status_code: Optional[int] = None,
+    response_time: Optional[float] = None,
         **context: Any,
     ) -> None:
         """Log API requests for tracking."""
@@ -210,8 +211,8 @@ class StructuredLogger:
     def database_operation(
         self,
         operation: str,
-        table: Optional[str] = None,
-        rows_affected: Optional[int] = None,
+    table: Optional[str] = None,
+    rows_affected: Optional[int] = None,
         **context: Any,
     ) -> None:
         """Log database operations for auditing."""
@@ -256,7 +257,7 @@ class StructuredLogger:
     def exception_caught(
         self,
         exception: Exception,
-        context_info: Optional[str] = None,
+    context_info: Optional[str] = None,
         **context: Any,
     ) -> None:
         """Log caught exceptions with full context."""
@@ -331,8 +332,8 @@ class ExecutionLogger:
         self,
         method: str,
         url: str,
-        status_code: Optional[int] = None,
-        response_time: Optional[float] = None,
+    status_code: Optional[int] = None,
+    response_time: Optional[float] = None,
         **context: Any,
     ) -> None:
         """Log API request with test context."""

@@ -6,7 +6,7 @@ import logging
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -86,8 +86,7 @@ def get_connection(db_file: str) -> sqlite3.Connection:
         sqlite3.Error: If connection fails
     """
     # Validate database file exists before attempting connection
-    import os
-    if not os.path.exists(db_file):
+    if not Path(db_file).exists():
         message = f"Database file not found: {db_file}"
         raise FileNotFoundError(message)
 
@@ -185,7 +184,7 @@ def execute_query_safe(
     conn: sqlite3.Connection,
     query: str,
     params: Optional[tuple] = None,
-) -> Optional[sqlite3.Cursor]:
+    ) -> Optional[sqlite3.Cursor]:
     """
     Safely execute a query with exception handling that returns None on failure.
 
@@ -272,7 +271,7 @@ def execute_and_fetch_one(
     conn: sqlite3.Connection,
     query: str,
     params: Optional[tuple] = None,
-) -> Optional[sqlite3.Row]:
+    ) -> Optional[sqlite3.Row]:
     """
     Execute query and fetch single result in one operation.
 
@@ -320,7 +319,7 @@ def insert_data(
     conn: sqlite3.Connection,
     table: str,
     data: dict[str, Any],
-) -> Optional[int]:
+    ) -> Optional[int]:
     """
     Insert data into a table with dynamic column mapping.
 

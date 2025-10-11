@@ -1,8 +1,9 @@
+
 """
-Smart Error Handling and Recovery System
-Intelligent error classification and automatic recovery mechanisms with
-retry strategies. Integrates tenacity and retry libraries for robust
-error handling.
+Smart Error Handling and Recovery System.
+Intelligent error classification and automatic recovery mechanisms
+with retry strategies.
+Integrates tenacity and retry libraries for robust error handling.
 """
 
 import functools
@@ -15,11 +16,10 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Optional, Optional
+from typing import Any
+from typing import Optional, Union
 
 import psutil
-
-# Retry libraries for robust error handling
 from selenium.common.exceptions import (
     ElementNotInteractableException,
     NoSuchElementException,
@@ -36,30 +36,9 @@ from tenacity import (
 )
 
 
-class ErrorSeverity(Enum):
-    """Error severity levels."""
-
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-
-class RecoveryStrategy(Enum):
-    """Recovery strategy types."""
-
-    RETRY = "retry"
-    REFRESH = "refresh"
-    NAVIGATE = "navigate"
-    RESTART_DRIVER = "restart_driver"
-    SKIP = "skip"
-    FAIL = "fail"
-
-
 @dataclass
 class ErrorContext:
     """Context information for error handling."""
-
     error_type: str
     error_message: str
     timestamp: datetime
@@ -72,10 +51,30 @@ class ErrorContext:
     retry_count: int = 0
 
 
+class ErrorSeverity(Enum):
+    """Error severity levels."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class RecoveryStrategy(Enum):
+    """Recovery strategy types."""
+    RETRY = "retry"
+    REFRESH = "refresh"
+    NAVIGATE = "navigate"
+    RESTART_DRIVER = "restart_driver"
+    SKIP = "skip"
+    FAIL = "fail"
+    browser_logs: Optional[list[str]] = None
+    element_info: Optional[dict[str, Any]] = None
+    retry_count: int = 0
+
+
 @dataclass
 class RecoveryAction:
     """Recovery action definition."""
-
     strategy: RecoveryStrategy
     max_attempts: int
     wait_time: float
@@ -84,6 +83,7 @@ class RecoveryAction:
 
 
 class ErrorClassifier:
+
     """
     Intelligent error classification system.
     Categorizes errors and suggests appropriate recovery strategies.
@@ -163,7 +163,7 @@ class ErrorClassifier:
     def classify_error(
         self,
         error: Exception,
-        _context: Optional[ErrorContext] = None,
+    _context: Optional[ErrorContext] = None,
     ) -> dict[str, Any]:
         """
         Classify error and return detailed information.
@@ -235,6 +235,27 @@ class ErrorClassifier:
 
 
 class RecoveryManager:
+
+    def _refresh_recovery(
+        self,
+        driver,
+        error_context: ErrorContext,
+        recovery_action: RecoveryAction,
+    ) -> bool:
+        """Execute page refresh recovery strategy."""
+        try:
+            driver.refresh()
+            # Wait for page to be fully loaded
+            WebDriverWait(driver, recovery_action.wait_time).until(
+                lambda d: d.execute_script("return document.readyState") == "complete",
+            )
+            if recovery_action.success_validation:
+                return recovery_action.success_validation(driver)
+        except Exception:
+            self.logger.exception("Refresh recovery failed")
+            return False
+        else:
+            return True
     """
     Intelligent recovery manager that executes recovery strategies.
     """
@@ -328,40 +349,13 @@ class RecoveryManager:
                 else:
                     # Default retry behavior - wait and assume success
                     return True
-
             except (WebDriverException, TimeoutException, ValueError, TypeError) as e:
                 attempt_num = attempt + 1
                 self.logger.warning("Retry attempt %d failed: %s", attempt_num, e)
                 continue
-
         return False
 
-    def _refresh_recovery(
-        self,
-        driver,
-        _error_context: ErrorContext,
-        recovery_action: RecoveryAction,
-    ) -> bool:
-        """Execute page refresh recovery strategy."""
-        try:
-            current_url = driver.current_url
-            driver.refresh()
-
-            # Wait for page to load
-            WebDriverWait(driver, recovery_action.wait_time).until(
-                lambda d: d.execute_script("return document.readyState") == "complete",
-            )
-
-            # Validate success
-            if recovery_action.success_validation:
-                return recovery_action.success_validation(driver)
-
-            # Default validation - check if URL is accessible
-        except Exception:
-            self.logger.exception("Refresh recovery failed")
-            return False
-        else:
-            return driver.current_url == current_url
+    # ...existing code...
 
     def _navigate_recovery(
         self,
@@ -498,7 +492,7 @@ class SmartErrorHandler:
         error: Exception,
         driver,
         test_name: str,
-        custom_recovery: Optional[RecoveryAction] = None,
+    custom_recovery: Optional[RecoveryAction] = None,
     ) -> bool:
         """
         Main error handling entry point.
@@ -588,9 +582,8 @@ class SmartErrorHandler:
             driver.save_screenshot(str(file_path))
             return str(file_path)
 
-        except Exception as e:
-            error_msg = str(e)
-            self.logger.warning("Failed to capture error screenshot: %s", error_msg)
+        except Exception:
+            self.logger.warning("Failed to capture error screenshot.")
             return None
 
     def monitor_memory_usage(self) -> dict[str, Any]:
@@ -613,7 +606,7 @@ class SmartErrorHandler:
         *args,
         max_attempts: int = 3,
         wait_strategy: str = "exponential",
-        retry_exceptions: Optional[tuple] = None,
+    retry_exceptions: Optional[tuple] = None,
         **kwargs,
     ) -> Any:
         """

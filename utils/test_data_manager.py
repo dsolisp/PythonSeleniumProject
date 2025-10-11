@@ -7,7 +7,7 @@ import csv
 import json
 import random
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -156,7 +156,7 @@ class DataManager:
     def save_test_results_yaml(
         self,
         results: dict[str, Any],
-        filename: Optional[str] = None,
+    filename: Optional[str] = None,
     ) -> str:
         """
         Save test results in YAML format for human-readable reports.
@@ -198,7 +198,7 @@ class DataManager:
 
     def get_user_accounts(
         self,
-        role: Optional[str] = None,
+    role: Optional[str] = None,
         environment: str = "default",
     ) -> list[dict[str, Any]]:
         """
@@ -221,7 +221,7 @@ class DataManager:
 
     def get_api_endpoints(
         self,
-        method: Optional[str] = None,
+    method: Optional[str] = None,
         environment: str = "default",
     ) -> list[dict[str, Any]]:
         """
@@ -247,8 +247,8 @@ class DataManager:
     def get_browser_configurations(
         *,
         self,
-        browser: Optional[str] = None,
-        mobile: Optional[bool] = None,
+    browser: Optional[str] = None,
+    mobile: Optional[bool] = None,
         environment: str = "default",
     ) -> list[dict[str, Any]]:
         """
@@ -359,8 +359,19 @@ class DataManager:
         results_dir = self.data_dir / "results" / environment
         results_dir.mkdir(parents=True, exist_ok=True)
 
+    def save_test_results_json(
+        self,
+        test_name: str,
+        results: list[dict[str, Any]],
+        environment: str = "default",
+    ) -> str:
+        """
+        Save test results in JSON format.
+        """
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"{test_name}_{timestamp}.json"
+        results_dir = self.data_dir / "results"
+        results_dir.mkdir(exist_ok=True)
         file_path = results_dir / filename
 
         # Add metadata
@@ -374,6 +385,7 @@ class DataManager:
 
         with file_path.open("w") as f:
             json.dump(results_with_metadata, f, indent=2, default=str)
+        return str(file_path)
 
     def cleanup_old_results(self, days_to_keep: int = 30) -> None:
         """
@@ -390,7 +402,9 @@ class DataManager:
 
         for file_path in results_dir.rglob("*.json"):
             try:
-                file_date = datetime.fromtimestamp(file_path.stat().st_mtime, tz=timezone.utc)
+                file_date = datetime.fromtimestamp(
+                    file_path.stat().st_mtime, tz=timezone.utc,
+                )
                 if file_date < cutoff_date:
                     file_path.unlink()
             except (OSError, ValueError):

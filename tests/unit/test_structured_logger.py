@@ -75,9 +75,22 @@ class TestStructuredLogger:
             logger.test_end("test_method", "PASS", duration=1.5)
             logger.performance_metric("response_time", 250.5, "ms")
             logger.browser_action("click", element="button#submit")
-            logger.api_request("GET", "http://example.com", status_code=200)
-            logger.database_operation("SELECT", table="users", rows_affected=5)
-            logger.assertion_result(assertion="equals", result=True, expected=5, actual=5)
+            logger.api_request(
+                "GET",
+                "http://example.com",
+                status_code=200,
+            )
+            logger.database_operation(
+                "SELECT",
+                table="users",
+                rows_affected=5,
+            )
+            logger.assertion_result(
+                assertion="equals",
+                result=True,
+                expected=5,
+                actual=5,
+            )
         except (ValueError, TypeError, OSError) as e:
             pytest.fail(f"Logging method failed: {e}")
 
@@ -200,7 +213,12 @@ class TestSpecializedLogging:
         logger = StructuredLogger("AssertLogger")
 
         try:
-            logger.assertion_result(assertion="equals", result=True, expected=5, actual=5)
+            logger.assertion_result(
+                assertion="equals",
+                result=True,
+                expected=5,
+                actual=5,
+            )
             logger.assertion_result(
                 assertion="contains",
                 result=False,
@@ -216,6 +234,9 @@ class TestSpecializedLogging:
 
         try:
             test_exception = ValueError("Test exception")
-            logger.exception_caught(test_exception, "Test context")
+            logger.exception_caught(
+                test_exception,
+                "Test context",
+            )
         except (ValueError, TypeError, OSError) as e:
             pytest.fail(f"Exception logging failed: {e}")

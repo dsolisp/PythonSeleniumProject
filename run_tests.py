@@ -24,7 +24,7 @@ import os
 import shlex
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 from utils.test_data_manager import DataManager
@@ -85,14 +85,14 @@ def export_test_results(*, test_type: str, success: bool, duration: float):
             "failed": "N/A",
             "success": success,
             "duration": duration,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
             "environment": os.getenv("TEST_ENV", "local"),
             "python_version": sys.version.split()[0],
             "platform": sys.platform,
         }
 
         # Export to YAML
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
         filename = f"test_run_{test_type}_{timestamp}.yml"
         yaml_file = manager.save_test_results_yaml(results, filename=filename)
 
@@ -216,7 +216,7 @@ Test Counts:
     args = parser.parse_args()
 
     # Track start time
-    start_time = datetime.now(timezone.utc)
+    start_time = datetime.now(datetime.UTC)
 
     # Build base command
     base_cmd = "python -m pytest"
@@ -312,7 +312,7 @@ Test Counts:
             test_runs.append((test_type, success_result))
 
     # Calculate duration
-    duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+    duration = (datetime.now(datetime.UTC) - start_time).total_seconds()
 
     # Export results (unless disabled)
     if not args.no_export:

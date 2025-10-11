@@ -39,7 +39,7 @@ class TestDatabaseConnectionFunctions:
         with pytest.raises(FileNotFoundError, match="Database file not found"):
             get_connection("nonexistent_file.db")
 
-    @patch("os.path.exists")
+    @patch("pathlib.Path.exists")
     @patch("sqlite3.connect")
     def test_get_connection_sqlite_error(self, mock_connect, mock_exists):
         """Test get_connection handles sqlite3.Error properly."""
@@ -49,12 +49,13 @@ class TestDatabaseConnectionFunctions:
         with pytest.raises(sqlite3.Error, match="Connection failed"):
             get_connection("test.db")
 
-    @patch("os.path.exists")
+    @patch("pathlib.Path.exists")
     @patch("sqlite3.connect")
     def test_get_connection_success(self, mock_connect, mock_exists):
         """Test successful connection setup."""
         mock_exists.return_value = True
         mock_conn = Mock()
+        mock_conn.execute = Mock()
         mock_connect.return_value = mock_conn
 
         result = get_connection("test.db")

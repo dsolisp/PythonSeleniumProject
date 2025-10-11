@@ -1,17 +1,13 @@
-"""
-Playwright Search Engine page implementation.
-Modern async alternative to Selenium SearchEnginePage.
-"""
+import asyncio
 
-from typing import Optional
-
+from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Page
 
 from config.settings import settings
-from locators.playwright_search_engine_locators import (
-    PlaywrightSearchEngineLocators,
-)
+from locators.playwright_search_engine_locators import PlaywrightSearchEngineLocators
 from pages.playwright_base_page import PlaywrightBasePage
+
+from typing import Optional
 
 
 class PlaywrightSearchEnginePage(PlaywrightBasePage):
@@ -36,23 +32,23 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         try:
             await self.navigate_to(self.base_url)
             await self.page.wait_for_load_state("networkidle", timeout=20000)
-            # Add small delay after navigation
-            import asyncio
             await asyncio.sleep(0.5)
-            # Check for CAPTCHA
             if await self.is_captcha_present():
                 print("CAPTCHA detected on open_search_engine")
                 return False
-            # Wait for search input to be ready
-            await self.page.wait_for_selector(self.locators.SEARCH_INPUT, timeout=20000)
-            return True
-        except Exception as e:
+            await self.page.wait_for_selector(
+                self.locators.SEARCH_INPUT, timeout=20000,
+            )
+        except (TimeoutError, PlaywrightError) as e:
             print(f"Failed to open search engine: {e}")
             return False
+        else:
+            return True
 
     async def search_for(
         self,
         search_term: str,
+        *,
         wait_for_results: bool = True,
     ) -> bool:
         """
@@ -60,43 +56,31 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
 
         Args:
             search_term: The term to search for
-            wait_for_results: Whether to wait for results to load
+            wait_for_results: Whether to wait for results to load (keyword-only)
 
         Returns:
             bool: True if search was successful, False otherwise
         """
         try:
-            # Add small delay to appear more human-like
-            import asyncio
             await asyncio.sleep(0.5)
-
-            # Clear and type search term with realistic typing speed
             await self.element_actions.send_keys(
                 self.locators.SEARCH_INPUT,
                 search_term,
             )
-
-            # Small pause before submitting
             await asyncio.sleep(0.3)
-
-            # Submit search (Enter key is more reliable than clicking button)
             await self.page.keyboard.press("Enter")
 
             if wait_for_results:
-                # Wait for navigation and results
                 try:
                     await self.page.wait_for_load_state("networkidle", timeout=20000)
-                except Exception as e:
+                except TimeoutError as e:
                     print(f"Navigation wait failed: {e}")
-                # Check if we got CAPTCHA'd
                 try:
                     if await self.is_captcha_present():
                         print("CAPTCHA detected after search submission")
                         return False
-                except Exception as e:
+                except PlaywrightError as e:
                     print(f"CAPTCHA check failed: {e}")
-
-                # Wait for results container indicating search completed
                 try:
                     selector = (
                         f"{self.locators.RESULTS_CONTAINER}, "
@@ -109,26 +93,23 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                     )
                 except TimeoutError as e:
                     print(f"Results wait timed out: {e}")
-                    # Even if timeout, search may have completed
-                    # Check if URL changed to indicate search happened
                     try:
                         current_url = await self.navigation_actions.get_current_url()
-                        return bool("q=" in current_url or "search" in current_url.lower())
-                    except Exception as e:
+                        return bool(
+                            "q=" in current_url or "search" in current_url.lower(),
+                        )
+                    except PlaywrightError as e:
                         print(f"URL check failed: {e}")
                         return False
-
-                # Additional wait for dynamic content to load
                 await asyncio.sleep(2)
-
-            return True
-
         except TimeoutError as e:
             print(f"Search failed: {e}")
             return False
-        except Exception as e:
+        except PlaywrightError as e:
             print(f"Unexpected error in search_for: {e}")
             return False
+        else:
+            return True
 
     async def get_search_input(self) -> Optional[str]:
         """
@@ -302,21 +283,14 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             bool: True if results found, False otherwise
         """
         try:
-            # First check if we're on a search results page by URL
             current_url = await self.navigation_actions.get_current_url()
             if "q=" in current_url or "search" in current_url.lower():
-                # We're on a search page, assume results are present
-                # DuckDuckGo may load content dynamically
                 return True
-
-            # Fallback: Check for results container
             results_present = await self.page.query_selector(
                 self.locators.RESULTS_CONTAINER,
             )
-
-            # Check for "no results" message
             no_results = await self.page.query_selector(self.locators.NO_RESULTS)
-        except Exception as e:
+        except PlaywrightError as e:
             print(f"has_results error: {e}")
             return False
         else:

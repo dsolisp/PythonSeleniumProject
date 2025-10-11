@@ -4,7 +4,7 @@
 set -e
 
 VENV_DIR="venv-enhanced"
-PYTHON_BIN="python3.13"
+PYTHON_BIN="python3.9"
 
 # 1. Create venv if not exists
 if [ ! -d "$VENV_DIR" ]; then

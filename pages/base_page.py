@@ -5,13 +5,14 @@ essential functionality with intelligent error handling, performance monitoring,
 and test data integration.
 """
 
+import contextlib
 import json
 import statistics
 import time
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, Optional
+from typing import Any
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -39,6 +40,8 @@ except ImportError:
     SmartErrorHandler = None
     TestDataManager = None
     AdvancedTestReporter = None
+
+from typing import Optional, Union
 
 
 class BasePage:
@@ -328,52 +331,47 @@ class BasePage:
             else:
                 actual_text = text
 
+
             element = self.wait_for_element(locator, timeout)
             if element:
+                # Clear existing value using several fallbacks;
+                # suppress non-critical errors
                 if clear_first:
-                    # Use JavaScript to clear first (more reliable across sites)
-                    try:
-                        self.driver.execute_script("arguments[0].value = '';", element)
-                    except Exception:
-                        # Fallback to element.clear()
-                        try:
-                            element.clear()
-                        except Exception:
-                            # Last-resort: attempt keyboard-based clear
-                            try:
-                                element.send_keys("\ue009a\ue003")  # CTRL+A, DEL (may vary)
-                            except Exception:
-                                pass
-                # Try to send keys; if the value doesn't match after typing, attempt JS set
-                try:
-                    element.send_keys(actual_text)
-                except Exception:
-                    # If send_keys fails, set value via JS
-                    try:
+                    with contextlib.suppress(Exception):
                         self.driver.execute_script(
-                            "arguments[0].value = arguments[1];", element, actual_text
+                            "arguments[0].value = '';",
+                            element,
                         )
-                    except Exception:
-                        pass
+                    with contextlib.suppress(Exception):
+                        element.clear()
+                    with contextlib.suppress(Exception):
+                        element.send_keys("\ue009a\ue003")  # CTRL+A, DEL (may vary)
 
-                # Post-type verification: if the entered value doesn't match, try JS set as fallback
+                # Attempt to send keys; fall back to JS if necessary
+                with contextlib.suppress(Exception):
+                    element.send_keys(actual_text)
+
+                # Post-type verification and JS fallback
                 entered_value = element.get_attribute("value")
                 if entered_value != actual_text:
-                    try:
+                    js_script = (
+                        "arguments[0].value = arguments[1];"
+                        "arguments[0].dispatchEvent(new Event('input', "
+                        "{ bubbles: true }));"
+                    )
+                    with contextlib.suppress(Exception):
                         self.driver.execute_script(
-                            "arguments[0].value = arguments[1];" "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));",
+                            js_script,
                             element,
                             actual_text,
                         )
-                    except Exception:
-                        pass
+                    entered_value = element.get_attribute("value")
 
-                # Verify text was entered correctly
-                entered_value = element.get_attribute("value")
+                # Final verification
                 if entered_value != actual_text:
                     message = (
-                        f"Text verification failed. Expected: "
-                        f"{actual_text}, Got: {entered_value}"
+                        f"Text verification failed. Expected: {actual_text}, "
+                        f"Got: {entered_value}"
                     )
                     raise ValueError(message)
 
@@ -657,7 +655,9 @@ class BasePage:
 
     # === DATABASE METHODS (if database connection provided) ===
 
-    def execute_query(self, query: str, parameters: Optional[tuple] = None) -> list[dict]:
+    def execute_query(
+        self, query: str, parameters: Optional[tuple] = None,
+    ) -> list[dict]:
         """
         Execute database query if database connection available.
 
@@ -760,7 +760,7 @@ class BasePage:
         """
         health_report = {
             "locator": locator,
-            "timestamp": datetime.now(timezone.utc),
+            "timestamp": datetime.now(datetime.UTC),
             "checks": {},
             "overall_health": "unknown",
             "recommendations": [],
@@ -965,7 +965,7 @@ class BasePage:
         Returns:
             Path to the saved screenshot
         """
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
         filename = name or f"{self.test_name}_{timestamp}"
 
         # Take the screenshot
@@ -1078,7 +1078,7 @@ class BasePage:
                 "memory_before_mb": memory_before.get("memory_usage_mb", 0),
                 "memory_after_mb": memory_after.get("memory_usage_mb", 0),
                 "success": True,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(datetime.UTC).isoformat(),
             }
 
             self.performance_data.append(performance_data)
@@ -1136,7 +1136,7 @@ class BasePage:
             return
 
         interaction = {
-            "timestamp": datetime.now(timezone.utc),
+            "timestamp": datetime.now(datetime.UTC),
             "action": action,
             "locator": locator,
             "status": status,

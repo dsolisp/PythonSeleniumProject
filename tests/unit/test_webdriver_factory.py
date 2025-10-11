@@ -117,7 +117,7 @@ class TestDatabaseFactory:
             equal_to(mock_connect.return_value.row_factory),
         )
 
-    @patch("utils.webdriver_factory.os.path.exists")
+    @patch("pathlib.Path.exists")
     def test_create_database_connection_file_not_found(self, mock_exists):
         """Test database connection when file doesn't exist."""
         mock_exists.return_value = False

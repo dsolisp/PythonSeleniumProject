@@ -427,9 +427,9 @@ class TestDecorators:
             time.sleep(0.05)  # 50ms - exceeds 10ms threshold
             return "completed"
 
-        with patch.dict("os.environ", {"PERFORMANCE_FAIL_ON_THRESHOLD": "true"}):
-            with pytest.raises(AssertionError, match="Performance threshold exceeded"):
-                slow_function()
+        with patch.dict("os.environ", {"PERFORMANCE_FAIL_ON_THRESHOLD": "true"}), \
+             pytest.raises(AssertionError, match="Performance threshold exceeded"):
+            slow_function()
 
     def test_performance_test_decorator_without_threshold(self):
         """Test performance test decorator without threshold."""

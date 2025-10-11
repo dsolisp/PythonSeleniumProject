@@ -10,6 +10,7 @@ import sqlite3
 import tempfile
 import uuid
 from pathlib import Path
+
 from typing import Optional, Union
 
 from selenium import webdriver
@@ -35,7 +36,7 @@ class WebDriverFactory:
     def create_chrome_driver(
         *,
         headless: bool = False,
-        window_size: Optional[tuple[int, int]] = None,
+    window_size: Optional[tuple[int, int]] = None,
     ) -> webdriver.Chrome:
         """Create Chrome driver with anti-detection configuration."""
         options = ChromeOptions()
@@ -97,7 +98,7 @@ class WebDriverFactory:
     def create_firefox_driver(
         *,
         headless: bool = False,
-        window_size: Optional[tuple[int, int]] = None,
+    window_size: Optional[tuple[int, int]] = None,
     ) -> webdriver.Firefox:
         """Create Firefox driver with configuration."""
         options = FirefoxOptions()
@@ -132,7 +133,7 @@ class WebDriverFactory:
     def create_edge_driver(
         *,
         headless: bool = False,
-        window_size: Optional[tuple[int, int]] = None,
+    window_size: Optional[tuple[int, int]] = None,
     ) -> webdriver.Edge:
         """Create Edge driver with configuration."""
         options = EdgeOptions()
@@ -216,7 +217,7 @@ class DatabaseFactory:
                 return connection
 
             # For default path, use sqlite3.connect directly (for test compatibility)
-            if not os.path.exists(db_file):
+            if not Path(db_file).exists():
                 logger.warning("Database file not found: %s", db_file)
                 return None
 
@@ -235,6 +236,7 @@ class DatabaseFactory:
 
 def get_driver(
     browser: str = "chrome",
+    *,
     headless: bool = False,
     window_size: Optional[tuple[int, int]] = None,
     db_path: Optional[str] = None,

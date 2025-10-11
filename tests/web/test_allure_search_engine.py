@@ -1,3 +1,5 @@
+
+import os
 import time
 
 import allure
@@ -258,13 +260,13 @@ class TestAllureSearchEngine:
             )
 
         with allure.step("Verify performance thresholds"):
-            import os
-
             max_load_time = 8000
             max_search_time = 8000
 
             # If strict failure is requested via env var, assert; otherwise log warnings
-            fail_on_threshold = os.getenv("PERFORMANCE_FAIL_ON_THRESHOLD", "false").lower() == "true"
+            fail_on_threshold = (
+                os.getenv("PERFORMANCE_FAIL_ON_THRESHOLD", "false").lower() == "true"
+            )
 
             if fail_on_threshold:
                 (
@@ -284,9 +286,15 @@ class TestAllureSearchEngine:
             else:
                 # Log a warning via test logger but do not fail
                 if load_time >= max_load_time:
-                    self.test_logger.log_step("Performance warning", f"Page load {load_time:.2f}ms >= {max_load_time}ms")
+                    self.test_logger.log_step(
+                        "Performance warning",
+                        f"Page load {load_time:.2f}ms >= {max_load_time}ms",
+                    )
                 if search_time >= max_search_time:
-                    self.test_logger.log_step("Performance warning", f"Search time {search_time:.2f}ms >= {max_search_time}ms")
+                    self.test_logger.log_step(
+                        "Performance warning",
+                        f"Search time {search_time:.2f}ms >= {max_search_time}ms",
+                    )
 
         self.test_logger.end_test("PASS")
 

@@ -3,9 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import jinja2
-import numpy
 import numpy as np
-import pandas
 import pandas as pd
 import psutil
 import pytest
@@ -54,9 +52,30 @@ class TestPandasIntegration:
 
         # Add test results
         results = [
-            Result("test1", "passed", 1.5, datetime.now(timezone.utc), "test", "chrome"),
-            Result("test2", "failed", 2.3, datetime.now(timezone.utc), "test", "chrome"),
-            Result("test3", "passed", 0.8, datetime.now(timezone.utc), "test", "chrome"),
+            Result(
+                "test1",
+                "passed",
+                2.5,
+                datetime.now(timezone.utc),
+                "test",
+                "chrome",
+            ),
+            Result(
+                "test2",
+                "failed",
+                1.8,
+                datetime.now(timezone.utc),
+                "test",
+                "chrome",
+            ),
+            Result(
+                "test3",
+                "passed",
+                3.0,
+                datetime.now(timezone.utc),
+                "test",
+                "chrome",
+            ),
         ]
 
         for result in results:
@@ -92,7 +111,14 @@ class TestPandasIntegration:
         reporter.start_test_suite("csv_test", "test", "chrome")
 
         # Add test result
-        result = Result("test_csv", "passed", 1.2, datetime.now(timezone.utc), "test", "chrome")
+        result = Result(
+            "test_csv",
+            "passed",
+            2.0,
+            datetime.now(timezone.utc),
+            "test",
+            "chrome",
+        )
         reporter.add_test_result(result)
 
         # Export to CSV
@@ -114,11 +140,11 @@ class TestPandasIntegration:
 
         # Add results with varied durations for statistical analysis
         durations = [1.0, 2.0, 3.0, 10.0, 1.5]  # 10.0 should be an outlier
-        for i, duration in enumerate(durations):
+        for i, _duration in enumerate(durations):
             result = Result(
                 f"test_{i}",
                 "passed",
-                duration,
+                _duration,
                 datetime.now(timezone.utc),
                 "test",
                 "chrome",
@@ -436,8 +462,8 @@ class TestLibraryIntegrationSmokeTest:
         """Test that all integrated libraries can be imported."""
         try:
             # Basic functionality test
-            assert_that(pandas, has_property("DataFrame"))
-            assert_that(numpy, has_property("array"))
+            assert_that(pd, has_property("DataFrame"))
+            assert_that(np, has_property("array"))
             assert_that(yaml, has_property("load"))
             assert_that(psutil, has_property("Process"))
             assert_that(tenacity, has_property("Retrying"))

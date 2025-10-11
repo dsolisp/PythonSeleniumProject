@@ -182,9 +182,7 @@ class TestPageObjectIntegration:
         page.navigate_to(settings.BASE_URL)
 
         # Create temporary directory for screenshots
-        with tempfile.TemporaryDirectory() as temp_dir:
-            screenshot_path = str(Path(temp_dir) / "integration_test.png")
-
+        with tempfile.TemporaryDirectory():
             # Take screenshot
             saved_path = page.take_screenshot("integration_test.png")
             assert_that(saved_path, is_(not_none()))

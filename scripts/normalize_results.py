@@ -8,7 +8,7 @@ Run with:
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
@@ -41,13 +41,13 @@ def normalize_custom_file(path: Path) -> Path:
                 created_ts = dt.timestamp()
             except (ValueError, OSError):
                 try:
-                    created_ts = datetime.now(timezone.utc).timestamp()
+                    created_ts = datetime.now(datetime.UTC).timestamp()
                 except OSError:
                     created_ts = None
         elif isinstance(created, (int, float)):
             created_ts = float(created)
         else:
-            created_ts = datetime.now(timezone.utc).timestamp()
+            created_ts = datetime.now(datetime.UTC).timestamp()
 
         norm["created"] = created_ts
         norm["duration"] = data.get("duration", 0)

@@ -4,12 +4,14 @@ Compatible interface with existing Selenium BasePage but with async capabilities
 """
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from playwright.async_api import ElementHandle, Page
 
 from config.settings import settings
 from utils.playwright_factory import PlaywrightPage
+
+from typing import Optional
 
 
 class PlaywrightBasePage(PlaywrightPage):
@@ -61,7 +63,7 @@ class PlaywrightElementActions:
         """Hover over an element."""
         await self.page.hover(selector)
 
-    async def send_keys(self, selector: str, text: str, clear: bool = True) -> None:
+    async def send_keys(self, selector: str, text: str, *, clear: bool = True) -> None:
         """Send keys to an input element."""
         if clear:
             await self.page.fill(selector, text)

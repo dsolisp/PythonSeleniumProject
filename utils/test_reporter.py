@@ -10,7 +10,7 @@ from collections import Counter
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, ClassVar, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -32,7 +32,7 @@ class Result:
     test_data: Optional[dict[str, Any]] = None
     performance_metrics: Optional[dict[str, float]] = None
     retries: int = 0
-    tags: list[str] = None
+    tags: Optional[list[str]] = None
 
     def __post_init__(self):
         if self.tags is None:
@@ -161,8 +161,8 @@ class AdvancedTestReporter:
         (self.reports_dir / "trends").mkdir(exist_ok=True)
         (self.reports_dir / "analytics").mkdir(exist_ok=True)
 
-        self.current_suite: Optional[Suite] = None
-        self.test_results: list[Result] = []
+    current_suite: ClassVar[Optional[Suite]] = None
+    test_results: ClassVar[list[Result]] = []
 
     def start_test_suite(
         self,
@@ -211,7 +211,6 @@ class AdvancedTestReporter:
         if not self.current_suite:
             message = "No active test suite."
             raise ValueError(message)
-
         self.current_suite.end_time = datetime.now(timezone.utc)
         return self.current_suite
 
@@ -631,7 +630,7 @@ class AdvancedTestReporter:
         <p>Suite: {self.current_suite.suite_name}</p>
         <p>Environment: {self.current_suite.environment}</p>
         <p>Browser: {self.current_suite.browser}</p>
-        <p>Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}</p>
+    <p>Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}</p>
     </div>
 
     <div class="metrics">

@@ -242,7 +242,7 @@ class TestPlaywrightPage:
     async def test_find_element_not_found(self):
         """Test find_element when element not found."""
         mock_page = AsyncMock()
-        mock_page.wait_for_selector.side_effect = Exception("Timeout")
+        mock_page.wait_for_selector.side_effect = TimeoutError("Timeout")
         wrapper = PlaywrightPage(mock_page)
 
         result = await wrapper.find_element("button")

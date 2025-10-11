@@ -4,7 +4,6 @@ Search engine page implementation using the page object pattern.
 
 import contextlib
 import time
-from typing import Optional
 
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.common.action_chains import ActionChains
@@ -15,6 +14,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from config.settings import settings
 from locators.search_engine_locators import SearchEngineLocators
 from pages.base_page import BasePage
+from typing import Optional
 
 
 class SearchEnginePage(BasePage):
@@ -101,15 +101,13 @@ class SearchEnginePage(BasePage):
         """Get list of search result titles."""
         elements = self.driver.find_elements(*SearchEngineLocators.RESULT_TITLES)
         titles = []
-
-        for element in elements[:max_count]:
-            try:
+        try:
+            for element in elements[:max_count]:
                 title = element.text.strip()
                 if title:
                     titles.append(title)
-            except WebDriverException:
-                continue
-
+        except WebDriverException:
+            pass
         return titles
 
     def perform_search_workflow(self, search_term: str) -> dict[str, any]:

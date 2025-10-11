@@ -8,7 +8,7 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 
 @dataclass
@@ -20,12 +20,12 @@ class TestResult:
     duration: float
     start_time: datetime
     end_time: datetime
-    error_message: str | None = None
-    error_type: str | None = None
-    browser: str | None = None
-    environment: str | None = None
-    screenshot_path: str | None = None
-    metadata: dict[str, Any] = None
+    error_message: Optional[str] = None
+    error_type: Optional[str] = None
+    browser: Optional[str] = None
+    environment: Optional[str] = None
+    screenshot_path: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         if self.metadata is None:
@@ -65,8 +65,7 @@ class TestReporter:
 
         self.test_results: list[TestResult] = []
         self.test_suites: list[TestSuite] = []
-        self.current_suite: TestSuite | None = None
-
+        self.current_suite: Optional[TestSuite] = None
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def add_test_result(self, result: TestResult) -> None:
@@ -90,10 +89,13 @@ class TestReporter:
         )
         self.logger.info("Started test suite: %s", suite_name)
 
-    def generate_json_report(self, filename: str | None = None) -> str:
+    def generate_json_report(self, filename: Optional[str] = None) -> str:
         """Generate JSON format report."""
         if filename is None:
-            filename = f"test_report_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+            filename = (
+                f"test_report_"
+                f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+            )
 
         report_data = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -122,7 +124,7 @@ class TestReporter:
         self.logger.info("JSON report generated: %s", output_path)
         return str(output_path)
 
-    def generate_html_report(self, filename: str | None = None) -> str:
+    def generate_html_report(self, filename: Optional[str] = None) -> str:
         """Generate HTML format report."""
         if filename is None:
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -151,7 +153,6 @@ class TestReporter:
         failed_count = sum(1 for r in self.test_results if r.status == "failed")
         success_rate = self._calculate_success_rate()
         current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-
         return (
             """<!DOCTYPE html>
 <html>

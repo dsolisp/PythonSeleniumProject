@@ -3,6 +3,7 @@ Playwright factory for modern browser automation.
 Provides async browser automation capabilities alongside existing Selenium support.
 """
 
+
 from typing import Any, Optional
 
 from playwright.async_api import (
@@ -10,6 +11,9 @@ from playwright.async_api import (
     BrowserContext,
     Page,
     async_playwright,
+)
+from playwright.async_api import (
+    Error as PlaywrightError,
 )
 
 from config.settings import settings
@@ -29,6 +33,7 @@ class PlaywrightFactory:
     async def create_browser(
         self,
         browser_type: str = "chromium",
+        *,
         headless: Optional[bool] = None,
         **kwargs,
     ) -> Browser:
@@ -93,7 +98,11 @@ class PlaywrightFactory:
                 "Chrome/119.0.0.0 Safari/537.36"
             ),
             "extra_http_headers": {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept": (
+                    "text/html,application/xhtml+xml,application/xml;q=0.9,"
+                    "image/avif,image/webp,image/apng,*/*;q=0.8,"
+                    "application/signed-exchange;v=b3;q=0.7"
+                ),
                 "Accept-Language": "en-US,en;q=0.9",
                 "Accept-Encoding": "gzip, deflate, br",
                 "DNT": "1",
@@ -191,7 +200,7 @@ class PlaywrightPage:
         """Find element by selector."""
         try:
             return await self.page.wait_for_selector(selector, timeout=5000)
-        except Exception:
+        except (TimeoutError, PlaywrightError):
             # Return None if element not found or timeout
             return None
 
@@ -216,7 +225,9 @@ class PlaywrightPage:
         """Get current URL."""
         return self.page.url
 
-    async def wait_for_element(self, selector: str, timeout: Optional[int] = None) -> Any:
+    async def wait_for_element(
+        self, selector: str, timeout: Optional[int] = None,
+    ) -> Any:
         """Wait for element to be visible."""
         timeout_ms = (timeout or settings.TIMEOUT) * SECONDS_TO_MILLISECONDS
         return await self.page.wait_for_selector(selector, timeout=timeout_ms)

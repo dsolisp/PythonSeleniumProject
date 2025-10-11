@@ -2,6 +2,7 @@
 Performance monitoring utilities with benchmarking and load testing capabilities.
 """
 
+import os
 import statistics
 import time
 from collections.abc import Callable
@@ -11,7 +12,6 @@ from functools import wraps
 from typing import Any, Optional
 
 import psutil
-import os
 
 from utils.structured_logger import get_logger
 
@@ -394,7 +394,7 @@ def performance_test(threshold_ms: Optional[float] = None, name: Optional[str] =
                 env_global = os.getenv("PERFORMANCE_THRESHOLD_MS")
                 if env_global:
                     effective_threshold = float(env_global)
-            except Exception:
+            except (ValueError, OSError, TypeError):
                 # Ignore invalid env var
                 pass
 
@@ -404,11 +404,15 @@ def performance_test(threshold_ms: Optional[float] = None, name: Optional[str] =
                 env_specific = os.getenv(specific_key)
                 if env_specific:
                     effective_threshold = float(env_specific)
-            except Exception:
+            except (ValueError, OSError, TypeError):
                 pass
 
             if effective_threshold:
-                monitor.set_threshold(f"{func.__name__}_execution", effective_threshold, "ms")
+                monitor.set_threshold(
+                    f"{func.__name__}_execution",
+                    effective_threshold,
+                    "ms",
+                )
 
             start_time = time.perf_counter()
             result = func(*args, **kwargs)
@@ -424,7 +428,12 @@ def performance_test(threshold_ms: Optional[float] = None, name: Optional[str] =
                     f"{execution_time:.2f}ms > {effective_threshold}ms"
                 )
                 # Allow strict failure to be opt-in via environment variable.
-                fail_on_threshold = os.getenv("PERFORMANCE_FAIL_ON_THRESHOLD", "false").lower() == "true"
+                fail_on_threshold = (
+                    os.getenv(
+                        "PERFORMANCE_FAIL_ON_THRESHOLD", "false",
+                    ).lower()
+                    == "true"
+                )
                 if fail_on_threshold:
                     raise AssertionError(msg)
                 # Default to warning to reduce test flakiness on slower runners.

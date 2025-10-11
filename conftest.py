@@ -4,6 +4,7 @@ Pytest configuration and fixtures for test automation.
 
 import os
 import time
+from collections.abc import Generator
 from typing import Any
 
 import pytest
@@ -38,7 +39,11 @@ def test_config(request) -> dict[str, Any]:
 
 
 @pytest.fixture
-def driver(request, test_config) -> tuple[webdriver.Chrome, object]:
+def driver(
+    request, test_config,
+) -> Generator[
+    tuple[webdriver.Chrome, object], None, None,
+]:
     """
     Main driver fixture providing WebDriver and database connection.
     """
