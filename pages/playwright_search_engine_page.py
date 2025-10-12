@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Page
@@ -6,8 +7,6 @@ from playwright.async_api import Page
 from config.settings import settings
 from locators.playwright_search_engine_locators import PlaywrightSearchEngineLocators
 from pages.playwright_base_page import PlaywrightBasePage
-
-from typing import Optional
 
 
 class PlaywrightSearchEnginePage(PlaywrightBasePage):

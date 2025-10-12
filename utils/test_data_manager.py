@@ -344,8 +344,8 @@ class DataManager:
 
     def save_test_results(
         self,
-        test_name: str,
-        results: dict[str, Any],
+        _test_name: str,
+        _results: dict[str, Any],
         environment: str = "default",
     ) -> None:
         """
@@ -405,10 +405,13 @@ class DataManager:
                 file_date = datetime.fromtimestamp(
                     file_path.stat().st_mtime, tz=timezone.utc,
                 )
-                if file_date < cutoff_date:
-                    file_path.unlink()
             except (OSError, ValueError):
                 continue
+            if file_date < cutoff_date:
+                try:
+                    file_path.unlink()
+                except (OSError, ValueError):
+                    continue
 
     def validate_data_schema(self, data: dict[str, Any], schema_name: str) -> bool:
         """

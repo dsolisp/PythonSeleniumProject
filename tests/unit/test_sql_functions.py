@@ -345,9 +345,8 @@ class TestValidationFunctions:
     """Test validation functions."""
 
     @patch("utils.sql_connection.get_connection_context")
-    @patch("utils.sql_connection.execute_query")
     @patch("utils.sql_connection.fetch_one")
-    def test_validate_connection_success(self, mock_fetch, mock_execute, mock_context):
+    def test_validate_connection_success(self, mock_fetch, mock_context):
         """Test validate_connection returns True on success."""
         mock_conn = Mock()
         mock_context.return_value.__enter__.return_value = mock_conn

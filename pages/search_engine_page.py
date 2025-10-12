@@ -4,6 +4,7 @@ Search engine page implementation using the page object pattern.
 
 import contextlib
 import time
+from typing import Optional
 
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.common.action_chains import ActionChains
@@ -14,7 +15,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from config.settings import settings
 from locators.search_engine_locators import SearchEngineLocators
 from pages.base_page import BasePage
-from typing import Optional
 
 
 class SearchEnginePage(BasePage):

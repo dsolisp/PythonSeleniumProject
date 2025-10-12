@@ -100,10 +100,10 @@ class AdvancedTestReporter:
                         retries=int(test.get("rerun", 0)),
                         tags=test.get("keywords", []),
                     )
-                    self.test_results.append(result)
                 except (ValueError, TypeError, KeyError, AttributeError):
                     # Skip malformed test entries
                     continue
+                self.test_results.append(result)
         elif "test_results" in data:
             # Our own format
             for test in data["test_results"]:
@@ -127,9 +127,9 @@ class AdvancedTestReporter:
                         retries=int(test.get("retries", 0)),
                         tags=test.get("tags", []),
                     )
-                    self.test_results.append(result)
                 except (ValueError, TypeError, KeyError, AttributeError):
                     continue
+                self.test_results.append(result)
         else:
             # Unknown format, skip
             pass

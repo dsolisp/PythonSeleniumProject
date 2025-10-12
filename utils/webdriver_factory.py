@@ -10,8 +10,7 @@ import sqlite3
 import tempfile
 import uuid
 from pathlib import Path
-
-from typing import Optional, Union
+from typing import Optional
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -214,24 +213,25 @@ class DatabaseFactory:
                 connection = sqlite3.connect(db_file)
                 connection.row_factory = sqlite3.Row  # Match test expectations
                 logger.info("Database connected: %s", db_file)
-                return connection
-
-            # For default path, use sqlite3.connect directly (for test compatibility)
-            if not Path(db_file).exists():
-                logger.warning("Database file not found: %s", db_file)
-                return None
-
-            connection = sqlite3.connect(db_file)
-            connection.row_factory = sqlite3.Row  # Match test expectations
-            logger.info("Database connected: %s", db_file)
-            return connection
-
+            else:
+                # For default path, use sqlite3.connect directly
+                # (for test compatibility)
+                if not Path(db_file).exists():
+                    logger.warning("Database file not found: %s", db_file)
+                    return None
+                connection = sqlite3.connect(db_file)
+                connection.row_factory = sqlite3.Row  # Match test expectations
+                logger.info(
+                    "Database connected: %s",
+                    db_file,
+                )
         except sqlite3.Error:
             # Re-raise SQL errors for test compatibility
             raise
         except Exception:
             logger.exception("Database connection failed")
             return None
+        return connection
 
 
 def get_driver(

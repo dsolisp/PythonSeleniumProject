@@ -73,89 +73,91 @@ class MLTestAnalyzer:
             try:
                 with Path.open(json_file) as f:
                     data = json.load(f)
-                    # Extract test details if available
-                    # 1) Our framework's custom format: top-level 'results' -> 'tests'
-                    if (
-                        "results" in data
-                        and isinstance(data["results"], dict)
-                        and "tests" in data["results"]
-                    ):
-                        results_data = data["results"]
-                        for test in results_data["tests"]:
-                            test_record = {
-                                "test_name": test.get("name", "unknown"),
-                                "status": test.get("status", "unknown"),
-                                "duration": test.get("duration", 0),
-                                "environment": data.get("environment", "unknown"),
-                                "timestamp": data.get("timestamp", "unknown"),
-                                "browser": results_data.get("browser", "unknown"),
-                                "headless": results_data.get("headless", False),
-                            }
-                            results.append(test_record)
-                    # 2) pytest-json-report format: top-level 'tests' array
-                    elif "tests" in data and isinstance(data["tests"], list):
-                        # Try to obtain a run-level timestamp if present
-                        run_ts = None
-                        if "created" in data:
-                            try:
-                                run_ts = datetime.fromtimestamp(
-                                    float(data["created"]),
-                                    timezone.utc,
-                                )
-                            except (ValueError, TypeError, OSError):
-                                run_ts = None
-
-                        for test in data["tests"]:
-                            # pytest entries vary; prefer nodeid and call.duration
-                            nodeid = test.get("nodeid") or test.get("name") or "unknown"
-                            outcome = (
-                                test.get("outcome")
-                                or (test.get("call") or {}).get("outcome")
-                                or "unknown"
-                            )
-                            duration = (
-                                (test.get("call") or {}).get("duration")
-                                or test.get("duration")
-                                or 0
-                            )
-                            test_ts = (
-                                run_ts
-                                or test.get("created")
-                                or data.get("created")
-                                or None
-                            )
-                            # Normalize timestamp to string or datetime
-                            try:
-                                if isinstance(test_ts, (int, float)):
-                                    test_ts = datetime.fromtimestamp(
-                                        float(test_ts),
-                                        timezone.utc,
-                                    )
-                            except (ValueError, TypeError, OSError):
-                                pass
-
-                            test_record = {
-                                "test_name": nodeid,
-                                "status": outcome,
-                                "duration": duration,
-                                "environment": data.get("environment", "unknown"),
-                                "timestamp": test_ts,
-                                "browser": (
-                                    data.get("metadata", {}).get("Browser", "unknown")
-                                    if isinstance(data.get("metadata"), dict)
-                                    else data.get("browser", "unknown")
-                                ),
-                                "headless": data.get("headless", False),
-                            }
-                            results.append(test_record)
-                    else:
-                        # Unsupported/unknown JSON structure - skip with a debug message
-                        print(
-                            f"⚠️  Skipping unsupported result file format: {json_file}",
-                        )
             except (json.JSONDecodeError, KeyError) as e:
-                print(f"⚠️  Skipping {json_file.name}: {e}")
+                print(f"\u26a0\ufe0f  Skipping {json_file.name}: {e}")
                 continue
+            # Extract test details if available
+            # 1) Our framework's custom format: top-level 'results' -> 'tests'
+            if (
+                "results" in data
+                and isinstance(data["results"], dict)
+                and "tests" in data["results"]
+            ):
+                results_data = data["results"]
+                for test in results_data["tests"]:
+                    test_record = {
+                        "test_name": test.get("name", "unknown"),
+                        "status": test.get("status", "unknown"),
+                        "duration": test.get("duration", 0),
+                        "environment": data.get("environment", "unknown"),
+                        "timestamp": data.get("timestamp", "unknown"),
+                        "browser": results_data.get("browser", "unknown"),
+                        "headless": results_data.get("headless", False),
+                    }
+                    results.append(test_record)
+            # 2) pytest-json-report format: top-level 'tests' array
+            elif "tests" in data and isinstance(data["tests"], list):
+                # Try to obtain a run-level timestamp if present
+                run_ts = None
+                if "created" in data:
+                    try:
+                        run_ts = datetime.fromtimestamp(
+                            float(data["created"]),
+                            timezone.utc,
+                        )
+                    except (ValueError, TypeError, OSError):
+                        run_ts = None
+
+                for test in data["tests"]:
+                    # pytest entries vary; prefer nodeid and call.duration
+                    nodeid = test.get("nodeid") or test.get("name") or "unknown"
+                    outcome = (
+                        test.get("outcome")
+                        or (test.get("call") or {}).get("outcome")
+                        or "unknown"
+                    )
+                    duration = (
+                        (test.get("call") or {}).get("duration")
+                        or test.get("duration")
+                        or 0
+                    )
+                    test_ts = (
+                        run_ts
+                        or test.get("created")
+                        or data.get("created")
+                        or None
+                    )
+                    # Normalize timestamp to string or datetime
+                    try:
+                        if isinstance(test_ts, (int, float)):
+                            test_ts = datetime.fromtimestamp(
+                                float(test_ts),
+                                timezone.utc,
+                            )
+                    except (ValueError, TypeError, OSError):
+                        pass
+
+                    test_record = {
+                        "test_name": nodeid,
+                        "status": outcome,
+                        "duration": duration,
+                        "environment": data.get("environment", "unknown"),
+                        "timestamp": test_ts,
+                        "browser": (
+                            data.get("metadata", {}).get("Browser", "unknown")
+                            if isinstance(data.get("metadata"), dict)
+                            else data.get("browser", "unknown"),
+                        ),
+                        "headless": data.get("headless", False),
+                    }
+                    results.append(test_record)
+            else:
+                # Unsupported/unknown JSON structure - skip with a debug message
+                msg = (
+                    f"\u26a0\ufe0f  Skipping unsupported result file format: "
+                    f"{json_file}"
+                )
+                print(msg)
 
         if not results:
             print("⚠️  No valid test data found in JSON files")

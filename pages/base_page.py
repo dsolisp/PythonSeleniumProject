@@ -41,7 +41,7 @@ except ImportError:
     TestDataManager = None
     AdvancedTestReporter = None
 
-from typing import Optional, Union
+from typing import Optional
 
 
 class BasePage:

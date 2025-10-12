@@ -1,5 +1,7 @@
 
 
+from typing import Optional
+
 from selenium.common.exceptions import (
     NoSuchElementException,
     TimeoutException,
@@ -8,7 +10,6 @@ from selenium.common.exceptions import (
 
 from locators.result_page_locators import ResultPageLocators
 from pages.base_page import BasePage
-from typing import Optional
 
 
 class ResultPage(BasePage):

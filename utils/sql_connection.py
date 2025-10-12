@@ -6,7 +6,7 @@ import logging
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

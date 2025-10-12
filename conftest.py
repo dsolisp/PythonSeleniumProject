@@ -81,7 +81,7 @@ def driver(
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item):
     """Capture test results for failure screenshots."""
     outcome = yield
     rep = outcome.get_result()

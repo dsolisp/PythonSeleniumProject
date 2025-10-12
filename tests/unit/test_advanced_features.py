@@ -429,8 +429,10 @@ class TestRecoveryManager:
             page_url="https://example.com",
         )
 
-        # Mock failing validation
-        success_validation = Mock(return_value=False)
+        # Mock failing validation: always returns False
+        def always_false():
+            return False
+        success_validation = Mock(side_effect=always_false)
         recovery_action = RecoveryAction(
             strategy=RecoveryStrategy.RETRY,
             max_attempts=2,

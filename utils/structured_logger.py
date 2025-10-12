@@ -5,8 +5,7 @@ Enhanced structured logging utilities with JSON output for enterprise reporting.
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import structlog
 

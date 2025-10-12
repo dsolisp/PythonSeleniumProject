@@ -4,14 +4,12 @@ Compatible interface with existing Selenium BasePage but with async capabilities
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from playwright.async_api import ElementHandle, Page
 
 from config.settings import settings
 from utils.playwright_factory import PlaywrightPage
-
-from typing import Optional
 
 
 class PlaywrightBasePage(PlaywrightPage):
