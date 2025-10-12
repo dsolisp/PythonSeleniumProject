@@ -591,7 +591,7 @@ class BasePage:
         Take screenshot of current page.
 
         Args:
-            filename: Optional filename (auto-generated if None)
+            filename: Optional filename (can include directory, auto-generated if None)
 
         Returns:
             Path to saved screenshot or empty string if failed
@@ -601,16 +601,16 @@ class BasePage:
                 timestamp = int(time.time())
                 filename = f"screenshot_{timestamp}.png"
 
-            # Ensure screenshots directory exists
-            screenshot_dir = "screenshots"
-            Path(screenshot_dir).mkdir(parents=True, exist_ok=True)
+            # If filename includes a directory, ensure it exists
+            filepath = Path(filename)
+            if filepath.parent and not filepath.parent.exists():
+                filepath.parent.mkdir(parents=True, exist_ok=True)
 
-            filepath = str(Path(screenshot_dir) / filename)
-            self.driver.save_screenshot(filepath)
+            self.driver.save_screenshot(str(filepath))
         except (WebDriverException, TimeoutException):
             return ""
         else:
-            return filepath
+            return str(filepath)
 
     def execute_script(self, script: str, *args) -> Any:
         """

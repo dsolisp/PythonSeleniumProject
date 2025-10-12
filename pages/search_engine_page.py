@@ -2,7 +2,6 @@
 Search engine page implementation using the page object pattern.
 """
 
-import contextlib
 import time
 from typing import Optional
 
@@ -154,31 +153,9 @@ class SearchEnginePage(BasePage):
         """Enter search term with enhanced error handling."""
         if self.send_keys(SearchEngineLocators.SEARCH_BOX, search_term):
             return True
-
-        # Fallback for headless runs where the native send_keys verification fails
         element = self.find_element(SearchEngineLocators.SEARCH_BOX)
         if not element:
             return False
-
-        with contextlib.suppress(WebDriverException):
-            self.driver.execute_script(
-                "arguments[0].focus();",
-                element,
-            )
-
-        try:
-            self.driver.execute_script(
-                """
-                arguments[0].value = arguments[1];
-                arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
-                arguments[0].dispatchEvent(new Event('change', { bubbles: true }));
-                """,
-                element,
-                search_term,
-            )
-        except WebDriverException:
-            return False
-
         current_value = (element.get_attribute("value") or "").strip()
         return search_term.strip().lower() in current_value.lower()
 
@@ -203,11 +180,21 @@ class SearchEnginePage(BasePage):
         return False
 
     def capture_search_input_screenshot(self, filename: str) -> str:
-        """Capture screenshot of search input area."""
+        """
+        Capture screenshot of search input area. Always takes a screenshot,
+        logs if element not found.
+        """
         element = self.find_element(SearchEngineLocators.SEARCH_BOX)
-        if element:
-            return self.take_screenshot(filename)
-        return ""
+        if not element:
+            print(
+                f"[DEBUG] Search input element not found for screenshot. "
+                f"Still taking full page screenshot: {filename}",
+            )
+        else:
+            print(
+                f"[DEBUG] Search input element found. Taking screenshot: {filename}",
+            )
+        return self.take_screenshot(filename)
 
     def click_search_input_advanced(self) -> bool:
         """Click on search input using advanced method."""

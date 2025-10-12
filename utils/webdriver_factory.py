@@ -290,7 +290,7 @@ def cleanup_driver_and_database(
             logger.info("Driver closed successfully")
 
             # Clean up temporary user data directory
-            if temp_dir and Path.exists(temp_dir):
+            if temp_dir and Path(temp_dir).exists():
                 try:
                     shutil.rmtree(temp_dir, ignore_errors=True)
                     logger.info("Cleaned up temp user data dir: %s", temp_dir)
