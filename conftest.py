@@ -109,6 +109,7 @@ def pytest_configure(config):
 
 # === PLAYWRIGHT CONFIGURATION ===
 
+
 @pytest.fixture(scope="session")
 def browser_context_args(browser_context_args):
     """Configure Playwright browser context for visual testing."""

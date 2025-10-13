@@ -143,7 +143,6 @@ class PlaywrightFactory:
 
         return page
 
-
     def cleanup(self):
         """Clean up browser resources with debug and timeouts."""
         try:

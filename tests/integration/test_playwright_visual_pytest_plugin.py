@@ -49,7 +49,6 @@ def test_search_page_visual_regression(assert_snapshot, page, search_term):
     )
 
 
-
 @pytest.mark.visual
 @pytest.mark.playwright
 def test_search_input_visual_regression(assert_snapshot, page):
