@@ -1,3 +1,9 @@
+import os
+import tempfile
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
 from hamcrest import (
     assert_that,
     contains_string,
@@ -10,32 +16,27 @@ from hamcrest import (
     none,
     not_none,
 )
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+
+from config.settings import Settings, settings
+from locators.search_engine_locators import SearchEngineLocators
+from locators.test_framework_locators import TestFrameworkLocators
+from pages.base_page import BasePage
+from pages.result_page import ResultPage
+from pages.search_engine_page import SearchEnginePage
+from utils.logger import TestLogger
+from utils.sql_connection import (
+    execute_query,
+    get_connection,
+)
+from utils.webdriver_factory import WebDriverFactory, get_driver
 
 """
 Integration tests for page object interactions.
 Tests complete workflows and module interactions.
 All locators are centralized in locator classes following clean architecture.
 """
-
-import os
-import tempfile
-from unittest.mock import Mock, patch
-
-import pytest
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-
-from config.settings import settings
-from locators.search_engine_locators import SearchEngineLocators
-from locators.test_framework_locators import TestFrameworkLocators
-from pages.base_page import BasePage
-from pages.result_page import ResultPage
-from pages.search_engine_page import SearchEnginePage
-from utils.sql_connection import (
-    execute_query,
-    get_connection,
-)
-from utils.webdriver_factory import get_driver
 
 
 class TestPageObjectIntegration:
@@ -44,8 +45,6 @@ class TestPageObjectIntegration:
     @pytest.fixture
     def chrome_driver(self):
         """Create a headless Chrome driver for testing."""
-        from utils.webdriver_factory import WebDriverFactory
-
         driver = WebDriverFactory.create_headless_chrome_for_testing()
         yield driver
         driver.quit()
@@ -53,8 +52,8 @@ class TestPageObjectIntegration:
     @pytest.fixture
     def temp_database(self):
         """Create a temporary database for testing."""
-        temp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-        temp_db.close()
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as temp_db:
+            pass
 
         # Create a simple test table
         conn = get_connection(temp_db.name)
@@ -74,7 +73,7 @@ class TestPageObjectIntegration:
 
         # Cleanup
         conn.close()
-        os.unlink(temp_db.name)
+        Path(temp_db.name).unlink()
 
     def test_base_page_integration(self, chrome_driver, temp_database):
         """Test BasePage integration with solid design."""
@@ -92,7 +91,8 @@ class TestPageObjectIntegration:
 
         # Verify data was inserted
         fetched_record = base_page.execute_query(
-            "SELECT * FROM test_results WHERE test_name = ?", ("integration_test",)
+            "SELECT * FROM test_results WHERE test_name = ?",
+            ("integration_test",),
         )
         assert_that(fetched_record, is_(not_none()))
         assert_that(len(fetched_record), greater_than(0))
@@ -125,9 +125,8 @@ class TestPageObjectIntegration:
         mock_chrome.return_value = mock_driver
 
         # Test driver creation and page object initialization
-        driver = get_driver("chrome")
+        driver, _ = get_driver(browser="chrome")
         page = BasePage(driver)
-
         assert_that(page.driver, equal_to(mock_driver))
 
     def test_database_integration_with_page_actions(self, temp_database):
@@ -159,7 +158,8 @@ class TestPageObjectIntegration:
 
         # Verify update
         updated_record = page.execute_query(
-            "SELECT result FROM test_results WHERE test_name = ?", ("test_2",)
+            "SELECT result FROM test_results WHERE test_name = ?",
+            ("test_2",),
         )
         assert_that(len(updated_record), greater_than(0))
         assert_that(updated_record[0][0], equal_to("re-tested"))
@@ -182,14 +182,12 @@ class TestPageObjectIntegration:
         page.navigate_to(settings.BASE_URL)
 
         # Create temporary directory for screenshots
-        with tempfile.TemporaryDirectory() as temp_dir:
-            os.path.join(temp_dir, "integration_test.png")
-
+        with tempfile.TemporaryDirectory():
             # Take screenshot
             saved_path = page.take_screenshot("integration_test.png")
             assert_that(saved_path, is_(not_none()))
-            assert_that(os.path.exists(saved_path), is_(True))
-            assert_that(os.path.getsize(saved_path), greater_than(0))
+            assert_that(Path(saved_path).exists(), is_(True))
+            assert_that(Path(saved_path).stat().st_size, greater_than(0))
 
     def test_element_actions_integration(self, chrome_driver):
         """Test element actions integration with real browser."""
@@ -225,7 +223,8 @@ class TestPageObjectIntegration:
         # Result may vary, but shouldn't raise unhandled exceptions
         # Screenshot path should be either None or a valid string
         assert_that(
-            screenshot_path is None or isinstance(screenshot_path, str), is_(True)
+            screenshot_path is None or isinstance(screenshot_path, str),
+            is_(True),
         )
 
     def test_multiple_page_objects_integration(self, chrome_driver):
@@ -273,8 +272,6 @@ class TestConfigurationIntegration:
     )
     def test_settings_integration(self):
         """Test settings integration with environment variables."""
-        from config.settings import Settings
-
         settings = Settings()
 
         assert_that(settings.BASE_URL, equal_to("https://test.example.com"))
@@ -284,8 +281,8 @@ class TestConfigurationIntegration:
     def test_logger_integration_across_modules(self):
         """Test logger integration across different modules."""
         # Create temporary database for this test
-        temp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-        temp_db.close()
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as temp_db:
+            pass
 
         # Create a simple test table
         conn = get_connection(temp_db.name)
@@ -302,8 +299,6 @@ class TestConfigurationIntegration:
         )
 
         try:
-            from utils.logger import TestLogger
-
             # Create logger
             TestLogger("integration_test")
 
@@ -320,14 +315,15 @@ class TestConfigurationIntegration:
             # Test database integration through page actions
             query = "INSERT INTO test_results (test_name, result) VALUES (?, ?)"
             page.execute_query(
-                query, ("logger_test", "passed")
+                query,
+                ("logger_test", "passed"),
             )  # Verify no exceptions were raised during logging
             conn.close()
 
         finally:
             # Cleanup
-            if os.path.exists(temp_db.name):
-                os.unlink(temp_db.name)
+            if Path(temp_db.name).exists():
+                Path(temp_db.name).unlink()
 
 
 class TestEndToEndWorkflow:
@@ -336,8 +332,8 @@ class TestEndToEndWorkflow:
     def test_complete_test_workflow(self):
         """Test a complete test execution workflow."""
         # Create temporary database
-        temp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-        temp_db.close()
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as temp_db:
+            pass
 
         # Create test table
         conn = get_connection(temp_db.name)
@@ -379,7 +375,8 @@ class TestEndToEndWorkflow:
             result_status = "completed" if screenshot_success else "failed"
             update_query = "UPDATE test_results SET result = ? WHERE test_name = ?"
             search_page.execute_query(
-                update_query, (result_status, "end_to_end_workflow")
+                update_query,
+                (result_status, "end_to_end_workflow"),
             )
 
             # Verify final state
@@ -393,11 +390,11 @@ class TestEndToEndWorkflow:
             assert_that(final_result[0][0], is_in(["completed", "failed"]))
 
             if screenshot_success:
-                assert_that(os.path.exists(screenshot_path), is_(True))
+                assert_that(Path(screenshot_path).exists(), is_(True))
 
         finally:
             # Cleanup
             chrome_driver.quit()
             conn.close()
-            if os.path.exists(temp_db.name):
-                os.unlink(temp_db.name)
+            if Path(temp_db.name).exists():
+                Path(temp_db.name).unlink()

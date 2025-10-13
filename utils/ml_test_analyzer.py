@@ -8,21 +8,26 @@ Analyzes historical test results to:
 - Optimize test execution order
 """
 
-import json
-import logging
-import warnings
-from datetime import datetime
+# --- PATCH: Ensure project root is in sys.path for script execution ---
+import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
 
-import numpy as np
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.exceptions import UndefinedMetricWarning
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+project_root = Path(__file__).parent.parent.resolve()
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
-from utils.structured_logger import get_logger
+import json  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
+from pathlib import Path  # noqa: E402
+from typing import Any  # noqa: E402
+
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+from sklearn.ensemble import RandomForestClassifier  # noqa: E402
+from sklearn.model_selection import train_test_split  # noqa: E402
+from sklearn.preprocessing import LabelEncoder  # noqa: E402
+
+from utils.structured_logger import get_logger  # noqa: E402
 
 # If you need to suppress sklearn UndefinedMetricWarning, use a context manager
 # Example:
@@ -66,33 +71,120 @@ class MLTestAnalyzer:
 
         for json_file in json_files:
             try:
-                with open(json_file) as f:
+                with Path.open(json_file) as f:
                     data = json.load(f)
-
-                    # Extract test details if available
-                    if "results" in data:
-                        results_data = data["results"]
-                        if isinstance(results_data, dict) and "tests" in results_data:
-                            for test in results_data["tests"]:
-                                test_record = {
-                                    "test_name": test.get("name", "unknown"),
-                                    "status": test.get("status", "unknown"),
-                                    "duration": test.get("duration", 0),
-                                    "environment": data.get("environment", "unknown"),
-                                    "timestamp": data.get("timestamp", "unknown"),
-                                    "browser": results_data.get("browser", "unknown"),
-                                    "headless": results_data.get("headless", False),
-                                }
-                                results.append(test_record)
             except (json.JSONDecodeError, KeyError) as e:
-                print(f"⚠️  Skipping {json_file.name}: {e}")
+                print(f"\u26a0\ufe0f  Skipping {json_file.name}: {e}")
                 continue
+            # Extract test details if available
+            # 1) Our framework's custom format: top-level 'results' -> 'tests'
+            if (
+                "results" in data
+                and isinstance(data["results"], dict)
+                and "tests" in data["results"]
+            ):
+                results_data = data["results"]
+                for test in results_data["tests"]:
+                    test_record = {
+                        "test_name": test.get("name", "unknown"),
+                        "status": test.get("status", "unknown"),
+                        "duration": test.get("duration", 0),
+                        "environment": data.get("environment", "unknown"),
+                        "timestamp": data.get("timestamp", "unknown"),
+                        "browser": results_data.get("browser", "unknown"),
+                        "headless": results_data.get("headless", False),
+                    }
+                    results.append(test_record)
+            # 2) pytest-json-report format: top-level 'tests' array
+            elif "tests" in data and isinstance(data["tests"], list):
+                # Try to obtain a run-level timestamp if present
+                run_ts = None
+                if "created" in data:
+                    try:
+                        run_ts = datetime.fromtimestamp(
+                            float(data["created"]),
+                            timezone.utc,
+                        )
+                    except (ValueError, TypeError, OSError):
+                        run_ts = None
+
+                for test in data["tests"]:
+                    # pytest entries vary; prefer nodeid and call.duration
+                    nodeid = test.get("nodeid") or test.get("name") or "unknown"
+                    outcome = (
+                        test.get("outcome")
+                        or (test.get("call") or {}).get("outcome")
+                        or "unknown"
+                    )
+                    duration = (
+                        (test.get("call") or {}).get("duration")
+                        or test.get("duration")
+                        or 0
+                    )
+                    test_ts = (
+                        run_ts or test.get("created") or data.get("created") or None
+                    )
+                    # Normalize timestamp to string or datetime
+                    try:
+                        if isinstance(test_ts, (int, float)):
+                            test_ts = datetime.fromtimestamp(
+                                float(test_ts),
+                                timezone.utc,
+                            )
+                    except (ValueError, TypeError, OSError):
+                        pass
+
+                    test_record = {
+                        "test_name": nodeid,
+                        "status": outcome,
+                        "duration": duration,
+                        "environment": data.get("environment", "unknown"),
+                        "timestamp": test_ts,
+                        "browser": (
+                            data.get("metadata", {}).get("Browser", "unknown")
+                            if isinstance(data.get("metadata"), dict)
+                            else data.get("browser", "unknown"),
+                        ),
+                        "headless": data.get("headless", False),
+                    }
+                    results.append(test_record)
+            else:
+                # Unsupported/unknown JSON structure - skip with a debug message
+                msg = (
+                    f"\u26a0\ufe0f  Skipping unsupported result file format: "
+                    f"{json_file}"
+                )
+                print(msg)
 
         if not results:
             print("⚠️  No valid test data found in JSON files")
             return pd.DataFrame()
 
         self.df = pd.DataFrame(results)
+
+        # Normalize columns to avoid unhashable types (dict/list) which break
+        # operations like nunique(); also coerce timestamps and durations.
+        for col in ["environment", "browser", "status", "test_name"]:
+            if col in self.df.columns:
+                self.df[col] = self.df[col].apply(
+                    lambda x: (
+                        json.dumps(x, sort_keys=True)
+                        if isinstance(x, (dict, list))
+                        else (str(x) if pd.notnull(x) else "unknown")
+                    ),
+                )
+
+        if "timestamp" in self.df.columns:
+            # Convert various timestamp representations to pandas datetime
+            self.df["timestamp"] = pd.to_datetime(self.df["timestamp"], errors="coerce")
+
+        # Ensure duration is numeric
+        if "duration" in self.df.columns:
+            self.df["duration"] = pd.to_numeric(
+                self.df["duration"],
+                errors="coerce",
+            ).fillna(0)
+
         print(f"✅ Loaded {len(self.df)} test records from {len(json_files)} files")
 
         return self.df
@@ -120,7 +212,7 @@ class MLTestAnalyzer:
                 {
                     "status": ["count", lambda x: (x == "passed").sum()],
                     "duration": "mean",
-                }
+                },
             )
             .reset_index()
         )
@@ -153,12 +245,12 @@ class MLTestAnalyzer:
                 print(
                     f"   • {test['test_name']}: "
                     f"{test['pass_rate']:.1%} pass rate "
-                    f"({test['passed_runs']}/{test['total_runs']} passed)"
+                    f"({test['passed_runs']}/{test['total_runs']} passed)",
                 )
 
         return flaky_tests
 
-    def analyze_performance_trends(self) -> Dict[str, Any]:
+    def analyze_performance_trends(self) -> dict[str, Any]:
         """
         Analyze performance trends and detect anomalies.
 
@@ -182,7 +274,7 @@ class MLTestAnalyzer:
 
         # Detect outliers (tests taking unusually long)
         z_scores = np.abs(
-            (self.df["duration"] - stats["avg_duration"]) / stats["std_duration"]
+            (self.df["duration"] - stats["avg_duration"]) / stats["std_duration"],
         )
         outliers = self.df[z_scores > 2].copy()
 
@@ -192,7 +284,7 @@ class MLTestAnalyzer:
         print(f"   Std deviation:    {stats['std_duration']:.2f}s")
         print(
             f"   Range:            {stats['min_duration']:.2f}s - "
-            f"{stats['max_duration']:.2f}s"
+            f"{stats['max_duration']:.2f}s",
         )
 
         if not outliers.empty:
@@ -200,7 +292,7 @@ class MLTestAnalyzer:
             for _, test in outliers.nlargest(5, "duration").iterrows():
                 print(
                     f"   • {test['test_name']}: {test['duration']:.2f}s "
-                    f"(environment: {test['environment']})"
+                    f"(environment: {test['environment']})",
                 )
 
         stats["outliers"] = outliers
@@ -229,7 +321,7 @@ class MLTestAnalyzer:
                         lambda x: (x == "failed").sum(),
                     ],
                     "duration": ["mean", "min", "max", "std"],
-                }
+                },
             )
             .reset_index()
         )
@@ -258,7 +350,7 @@ class MLTestAnalyzer:
             print(
                 f"   • {test['test_name']}: "
                 f"{test['pass_rate']:.1%} pass rate, "
-                f"{test['avg_duration']:.2f}s avg"
+                f"{test['avg_duration']:.2f}s avg",
             )
 
         if len(stats) > 5:
@@ -267,12 +359,12 @@ class MLTestAnalyzer:
                 print(
                     f"   • {test['test_name']}: "
                     f"{test['pass_rate']:.1%} pass rate, "
-                    f"{test['avg_duration']:.2f}s avg"
+                    f"{test['avg_duration']:.2f}s avg",
                 )
 
         return stats
 
-    def train_failure_predictor(self) -> Tuple[float, Any]:
+    def train_failure_predictor(self) -> tuple[float, Any]:
         """
         Train ML model to predict test failures.
 
@@ -297,7 +389,7 @@ class MLTestAnalyzer:
 
         # Features for prediction
         feature_cols = [col for col in df_ml.columns if col.endswith("_encoded")] + [
-            "duration"
+            "duration",
         ]
         if "headless" in df_ml.columns:
             df_ml["headless_int"] = df_ml["headless"].astype(int)
@@ -308,7 +400,10 @@ class MLTestAnalyzer:
 
         # Split data
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
+            X,
+            y,
+            test_size=0.2,
+            random_state=42,
         )
 
         # Train model
@@ -324,7 +419,7 @@ class MLTestAnalyzer:
 
         # Feature importance
         feature_importance = pd.DataFrame(
-            {"feature": feature_cols, "importance": self.model.feature_importances_}
+            {"feature": feature_cols, "importance": self.model.feature_importances_},
         ).sort_values("importance", ascending=False)
 
         print("\n🎯 Most Important Features:")
@@ -334,8 +429,9 @@ class MLTestAnalyzer:
         return accuracy, self.model
 
     def predict_test_failures(
-        self, upcoming_tests: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self,
+        upcoming_tests: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """
         Predict which tests are likely to fail.
 
@@ -390,7 +486,7 @@ class MLTestAnalyzer:
                             else "Low risk - standard execution"
                         )
                     ),
-                }
+                },
             )
 
         # Sort by failure probability
@@ -401,7 +497,7 @@ class MLTestAnalyzer:
             print(
                 f"   • {pred['test_name']}: "
                 f"{pred['failure_probability']:.1%} failure risk - "
-                f"{pred['recommendation']}"
+                f"{pred['recommendation']}",
             )
 
         return predictions
@@ -419,7 +515,7 @@ class MLTestAnalyzer:
         report_lines.append("=" * 70)
         report_lines.append("ML TEST ANALYSIS REPORT")
         report_lines.append(
-            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
         )
         report_lines.append("=" * 70)
         report_lines.append("")
@@ -436,18 +532,39 @@ class MLTestAnalyzer:
             report_lines.append(f"   Unique tests: {df['test_name'].nunique()}")
             report_lines.append(f"   Environments: {df['environment'].nunique()}")
             report_lines.append(
-                f"   Date range: {df['timestamp'].min()} to {df['timestamp'].max()}"
+                f"   Date range: {df['timestamp'].min()} to {df['timestamp'].max()}",
             )
             report_lines.append("")
 
-            # Flaky tests
-            flaky = self.detect_flaky_tests()
+            # Flaky tests (use min_runs=2 to be more sensitive with small histories)
+            flaky = self.detect_flaky_tests(min_runs=2)
             if not flaky.empty:
                 report_lines.append(f"⚠️  Flaky Tests Detected: {len(flaky)}")
                 for _, test in flaky.iterrows():
                     test_name = test["test_name"]
                     pass_rate = test["pass_rate"]
                     report_lines.append(f"   • {test_name}: {pass_rate:.1%} pass rate")
+                report_lines.append("")
+
+            # Recent failures (show last 10 failed executions to make issues obvious)
+            recent_failures = df[df["status"].str.lower() == "failed"].copy()
+            if not recent_failures.empty:
+                recent_failures = recent_failures.sort_values(
+                    "timestamp",
+                    ascending=False,
+                )
+                report_lines.append("❗ Recent Failures (most recent first):")
+                for _, row in recent_failures.head(10).iterrows():
+                    ts = row.get("timestamp")
+                    ts_str = (
+                        ts.strftime("%Y-%m-%d %H:%M:%S")
+                        if hasattr(ts, "strftime")
+                        else str(ts)
+                    )
+                    report_lines.append(
+                        f"   • {row.get('test_name')}: {row.get('status')} at "
+                        f"{ts_str} ({row.get('duration'):.2f}s)",
+                    )
                 report_lines.append("")
 
             # Performance trends
@@ -466,7 +583,7 @@ class MLTestAnalyzer:
                 report_lines.append(
                     f"   {i}. {test['test_name']}: "
                     f"{test['pass_rate']:.1%} pass rate, "
-                    f"{test['avg_duration']:.2f}s avg"
+                    f"{test['avg_duration']:.2f}s avg",
                 )
             report_lines.append("")
 
@@ -482,7 +599,7 @@ class MLTestAnalyzer:
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, "w") as f:
+        with Path.open(output_path, "w") as f:
             f.write("\n".join(report_lines))
 
         print(f"✅ Report saved to: {output_path}")
@@ -529,7 +646,7 @@ def main():
             "browser": "chrome",
             "duration": df["duration"].mean(),
             "headless": False,
-        }
+        },
     ]
     analyzer.predict_test_failures(upcoming_tests)
 

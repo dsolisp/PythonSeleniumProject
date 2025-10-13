@@ -1,19 +1,13 @@
+import sqlite3
+from unittest.mock import Mock, patch
+
+import pytest
 from hamcrest import (
     assert_that,
     equal_to,
     is_,
     none,
 )
-
-"""
-Real Unit Tests for SQL Connection Functions
-Testing actual function logic with proper mocks and edge cases.
-"""
-
-import sqlite3
-from unittest.mock import Mock, patch
-
-import pytest
 
 from utils.sql_connection import (
     close_connection,
@@ -31,6 +25,11 @@ from utils.sql_connection import (
     validate_connection,
 )
 
+"""
+Real Unit Tests for SQL Connection Functions
+Testing actual function logic with proper mocks and edge cases.
+"""
+
 
 class TestDatabaseConnectionFunctions:
     """Test core database connection functions."""
@@ -40,8 +39,8 @@ class TestDatabaseConnectionFunctions:
         with pytest.raises(FileNotFoundError, match="Database file not found"):
             get_connection("nonexistent_file.db")
 
-    @patch("utils.sql_connection.os.path.exists")
-    @patch("utils.sql_connection.sqlite3.connect")
+    @patch("pathlib.Path.exists")
+    @patch("sqlite3.connect")
     def test_get_connection_sqlite_error(self, mock_connect, mock_exists):
         """Test get_connection handles sqlite3.Error properly."""
         mock_exists.return_value = True
@@ -50,12 +49,13 @@ class TestDatabaseConnectionFunctions:
         with pytest.raises(sqlite3.Error, match="Connection failed"):
             get_connection("test.db")
 
-    @patch("utils.sql_connection.os.path.exists")
-    @patch("utils.sql_connection.sqlite3.connect")
+    @patch("pathlib.Path.exists")
+    @patch("sqlite3.connect")
     def test_get_connection_success(self, mock_connect, mock_exists):
         """Test successful connection setup."""
         mock_exists.return_value = True
         mock_conn = Mock()
+        mock_conn.execute = Mock()
         mock_connect.return_value = mock_conn
 
         result = get_connection("test.db")
@@ -90,7 +90,8 @@ class TestQueryExecutionFunctions:
 
         assert_that(result, equal_to(mock_cursor))
         mock_cursor.execute.assert_called_once_with(
-            "SELECT * FROM users WHERE id = ?", (1,)
+            "SELECT * FROM users WHERE id = ?",
+            (1,),
         )
 
     def test_execute_query_sqlite_error(self):
@@ -218,7 +219,8 @@ class TestDataModificationFunctions:
         mock_conn = Mock()
 
         with patch(
-            "utils.sql_connection.execute_query", side_effect=Exception("Insert failed")
+            "utils.sql_connection.execute_query",
+            side_effect=Exception("Insert failed"),
         ):
             result = insert_data(mock_conn, "users", {"name": "John"})
 
@@ -242,7 +244,8 @@ class TestDataModificationFunctions:
         mock_conn = Mock()
 
         with patch(
-            "utils.sql_connection.execute_query", side_effect=Exception("Update failed")
+            "utils.sql_connection.execute_query",
+            side_effect=Exception("Update failed"),
         ):
             result = update_data(mock_conn, "users", {"name": "Jane"}, "id = ?", (1,))
 
@@ -266,7 +269,8 @@ class TestDataModificationFunctions:
         mock_conn = Mock()
 
         with patch(
-            "utils.sql_connection.execute_query", side_effect=Exception("Delete failed")
+            "utils.sql_connection.execute_query",
+            side_effect=Exception("Delete failed"),
         ):
             result = delete_data(mock_conn, "users", "id = ?", (1,))
 
@@ -283,7 +287,8 @@ class TestUtilityFunctions:
         mock_rows = [Mock(), Mock()]
 
         with patch(
-            "utils.sql_connection.execute_and_fetch_all", return_value=mock_rows
+            "utils.sql_connection.execute_and_fetch_all",
+            return_value=mock_rows,
         ):
             result = get_table_info(mock_conn, "users")
 
@@ -295,7 +300,8 @@ class TestUtilityFunctions:
         mock_rows = [{"name": "users"}, {"name": "products"}]
 
         with patch(
-            "utils.sql_connection.execute_and_fetch_all", return_value=mock_rows
+            "utils.sql_connection.execute_and_fetch_all",
+            return_value=mock_rows,
         ):
             result = get_table_names(mock_conn)
 
@@ -339,9 +345,8 @@ class TestValidationFunctions:
     """Test validation functions."""
 
     @patch("utils.sql_connection.get_connection_context")
-    @patch("utils.sql_connection.execute_query")
     @patch("utils.sql_connection.fetch_one")
-    def test_validate_connection_success(self, mock_fetch, mock_execute, mock_context):
+    def test_validate_connection_success(self, mock_fetch, mock_context):
         """Test validate_connection returns True on success."""
         mock_conn = Mock()
         mock_context.return_value.__enter__.return_value = mock_conn

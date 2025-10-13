@@ -1,3 +1,14 @@
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+
+import jinja2
+import numpy as np
+import pandas as pd
+import psutil
+import pytest
+import tenacity
+import yaml
 from hamcrest import (
     any_of,
     assert_that,
@@ -14,17 +25,17 @@ from hamcrest import (
     less_than_or_equal_to,
     not_none,
 )
+from jinja2 import Template
+from tenacity import Retrying, stop_after_attempt, wait_exponential, wait_fixed
+
+from utils.error_handler import SmartErrorHandler
+from utils.test_data_manager import DataManager
+from utils.test_reporter import AdvancedTestReporter, Result
 
 """
 Unit tests for library integrations (pandas, yaml, psutil, tenacity, jinja2, numpy).
 Validates that all new library features are working correctly.
 """
-
-import os
-import tempfile
-from datetime import datetime
-
-import pytest
 
 
 class TestPandasIntegration:
@@ -36,18 +47,35 @@ class TestPandasIntegration:
 
     def test_pandas_dataframe_creation(self):
         """Test that pandas DataFrames are created correctly."""
-        import pandas as pd
-
-        from utils.test_reporter import AdvancedTestReporter, Result
-
         reporter = AdvancedTestReporter(self.temp_dir)
         reporter.start_test_suite("pandas_test", "test", "chrome")
 
         # Add test results
         results = [
-            Result("test1", "passed", 1.5, datetime.now(), "test", "chrome"),
-            Result("test2", "failed", 2.3, datetime.now(), "test", "chrome"),
-            Result("test3", "passed", 0.8, datetime.now(), "test", "chrome"),
+            Result(
+                "test1",
+                "passed",
+                2.5,
+                datetime.now(timezone.utc),
+                "test",
+                "chrome",
+            ),
+            Result(
+                "test2",
+                "failed",
+                1.8,
+                datetime.now(timezone.utc),
+                "test",
+                "chrome",
+            ),
+            Result(
+                "test3",
+                "passed",
+                3.0,
+                datetime.now(timezone.utc),
+                "test",
+                "chrome",
+            ),
         ]
 
         for result in results:
@@ -79,21 +107,24 @@ class TestPandasIntegration:
 
     def test_csv_export_functionality(self):
         """Test CSV export using pandas."""
-        import pandas as pd
-
-        from utils.test_reporter import AdvancedTestReporter, Result
-
         reporter = AdvancedTestReporter(self.temp_dir)
         reporter.start_test_suite("csv_test", "test", "chrome")
 
         # Add test result
-        result = Result("test_csv", "passed", 1.2, datetime.now(), "test", "chrome")
+        result = Result(
+            "test_csv",
+            "passed",
+            2.0,
+            datetime.now(timezone.utc),
+            "test",
+            "chrome",
+        )
         reporter.add_test_result(result)
 
         # Export to CSV
         csv_file = reporter.export_to_csv()
         assert_that(csv_file, is_(not_none()))
-        assert_that(os.path.exists(csv_file), is_(True))
+        assert_that(Path(csv_file).exists(), is_(True))
         assert_that(csv_file, ends_with(".csv"))
 
         # Verify CSV content
@@ -104,18 +135,19 @@ class TestPandasIntegration:
 
     def test_numpy_statistical_operations(self):
         """Test numpy integration for statistical calculations."""
-        import pandas as pd
-
-        from utils.test_reporter import AdvancedTestReporter, Result
-
         reporter = AdvancedTestReporter(self.temp_dir)
         reporter.start_test_suite("numpy_test", "test", "chrome")
 
         # Add results with varied durations for statistical analysis
         durations = [1.0, 2.0, 3.0, 10.0, 1.5]  # 10.0 should be an outlier
-        for i, duration in enumerate(durations):
+        for i, _duration in enumerate(durations):
             result = Result(
-                f"test_{i}", "passed", duration, datetime.now(), "test", "chrome"
+                f"test_{i}",
+                "passed",
+                _duration,
+                datetime.now(timezone.utc),
+                "test",
+                "chrome",
             )
             reporter.add_test_result(result)
 
@@ -141,8 +173,6 @@ class TestYAMLIntegration:
 
     def test_yaml_config_loading(self):
         """Test YAML configuration loading."""
-        from utils.test_data_manager import DataManager
-
         manager = DataManager(self.temp_dir)
 
         # Load YAML config (should create default if not exists)
@@ -154,10 +184,6 @@ class TestYAMLIntegration:
 
     def test_yaml_data_export(self):
         """Test YAML data export functionality."""
-        import yaml
-
-        from utils.test_data_manager import DataManager
-
         manager = DataManager(self.temp_dir)
 
         # Test data to export (matching the expected structure)
@@ -172,11 +198,11 @@ class TestYAMLIntegration:
         # Export to YAML
         yaml_file = manager.save_test_results_yaml(test_data)
         assert_that(yaml_file, is_(not_none()))
-        assert_that(os.path.exists(yaml_file), is_(True))
+        assert_that(Path(yaml_file).exists(), is_(True))
         assert_that(yaml_file, ends_with(".yml"))
 
         # Verify YAML content
-        with open(yaml_file, "r") as f:
+        with Path(yaml_file).open() as f:
             loaded_data = yaml.safe_load(f)
 
         assert_that(loaded_data, is_(not_none()))
@@ -185,8 +211,6 @@ class TestYAMLIntegration:
 
     def test_yaml_configuration_structure(self):
         """Test that YAML configurations have expected structure."""
-        from utils.test_data_manager import DataManager
-
         manager = DataManager(self.temp_dir)
 
         # Load config for different environments
@@ -203,8 +227,6 @@ class TestPsutilIntegration:
 
     def test_memory_monitoring(self):
         """Test memory monitoring functionality."""
-        from utils.error_handler import SmartErrorHandler
-
         handler = SmartErrorHandler()
 
         # Test memory monitoring
@@ -222,18 +244,18 @@ class TestPsutilIntegration:
             any_of(instance_of(int), instance_of(float)),
         )
         assert_that(
-            memory_data["memory_percent"], any_of(instance_of(int), instance_of(float))
+            memory_data["memory_percent"],
+            any_of(instance_of(int), instance_of(float)),
         )
         assert_that(
-            memory_data["cpu_percent"], any_of(instance_of(int), instance_of(float))
+            memory_data["cpu_percent"],
+            any_of(instance_of(int), instance_of(float)),
         )
         assert_that(memory_data["current_memory_mb"], greater_than(0))
         assert_that(0, less_than_or_equal_to(memory_data["memory_percent"] <= 100))
 
     def test_system_info_collection(self):
         """Test system information collection."""
-        import psutil
-
         # Test basic psutil functionality
         cpu_count = psutil.cpu_count()
         memory_info = psutil.virtual_memory()
@@ -249,8 +271,6 @@ class TestTenacityIntegration:
 
     def test_retry_configuration(self):
         """Test tenacity retry configuration."""
-        from tenacity import Retrying, stop_after_attempt, wait_exponential
-
         # Test retry configuration creation
         retry_config = Retrying(
             stop=stop_after_attempt(3),
@@ -263,8 +283,6 @@ class TestTenacityIntegration:
 
     def test_error_handler_retry_integration(self):
         """Test that error handler integrates with tenacity."""
-        from utils.error_handler import SmartErrorHandler
-
         handler = SmartErrorHandler()
 
         # Check that handler has retry capabilities
@@ -272,16 +290,20 @@ class TestTenacityIntegration:
 
     def test_retry_execution_simulation(self):
         """Test retry execution with tenacity."""
-        from tenacity import Retrying, stop_after_attempt, wait_fixed
-
         # Create a function that fails first time, succeeds second time
         call_count = 0
+
+        class TestRetryException(Exception):
+            """Custom exception for testing retry functionality."""
+
+            pass
 
         def flaky_function():
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                raise Exception("First attempt fails")
+                message = "First attempt fails"
+                raise TestRetryException(message)
             return "Success"
 
         # Configure retry
@@ -304,14 +326,13 @@ class TestJinja2Integration:
 
     def test_template_creation(self):
         """Test basic template creation and rendering."""
-        from jinja2 import Template
-
         # Create a simple template
         template = Template("<h1>{{ title }}</h1><p>{{ description }}</p>")
 
         # Render with data
         rendered = template.render(
-            title="Test Report", description="This is a test description"
+            title="Test Report",
+            description="This is a test description",
         )
 
         assert_that(rendered, contains_string("<h1>Test Report</h1>"))
@@ -319,8 +340,6 @@ class TestJinja2Integration:
 
     def test_html_report_template(self):
         """Test HTML report template functionality."""
-        from jinja2 import Template
-
         # Create a more complex template similar to what would be used for
         # reports
         html_template = Template(
@@ -351,7 +370,7 @@ class TestJinja2Integration:
             {% endif %}
         </body>
         </html>
-        """
+        """,
         )
 
         # Test data
@@ -374,7 +393,8 @@ class TestJinja2Integration:
         # Verify rendered content
         assert_that(rendered, contains_string("<!DOCTYPE html>"))
         assert_that(
-            rendered, contains_string("<title>Integration Tests - Test Report</title>")
+            rendered,
+            contains_string("<title>Integration Tests - Test Report</title>"),
         )
         assert_that(rendered, contains_string("Environment: test"))
         assert_that(rendered, contains_string("Browser: chrome"))
@@ -389,8 +409,6 @@ class TestNumpyIntegration:
 
     def test_numpy_statistical_functions(self):
         """Test numpy statistical operations."""
-        import numpy as np
-
         # Test data
         data = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 15.0])  # 15.0 is an outlier
 
@@ -412,20 +430,17 @@ class TestNumpyIntegration:
 
     def test_numpy_with_pandas_integration(self):
         """Test numpy operations within pandas context."""
-        import numpy as np
-        import pandas as pd
-
         # Create DataFrame
         df = pd.DataFrame(
             {
                 "duration": [1.0, 2.0, 3.0, 4.0, 10.0],
                 "status": ["passed", "passed", "failed", "passed", "passed"],
-            }
+            },
         )
 
         # Add numpy-based calculations
         df["duration_zscore"] = np.abs(
-            (df["duration"] - df["duration"].mean()) / df["duration"].std()
+            (df["duration"] - df["duration"].mean()) / df["duration"].std(),
         )
         df["is_outlier"] = df["duration_zscore"] > 2
 
@@ -446,16 +461,9 @@ class TestLibraryIntegrationSmokeTest:
     def test_all_libraries_importable(self):
         """Test that all integrated libraries can be imported."""
         try:
-            import jinja2
-            import numpy
-            import pandas
-            import psutil
-            import tenacity
-            import yaml
-
             # Basic functionality test
-            assert_that(pandas, has_property("DataFrame"))
-            assert_that(numpy, has_property("array"))
+            assert_that(pd, has_property("DataFrame"))
+            assert_that(np, has_property("array"))
             assert_that(yaml, has_property("load"))
             assert_that(psutil, has_property("Process"))
             assert_that(tenacity, has_property("Retrying"))
@@ -466,10 +474,6 @@ class TestLibraryIntegrationSmokeTest:
 
     def test_framework_components_with_libraries(self):
         """Test that framework components use libraries correctly."""
-        from utils.error_handler import SmartErrorHandler
-        from utils.test_data_manager import DataManager
-        from utils.test_reporter import AdvancedTestReporter
-
         # Test that components can be instantiated
         temp_dir = tempfile.mkdtemp()
 

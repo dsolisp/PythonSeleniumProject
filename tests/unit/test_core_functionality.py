@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 from hamcrest import (
     assert_that,
     equal_to,
@@ -8,12 +10,16 @@ from hamcrest import (
     not_none,
 )
 
+from locators.result_page_locators import ResultPageLocators
+from locators.search_engine_locators import SearchEngineLocators
+from pages.base_page import BasePage
+from pages.result_page import ResultPage
+from pages.search_engine_page import SearchEnginePage
+
 """
 Essential Unit Tests - Only What You Actually Need
 A practical, minimal test suite for a Selenium automation framework.
 """
-
-from unittest.mock import Mock
 
 
 # Test Base Page Core Functionality
@@ -22,8 +28,6 @@ class TestBasePage:
 
     def test_base_page_init(self):
         """Test BasePage initialization."""
-        from pages.base_page import BasePage
-
         mock_driver = Mock()
         mock_sql = Mock()
 
@@ -38,8 +42,6 @@ class TestLocators:
 
     def test_search_engine_locators_structure(self):
         """Test that search engine locators have correct tuple structure."""
-        from locators.search_engine_locators import SearchEngineLocators
-
         # Test key locators exist and are properly structured
         assert_that(SearchEngineLocators, has_property("SEARCH_BOX"))
         assert_that(SearchEngineLocators, has_property("SEARCH_BUTTON"))
@@ -52,8 +54,6 @@ class TestLocators:
 
     def test_result_page_locators_structure(self):
         """Test that result page locators have correct structure."""
-        from locators.result_page_locators import ResultPageLocators
-
         assert_that(ResultPageLocators, has_property("RESULTS_CONTAINER"))
         assert_that(ResultPageLocators.RESULTS_CONTAINER, instance_of(tuple))
         assert_that(len(ResultPageLocators.RESULTS_CONTAINER), equal_to(2))
@@ -65,19 +65,12 @@ class TestPageObjects:
 
     def test_page_object_inheritance(self):
         """Test page objects inherit from BasePage correctly."""
-        from pages.base_page import BasePage
-        from pages.result_page import ResultPage
-        from pages.search_engine_page import SearchEnginePage
-
         # Test inheritance structure
         assert_that(issubclass(SearchEnginePage, BasePage), is_(True))
         assert_that(issubclass(ResultPage, BasePage), is_(True))
 
     def test_page_object_initialization(self):
         """Test page objects can be initialized with mock driver."""
-        from pages.result_page import ResultPage
-        from pages.search_engine_page import SearchEnginePage
-
         mock_driver = Mock()
 
         search_page = SearchEnginePage(mock_driver)

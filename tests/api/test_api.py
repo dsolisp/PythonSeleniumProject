@@ -35,7 +35,9 @@ class TestUnifiedAPI:
         if settings.ENABLE_ALLURE:
             self.test_logger = get_test_logger(method.__name__)
             self.test_logger.start_test(
-                test_type="API", test_suite="REST API", framework="requests"
+                test_type="API",
+                test_suite="REST API",
+                framework="requests",
             )
 
         self.base_url = settings.API_BASE_URL
@@ -44,7 +46,7 @@ class TestUnifiedAPI:
             {
                 "Content-Type": "application/json",
                 "User-Agent": "TestFramework/1.0",
-            }
+            },
         )
 
     def teardown_method(self):
@@ -88,7 +90,7 @@ class TestUnifiedAPI:
         """
         Test the GET /posts endpoint to ensure it returns a list of posts
         with proper structure and data validation.
-        """
+        """,
     )
     @allure.tag("smoke", "api", "get")
     def test_get_posts(self):
@@ -102,33 +104,43 @@ class TestUnifiedAPI:
             self._log_api_response(response, "GET Posts")
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                 self.test_logger.performance_metric(
-                    "get_posts_response_time", response_time, "ms"
+                    "get_posts_response_time",
+                    response_time,
+                    "ms",
                 )
 
         with allure.step("Verify response status code"):
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                 self.test_logger.log_assertion(
-                    "Status code is 200",
-                    response.status_code == 200,
+                    assertion="Status code is 200",
+                    result=response.status_code == 200,
                     expected=200,
                     actual=response.status_code,
                 )
-            assert_that(
-                response.status_code, equal_to(200)
-            ), f"Expected 200, got {response.status_code}"
+            (
+                assert_that(
+                    response.status_code,
+                    equal_to(200),
+                ),
+                f"Expected 200, got {response.status_code}",
+            )
 
         with allure.step("Verify response content type"):
             content_type = response.headers.get("content-type", "")
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                 self.test_logger.log_assertion(
-                    "Content type is JSON",
-                    "application/json" in content_type,
+                    assertion="Content type is JSON",
+                    result="application/json" in content_type,
                     expected="application/json",
                     actual=content_type,
                 )
-            assert_that(
-                content_type, contains_string("application/json")
-            ), f"Expected JSON content type, got {content_type}"
+            (
+                assert_that(
+                    content_type,
+                    contains_string("application/json"),
+                ),
+                f"Expected JSON content type, got {content_type}",
+            )
 
         with allure.step("Parse and validate JSON response"):
             try:
@@ -144,8 +156,8 @@ class TestUnifiedAPI:
             # Verify it's a list
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                 self.test_logger.log_assertion(
-                    "Response is a list",
-                    isinstance(posts, list),
+                    assertion="Response is a list",
+                    result=isinstance(posts, list),
                     expected="list",
                     actual=type(posts).__name__,
                 )
@@ -154,8 +166,8 @@ class TestUnifiedAPI:
             # Verify list is not empty
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                 self.test_logger.log_assertion(
-                    "Posts list not empty",
-                    len(posts) > 0,
+                    assertion="Posts list not empty",
+                    result=len(posts) > 0,
                     expected=">0 posts",
                     actual=len(posts),
                 )
@@ -176,14 +188,18 @@ class TestUnifiedAPI:
             for field in required_fields:
                 if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                     self.test_logger.log_assertion(
-                        f"Post has '{field}' field",
-                        field in first_post,
+                        assertion=f"Post has '{field}' field",
+                        result=field in first_post,
                         expected=f"'{field}' field present",
                         actual=f"Fields: {list(first_post.keys())}",
                     )
-                assert_that(
-                    first_post, has_key(field)
-                ), f"Post missing required field: {field}"
+                (
+                    assert_that(
+                        first_post,
+                        has_key(field),
+                    ),
+                    f"Post missing required field: {field}",
+                )
 
             # Attach first post sample to Allure
             if settings.ENABLE_ALLURE:
@@ -215,14 +231,18 @@ class TestUnifiedAPI:
             self._log_api_response(response, f"GET Post {post_id}")
 
         with allure.step("Verify successful response"):
-            assert_that(
-                response.status_code, equal_to(200)
-            ), f"Expected 200, got {response.status_code}"
+            (
+                assert_that(
+                    response.status_code,
+                    equal_to(200),
+                ),
+                f"Expected 200, got {response.status_code}",
+            )
 
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                 self.test_logger.log_assertion(
-                    "Single post retrieval successful",
-                    response.status_code == 200,
+                    assertion="Single post retrieval successful",
+                    result=response.status_code == 200,
                     expected=200,
                     actual=response.status_code,
                 )
@@ -233,14 +253,18 @@ class TestUnifiedAPI:
             # Verify ID matches
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                 self.test_logger.log_assertion(
-                    "Post ID matches request",
-                    post["id"] == post_id,
+                    assertion="Post ID matches request",
+                    result=post["id"] == post_id,
                     expected=post_id,
                     actual=post["id"],
                 )
-            assert_that(
-                post["id"], equal_to(post_id)
-            ), f"Expected post ID {post_id}, got {post['id']}"
+            (
+                assert_that(
+                    post["id"],
+                    equal_to(post_id),
+                ),
+                f"Expected post ID {post_id}, got {post['id']}",
+            )
 
             # Verify data types
             assert_that(post["title"], instance_of(str)), "Title should be string"
@@ -294,14 +318,18 @@ class TestUnifiedAPI:
         with allure.step("Verify post creation response"):
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                 self.test_logger.log_assertion(
-                    "Post creation successful",
-                    response.status_code == 201,
+                    assertion="Post creation successful",
+                    result=response.status_code == 201,
                     expected=201,
                     actual=response.status_code,
                 )
-            assert_that(
-                response.status_code, equal_to(201)
-            ), f"Expected 201, got {response.status_code}"
+            (
+                assert_that(
+                    response.status_code,
+                    equal_to(201),
+                ),
+                f"Expected 201, got {response.status_code}",
+            )
 
         with allure.step("Validate created post data"):
             created_post = response.json()
@@ -310,21 +338,25 @@ class TestUnifiedAPI:
             assert_that(created_post, has_key("id")), "Created post should have an ID"
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                 self.test_logger.log_assertion(
-                    "Created post has ID",
-                    "id" in created_post,
+                    assertion="Created post has ID",
+                    result="id" in created_post,
                     expected="ID field present",
                     actual=f"Fields: {list(created_post.keys())}",
                 )
 
             # Verify the data matches what we sent
             for key, value in new_post_data.items():
-                assert_that(
-                    created_post[key], equal_to(value)
-                ), f"Expected {key}='{value}', got '{created_post[key]}'"
+                (
+                    assert_that(
+                        created_post[key],
+                        equal_to(value),
+                    ),
+                    f"Expected {key}='{value}', got '{created_post[key]}'",
+                )
                 if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                     self.test_logger.log_assertion(
-                        f"Created post {key} matches",
-                        created_post[key] == value,
+                        assertion=f"Created post {key} matches",
+                        result=created_post[key] == value,
                         expected=value,
                         actual=created_post[key],
                     )
@@ -360,14 +392,18 @@ class TestUnifiedAPI:
         with allure.step("Verify 404 error response"):
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                 self.test_logger.log_assertion(
-                    "Returns 404 for invalid post",
-                    response.status_code == 404,
+                    assertion="Returns 404 for invalid post",
+                    result=response.status_code == 404,
                     expected=404,
                     actual=response.status_code,
                 )
-            assert_that(
-                response.status_code, equal_to(404)
-            ), f"Expected 404, got {response.status_code}"
+            (
+                assert_that(
+                    response.status_code,
+                    equal_to(404),
+                ),
+                f"Expected 404, got {response.status_code}",
+            )
 
         with allure.step("Verify error response structure"):
             # Some APIs return empty body for 404, others return error details
@@ -396,7 +432,8 @@ class TestUnifiedAPI:
         # Also test invalid data handling
         with allure.step("Test invalid data handling"):
             invalid_response = self.session.post(
-                f"{self.base_url}/posts", json={"invalid": "data"}
+                f"{self.base_url}/posts",
+                json={"invalid": "data"},
             )
             assert_that(
                 invalid_response.status_code,
@@ -419,7 +456,7 @@ class TestUnifiedAPI:
         max_response_time = 2000  # 2 seconds in ms
 
         with allure.step(
-            f"Execute {num_requests} API requests for performance measurement"
+            f"Execute {num_requests} API requests for performance measurement",
         ):
             for i in range(num_requests):
                 start_time = time.time()
@@ -431,12 +468,14 @@ class TestUnifiedAPI:
                         "request": i + 1,
                         "response_time_ms": response_time,
                         "status_code": response.status_code,
-                    }
+                    },
                 )
 
                 if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                     self.test_logger.performance_metric(
-                        f"api_request_{i + 1}_response_time", response_time, "ms"
+                        f"api_request_{i + 1}_response_time",
+                        response_time,
+                        "ms",
                     )
 
         with allure.step("Analyze performance metrics"):
@@ -465,15 +504,15 @@ class TestUnifiedAPI:
             # Log performance assertions
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
                 self.test_logger.log_assertion(
-                    "Average response time acceptable",
-                    avg_response_time < max_response_time,
+                    assertion="Average response time acceptable",
+                    result=avg_response_time < max_response_time,
                     expected=f"<{max_response_time}ms",
                     actual=f"{avg_response_time:.2f}ms",
                 )
 
                 self.test_logger.log_assertion(
-                    "All requests successful",
-                    all(data["status_code"] == 200 for data in performance_data),
+                    assertion="All requests successful",
+                    result=all(data["status_code"] == 200 for data in performance_data),
                     expected="All 200 status codes",
                     actual=(
                         f"Status codes: "
@@ -482,12 +521,20 @@ class TestUnifiedAPI:
                 )
 
         with allure.step("Validate performance requirements"):
-            assert_that(
-                avg_response_time, less_than(max_response_time)
-            ), f"Average response time too slow: {avg_response_time:.2f}ms"
-            assert_that(
-                all(data["status_code"] == 200 for data in performance_data), is_(True)
-            ), "Some requests failed"
+            (
+                assert_that(
+                    avg_response_time,
+                    less_than(max_response_time),
+                ),
+                f"Average response time too slow: {avg_response_time:.2f}ms",
+            )
+            (
+                assert_that(
+                    all(data["status_code"] == 200 for data in performance_data),
+                    is_(True),
+                ),
+                "Some requests failed",
+            )
 
         if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
             self.test_logger.end_test("PASS")

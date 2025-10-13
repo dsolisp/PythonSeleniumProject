@@ -1,5 +1,7 @@
 """Unit tests for structured_logger module."""
 
+from contextlib import suppress
+
 import pytest
 from hamcrest import (
     assert_that,
@@ -16,6 +18,9 @@ from utils.structured_logger import (
     framework_logger,
     get_logger,
     get_test_logger,
+    log_error,
+    log_info,
+    log_warning,
 )
 
 
@@ -70,10 +75,23 @@ class TestStructuredLogger:
             logger.test_end("test_method", "PASS", duration=1.5)
             logger.performance_metric("response_time", 250.5, "ms")
             logger.browser_action("click", element="button#submit")
-            logger.api_request("GET", "http://example.com", status_code=200)
-            logger.database_operation("SELECT", table="users", rows_affected=5)
-            logger.assertion_result("equals", True, expected=5, actual=5)
-        except Exception as e:
+            logger.api_request(
+                "GET",
+                "http://example.com",
+                status_code=200,
+            )
+            logger.database_operation(
+                "SELECT",
+                table="users",
+                rows_affected=5,
+            )
+            logger.assertion_result(
+                assertion="equals",
+                result=True,
+                expected=5,
+                actual=5,
+            )
+        except (ValueError, TypeError, OSError) as e:
             pytest.fail(f"Logging method failed: {e}")
 
 
@@ -100,9 +118,9 @@ class TestExecutionLogger:
         try:
             test_logger.start_test(browser="chrome")
             test_logger.log_step("Navigate to page", "navigate")
-            test_logger.log_assertion("Page title correct", True)
+            test_logger.log_assertion(assertion="Page title correct", result=True)
             test_logger.end_test("PASS")
-        except Exception as e:
+        except (ValueError, TypeError, OSError) as e:
             pytest.fail(f"Test execution logging failed: {e}")
 
     def test_step_counting(self):
@@ -144,21 +162,17 @@ class TestBackwardsCompatibility:
 
     def test_legacy_logging_functions_exist(self):
         """Test that legacy logging functions exist for backwards compatibility."""
-        from utils.structured_logger import log_error, log_info, log_warning
-
         assert_that(callable(log_info), is_(True))
         assert_that(callable(log_error), is_(True))
         assert_that(callable(log_warning), is_(True))
 
     def test_legacy_logging_functions_callable(self):
         """Test that legacy logging functions can be called."""
-        from utils.structured_logger import log_error, log_info, log_warning
-
         try:
             log_info("Test info message", context="test")
             log_error("Test error message", context="test")
             log_warning("Test warning message", context="test")
-        except Exception as e:
+        except (ValueError, TypeError, OSError) as e:
             pytest.fail(f"Legacy logging function failed: {e}")
 
 
@@ -167,13 +181,8 @@ class TestErrorHandling:
 
     def test_invalid_log_level_handling(self):
         """Test handling of invalid log levels."""
-        try:
-            # This should not crash, might use default level
+        with suppress(ValueError, TypeError):
             StructuredLogger("TestLogger", "INVALID_LEVEL")
-            # If it doesn't crash, that's acceptable behavior
-        except Exception:
-            # If it does throw an exception, that's also acceptable
-            pass
 
     def test_none_values_in_context(self):
         """Test that None values in context don't cause issues."""
@@ -181,7 +190,7 @@ class TestErrorHandling:
 
         try:
             logger.info("Test message", none_value=None, empty_string="")
-        except Exception as e:
+        except (ValueError, TypeError, OSError) as e:
             pytest.fail(f"Logging with None values failed: {e}")
 
 
@@ -196,7 +205,7 @@ class TestSpecializedLogging:
             logger.performance_metric("response_time", 150.5, "ms")
             logger.performance_metric("memory_usage", 512.0, "MB")
             logger.performance_metric("cpu_usage", 45.2, "%")
-        except Exception as e:
+        except (ValueError, TypeError, OSError) as e:
             pytest.fail(f"Performance metric logging failed: {e}")
 
     def test_assertion_result_logging(self):
@@ -204,9 +213,19 @@ class TestSpecializedLogging:
         logger = StructuredLogger("AssertLogger")
 
         try:
-            logger.assertion_result("equals", True, expected=5, actual=5)
-            logger.assertion_result("contains", False, expected="text", actual="other")
-        except Exception as e:
+            logger.assertion_result(
+                assertion="equals",
+                result=True,
+                expected=5,
+                actual=5,
+            )
+            logger.assertion_result(
+                assertion="contains",
+                result=False,
+                expected="text",
+                actual="other",
+            )
+        except (ValueError, TypeError, OSError) as e:
             pytest.fail(f"Assertion result logging failed: {e}")
 
     def test_exception_logging(self):
@@ -215,6 +234,9 @@ class TestSpecializedLogging:
 
         try:
             test_exception = ValueError("Test exception")
-            logger.exception_caught(test_exception, "Test context")
-        except Exception as e:
+            logger.exception_caught(
+                test_exception,
+                "Test context",
+            )
+        except (ValueError, TypeError, OSError) as e:
             pytest.fail(f"Exception logging failed: {e}")

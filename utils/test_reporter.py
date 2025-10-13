@@ -8,13 +8,12 @@ import json
 import statistics
 from collections import Counter
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, ClassVar, Optional, Union
 
 import numpy as np
 import pandas as pd
-from jinja2 import Template
 
 
 @dataclass
@@ -30,10 +29,10 @@ class Result:
     error_message: Optional[str] = None
     screenshot_path: Optional[str] = None
     stack_trace: Optional[str] = None
-    test_data: Optional[Dict[str, Any]] = None
-    performance_metrics: Optional[Dict[str, float]] = None
+    test_data: Optional[dict[str, Any]] = None
+    performance_metrics: Optional[dict[str, float]] = None
     retries: int = 0
-    tags: List[str] = None
+    tags: Optional[list[str]] = None
 
     def __post_init__(self):
         if self.tags is None:
@@ -65,10 +64,76 @@ class TestTrend:
     pass_rate: float
     total_tests: int
     avg_duration: float
-    failed_tests: List[str]
+    failed_tests: list[str]
 
 
 class AdvancedTestReporter:
+    def load_json_report(self, file_path: Union[str, Path]) -> None:
+        """
+        Load test results from a JSON file (pytest-json-report or custom format)
+        and append to self.test_results. Supports both pytest-json-report and this
+        framework's own format.
+        """
+        file_path = Path(file_path)
+        with Path.open(file_path) as f:
+            data = json.load(f)
+
+        # Try to detect pytest-json-report format
+        if "tests" in data:
+            # pytest-json-report format
+            for test in data["tests"]:
+                try:
+                    result = Result(
+                        test_name=test.get("nodeid", test.get("name", "unknown")),
+                        status=test.get(
+                            "outcome",
+                            test.get("status", "unknown"),
+                        ).upper(),
+                        duration=float(test.get("duration", 0)),
+                        timestamp=datetime.fromisoformat(
+                            test.get("start", datetime.now(timezone.utc).isoformat()),
+                        ),
+                        environment=test.get("environment", "unknown"),
+                        browser=test.get("browser", "unknown"),
+                        error_message=test.get("longrepr", None),
+                        stack_trace=test.get("longrepr", None),
+                        retries=int(test.get("rerun", 0)),
+                        tags=test.get("keywords", []),
+                    )
+                except (ValueError, TypeError, KeyError, AttributeError):
+                    # Skip malformed test entries
+                    continue
+                self.test_results.append(result)
+        elif "test_results" in data:
+            # Our own format
+            for test in data["test_results"]:
+                try:
+                    # Convert timestamp if needed
+                    ts = test.get("timestamp", datetime.now(timezone.utc).isoformat())
+                    if isinstance(ts, str):
+                        try:
+                            ts = datetime.fromisoformat(ts)
+                        except (ValueError, TypeError):
+                            ts = datetime.now(timezone.utc)
+                    result = Result(
+                        test_name=test.get("test_name", "unknown"),
+                        status=test.get("status", "unknown").upper(),
+                        duration=float(test.get("duration", 0)),
+                        timestamp=ts,
+                        environment=test.get("environment", "unknown"),
+                        browser=test.get("browser", "unknown"),
+                        error_message=test.get("error_message", None),
+                        stack_trace=test.get("stack_trace", None),
+                        retries=int(test.get("retries", 0)),
+                        tags=test.get("tags", []),
+                    )
+                except (ValueError, TypeError, KeyError, AttributeError):
+                    continue
+                self.test_results.append(result)
+        else:
+            # Unknown format, skip
+            pass
+
     """
     Advanced test reporting system with analytics and insights.
 
@@ -81,7 +146,7 @@ class AdvancedTestReporter:
     - Integration with external tools
     """
 
-    def __init__(self, reports_dir: Union[str, Path] = None):
+    def __init__(self, reports_dir: Optional[Union[str, Path]] = None):
         """Initialize the advanced test reporter."""
         self.reports_dir = (
             Path(reports_dir)
@@ -96,8 +161,8 @@ class AdvancedTestReporter:
         (self.reports_dir / "trends").mkdir(exist_ok=True)
         (self.reports_dir / "analytics").mkdir(exist_ok=True)
 
-        self.current_suite: Optional[Suite] = None
-        self.test_results: List[Result] = []
+    current_suite: ClassVar[Optional[Suite]] = None
+    test_results: ClassVar[list[Result]] = []
 
     def start_test_suite(
         self,
@@ -114,8 +179,8 @@ class AdvancedTestReporter:
             skipped=0,
             errors=0,
             total_duration=0.0,
-            start_time=datetime.now(),
-            end_time=datetime.now(),
+            start_time=datetime.now(timezone.utc),
+            end_time=datetime.now(timezone.utc),
             environment=environment,
             browser=browser,
         )
@@ -124,7 +189,8 @@ class AdvancedTestReporter:
     def add_test_result(self, result: Result) -> None:
         """Add a test result to the current suite."""
         if not self.current_suite:
-            raise ValueError("No active test suite. Call start_test_suite() first.")
+            message = "No active test suite. Call start_test_suite() first."
+            raise ValueError(message)
 
         self.test_results.append(result)
         self.current_suite.total_tests += 1
@@ -143,12 +209,12 @@ class AdvancedTestReporter:
     def end_test_suite(self) -> Suite:
         """End the current test suite and return summary."""
         if not self.current_suite:
-            raise ValueError("No active test suite.")
-
-        self.current_suite.end_time = datetime.now()
+            message = "No active test suite."
+            raise ValueError(message)
+        self.current_suite.end_time = datetime.now(timezone.utc)
         return self.current_suite
 
-    def generate_json_report(self, filename: str = None) -> str:
+    def generate_json_report(self, filename: Optional[str] = None) -> str:
         """
         Generate comprehensive JSON report.
 
@@ -159,9 +225,10 @@ class AdvancedTestReporter:
             Path to generated report file
         """
         if not self.current_suite:
-            raise ValueError("No test suite data available.")
+            message = "No test suite data available."
+            raise ValueError(message)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = filename or f"test_report_{timestamp}.json"
         file_path = self.reports_dir / "json" / filename
 
@@ -188,15 +255,15 @@ class AdvancedTestReporter:
             "test_results": [asdict(result) for result in self.test_results],
             "failure_analysis": self._analyze_failures(),
             "performance_analysis": self._analyze_performance(),
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
-        with open(file_path, "w") as f:
+        with Path.open(file_path, "w") as f:
             json.dump(report_data, f, indent=2, default=str)
 
         return str(file_path)
 
-    def generate_html_report(self, filename: str = None) -> str:
+    def generate_html_report(self, filename: Optional[str] = None) -> str:
         """
         Generate interactive HTML report.
 
@@ -207,9 +274,10 @@ class AdvancedTestReporter:
             Path to generated HTML report
         """
         if not self.current_suite:
-            raise ValueError("No test suite data available.")
+            message = "No test suite data available."
+            raise ValueError(message)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = filename or f"test_report_{timestamp}.html"
         file_path = self.reports_dir / "html" / filename
 
@@ -222,12 +290,12 @@ class AdvancedTestReporter:
 
         html_content = self._generate_html_template(pass_rate)
 
-        with open(file_path, "w") as f:
+        with Path.open(file_path, "w") as f:
             f.write(html_content)
 
         return str(file_path)
 
-    def generate_trend_analysis(self, days: int = 30) -> Dict[str, Any]:
+    def generate_trend_analysis(self, days: int = 30) -> dict[str, Any]:
         """
         Generate trend analysis for the specified period.
 
@@ -262,9 +330,9 @@ class AdvancedTestReporter:
         trend_file = (
             self.reports_dir
             / "trends"
-            / f"trend_analysis_{datetime.now().strftime('%Y%m%d')}.json"
+            / f"trend_analysis_{datetime.now(timezone.utc).strftime('%Y%m%d')}.json"
         )
-        with open(trend_file, "w") as f:
+        with Path.open(trend_file, "w") as f:
             json.dump(analysis, f, indent=2, default=str)
 
         return analysis
@@ -284,12 +352,12 @@ class AdvancedTestReporter:
         # Generate dashboard HTML with charts
         dashboard_html = self._generate_dashboard_template(trend_data)
 
-        with open(dashboard_path, "w") as f:
+        with Path.open(dashboard_path, "w") as f:
             f.write(dashboard_html)
 
         return str(dashboard_path)
 
-    def export_to_junit(self, filename: str = None) -> str:
+    def export_to_junit(self, filename: Optional[str] = None) -> str:
         """
         Export results to JUnit XML format for CI/CD integration.
 
@@ -300,9 +368,10 @@ class AdvancedTestReporter:
             Path to generated JUnit XML file
         """
         if not self.current_suite:
-            raise ValueError("No test suite data available.")
+            message = "No test suite data available."
+            raise ValueError(message)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = filename or f"junit_report_{timestamp}.xml"
         file_path = self.reports_dir / "xml" / filename
 
@@ -311,12 +380,12 @@ class AdvancedTestReporter:
 
         junit_xml = self._generate_junit_xml()
 
-        with open(file_path, "w") as f:
+        with Path.open(file_path, "w") as f:
             f.write(junit_xml)
 
         return str(file_path)
 
-    def get_failure_patterns(self) -> Dict[str, Any]:
+    def get_failure_patterns(self) -> dict[str, Any]:
         """
         Analyze failure patterns and provide insights.
 
@@ -353,7 +422,7 @@ class AdvancedTestReporter:
             "recommendations": self._get_failure_recommendations(error_patterns),
         }
 
-    def _analyze_failures(self) -> Dict[str, Any]:
+    def _analyze_failures(self) -> dict[str, Any]:
         """Analyze failure patterns in current results."""
         failed_tests = [r for r in self.test_results if r.status in ["FAILED", "ERROR"]]
 
@@ -367,7 +436,7 @@ class AdvancedTestReporter:
             "failure_distribution": self._get_failure_distribution(failed_tests),
         }
 
-    def _analyze_performance(self) -> Dict[str, Any]:
+    def _analyze_performance(self) -> dict[str, Any]:
         """Analyze performance metrics from current results."""
         durations = [r.duration for r in self.test_results]
 
@@ -380,12 +449,13 @@ class AdvancedTestReporter:
             "fastest_test": min(durations),
             "slowest_test": max(durations),
             "duration_std_dev": round(
-                statistics.stdev(durations) if len(durations) > 1 else 0, 2
+                statistics.stdev(durations) if len(durations) > 1 else 0,
+                2,
             ),
             "performance_distribution": self._get_performance_distribution(durations),
         }
 
-    def _extract_common_errors(self, failed_tests: List[Result]) -> List[str]:
+    def _extract_common_errors(self, failed_tests: list[Result]) -> list[str]:
         """Extract common error patterns from failed tests."""
         error_messages = [t.error_message for t in failed_tests if t.error_message]
 
@@ -401,11 +471,11 @@ class AdvancedTestReporter:
 
         return list(set(common_patterns))
 
-    def _get_failure_distribution(self, failed_tests: List[Result]) -> Dict[str, int]:
+    def _get_failure_distribution(self, failed_tests: list[Result]) -> dict[str, int]:
         """Get distribution of failures by test name."""
         return dict(Counter([t.test_name for t in failed_tests]))
 
-    def _get_performance_distribution(self, durations: List[float]) -> Dict[str, int]:
+    def _get_performance_distribution(self, durations: list[float]) -> dict[str, int]:
         """Get performance distribution categorization."""
         fast = sum(1 for d in durations if d < 5)
         medium = sum(1 for d in durations if 5 <= d < 15)
@@ -413,13 +483,13 @@ class AdvancedTestReporter:
 
         return {"fast_tests": fast, "medium_tests": medium, "slow_tests": slow}
 
-    def _load_historical_data(self, days: int) -> List[TestTrend]:
+    def _load_historical_data(self, _days: int) -> list[TestTrend]:
         """Load historical test data for trend analysis."""
         # Placeholder for loading historical data
         # In real implementation, this would load from database or files
         return []
 
-    def _calculate_trend(self, values: List[float]) -> str:
+    def _calculate_trend(self, values: list[float]) -> str:
         """Calculate trend direction from values."""
         if len(values) < 2:
             return "stable"
@@ -433,12 +503,11 @@ class AdvancedTestReporter:
 
         if avg_second > avg_first * 1.05:
             return "improving"
-        elif avg_second < avg_first * 0.95:
+        if avg_second < avg_first * 0.95:
             return "declining"
-        else:
-            return "stable"
+        return "stable"
 
-    def _calculate_stability_score(self, pass_rates: List[float]) -> float:
+    def _calculate_stability_score(self, pass_rates: list[float]) -> float:
         """Calculate stability score based on pass rate consistency."""
         if not pass_rates:
             return 0.0
@@ -450,7 +519,7 @@ class AdvancedTestReporter:
         stability = (avg_rate / 100) * (1 - min(std_dev / 100, 1))
         return round(stability * 100, 2)
 
-    def _calculate_performance_score(self, durations: List[float]) -> float:
+    def _calculate_performance_score(self, durations: list[float]) -> float:
         """Calculate performance score based on execution times."""
         if not durations:
             return 0.0
@@ -461,7 +530,7 @@ class AdvancedTestReporter:
         score = max(0, 100 - (avg_duration / 30 * 100))
         return round(score, 2)
 
-    def _generate_recommendations(self, trends: List[TestTrend]) -> List[str]:
+    def _generate_recommendations(self, trends: list[TestTrend]) -> list[str]:
         """Generate actionable recommendations based on trends."""
         recommendations = []
 
@@ -484,14 +553,14 @@ class AdvancedTestReporter:
 
         if avg_duration > 15:
             recommendations.append(
-                "Optimize test execution time - average duration > 15s"
+                "Optimize test execution time - average duration > 15s",
             )
         if avg_duration > 30:
             recommendations.append("Consider parallelization for faster execution")
 
         return recommendations
 
-    def _get_common_failures(self, trends: List[TestTrend]) -> List[str]:
+    def _get_common_failures(self, trends: list[TestTrend]) -> list[str]:
         """Get most common failing tests across trends."""
         all_failures = []
         for trend in trends:
@@ -499,28 +568,29 @@ class AdvancedTestReporter:
 
         return [test for test, count in Counter(all_failures).most_common(5)]
 
-    def _get_most_failing_tests(self, failed_tests: List[Result]) -> List[str]:
+    def _get_most_failing_tests(self, failed_tests: list[Result]) -> list[str]:
         """Get tests that fail most frequently."""
         return [
             test
             for test, count in Counter([t.test_name for t in failed_tests]).most_common(
-                5
+                5,
             )
         ]
 
     def _analyze_failures_by_browser(
-        self, failed_tests: List[Result]
-    ) -> Dict[str, int]:
+        self,
+        failed_tests: list[Result],
+    ) -> dict[str, int]:
         """Analyze failure distribution by browser."""
         return dict(Counter([t.browser for t in failed_tests]))
 
-    def _get_failure_recommendations(self, error_patterns: Counter) -> List[str]:
+    def _get_failure_recommendations(self, error_patterns: Counter) -> list[str]:
         """Generate recommendations based on error patterns."""
         recommendations = []
 
         if error_patterns.get("timeout_errors", 0) > 2:
             recommendations.append(
-                "Consider increasing timeout values or optimizing page load times"
+                "Consider increasing timeout values or optimizing page load times",
             )
         if error_patterns.get("element_not_found", 0) > 2:
             recommendations.append("Review element locators and add explicit waits")
@@ -540,7 +610,10 @@ class AdvancedTestReporter:
         body {{ font-family: Arial, sans-serif; margin: 20px; }}
         .header {{ background-color: #f4f4f4; padding: 20px; border-radius: 5px; }}
         .metrics {{ display: flex; justify-content: space-around; margin: 20px 0; }}
-        .metric {{ text-align: center; padding: 15px; background-color: #e9e9e9; border-radius: 5px; }}
+        .metric {{
+            text-align: center; padding: 15px; background-color: #e9e9e9;
+            border-radius: 5px;
+        }}
         .passed {{ background-color: #d4edda; }}
         .failed {{ background-color: #f8d7da; }}
         .test-results {{ margin-top: 20px; }}
@@ -557,9 +630,9 @@ class AdvancedTestReporter:
         <p>Suite: {self.current_suite.suite_name}</p>
         <p>Environment: {self.current_suite.environment}</p>
         <p>Browser: {self.current_suite.browser}</p>
-        <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+    <p>Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}</p>
     </div>
-    
+
     <div class="metrics">
         <div class="metric passed">
             <h3>Passed</h3>
@@ -578,7 +651,7 @@ class AdvancedTestReporter:
             <p>{self.current_suite.total_duration:.2f}s</p>
         </div>
     </div>
-    
+
     <div class="test-results">
         <h2>Test Results</h2>
         <table>
@@ -588,20 +661,24 @@ class AdvancedTestReporter:
                 <th>Duration</th>
                 <th>Error Message</th>
             </tr>
-            {''.join([
-            f'<tr><td>{r.test_name}</td>'
-            f'<td class="status-{r.status.lower()}">{r.status}</td>'
-            f'<td>{r.duration:.2f}s</td>'
-            f'<td>{r.error_message or ""}</td></tr>'
-            for r in self.test_results
-        ])}
+            {
+            "".join(
+                [
+                    f"<tr><td>{r.test_name}</td>"
+                    f'<td class="status-{r.status.lower()}">{r.status}</td>'
+                    f"<td>{r.duration:.2f}s</td>"
+                    f"<td>{r.error_message or ''}</td></tr>"
+                    for r in self.test_results
+                ]
+            )
+        }
         </table>
     </div>
 </body>
 </html>
         """
 
-    def _generate_dashboard_template(self, trend_data: Dict[str, Any]) -> str:
+    def _generate_dashboard_template(self, trend_data: dict[str, Any]) -> str:
         """Generate dashboard HTML template with analytics."""
         return f"""
 <!DOCTYPE html>
@@ -620,40 +697,48 @@ class AdvancedTestReporter:
 </head>
 <body>
     <h1>Test Analytics Dashboard</h1>
-    
+
     <div class="dashboard">
         <div class="widget">
             <h2>Current Metrics</h2>
             <div class="metric">
                 <h3>Average Pass Rate</h3>
-                <p>{trend_data.get('average_pass_rate', 'N/A')}%</p>
+                <p>{trend_data.get("average_pass_rate", "N/A")}%</p>
             </div>
             <div class="metric">
                 <h3>Stability Score</h3>
-                <p>{trend_data.get('stability_score', 'N/A')}</p>
+                <p>{trend_data.get("stability_score", "N/A")}</p>
             </div>
         </div>
-        
+
         <div class="widget">
             <h2>Trends</h2>
-            <p>Pass Rate Trend: {trend_data.get('pass_rate_trend', 'N/A')}</p>
-            <p>Duration Trend: {trend_data.get('duration_trend', 'N/A')}</p>
+            <p>Pass Rate Trend: {trend_data.get("pass_rate_trend", "N/A")}</p>
+            <p>Duration Trend: {trend_data.get("duration_trend", "N/A")}</p>
         </div>
-        
+
         <div class="widget">
             <h2>Recommendations</h2>
             <ul>
-                {''.join([f'<li>{rec}</li>' for rec in trend_data.get('recommendations', [])])}
+                {
+            "".join(
+                [f"<li>{rec}</li>" for rec in trend_data.get("recommendations", [])]
+            )
+        }
             </ul>
         </div>
-        
+
         <div class="widget">
             <h2>Common Failures</h2>
             <ul>
-                {''.join([
-            f'<li>{failure}</li>'
-            for failure in trend_data.get('most_common_failures', [])
-        ])}
+                {
+            "".join(
+                [
+                    f"<li>{failure}</li>"
+                    for failure in trend_data.get("most_common_failures", [])
+                ]
+            )
+        }
             </ul>
         </div>
     </div>
@@ -663,12 +748,11 @@ class AdvancedTestReporter:
 
     def _generate_junit_xml(self) -> str:
         """Generate JUnit XML format report."""
-        self.current_suite.total_duration
         test_cases = []
 
         for result in self.test_results:
             case_xml = (
-                f'    <testcase name="{result.test_name}" ' f'time="{result.duration}"'
+                f'    <testcase name="{result.test_name}" time="{result.duration}"'
             )
 
             if result.status == "FAILED":
@@ -692,7 +776,7 @@ class AdvancedTestReporter:
 
             test_cases.append(case_xml)
 
-    def generate_dataframe_analytics(self) -> Optional[Dict[str, Any]]:
+    def generate_dataframe_analytics(self) -> Optional[dict[str, Any]]:
         """
         Generate pandas DataFrame for advanced analytics.
         Leverages pandas for statistical analysis and numpy for computations.
@@ -701,34 +785,33 @@ class AdvancedTestReporter:
             return None
 
         # Convert test results to structured data
-        data = []
-        for result in self.test_results:
-            data.append(
-                {
-                    "test_name": result.test_name,
-                    "status": result.status,
-                    "duration": result.duration,
-                    "timestamp": result.timestamp,
-                    "browser": result.browser,
-                    "environment": result.environment,
-                    "error_type": result.error_message or "none",
-                    "day_of_week": result.timestamp.strftime("%A"),
-                    "hour": result.timestamp.hour,
-                }
-            )
+        data = [
+            {
+                "test_name": result.test_name,
+                "status": result.status,
+                "duration": result.duration,
+                "timestamp": result.timestamp,
+                "browser": result.browser,
+                "environment": result.environment,
+                "error_type": result.error_message or "none",
+                "day_of_week": result.timestamp.strftime("%A"),
+                "hour": result.timestamp.hour,
+            }
+            for result in self.test_results
+        ]
 
         df = pd.DataFrame(data)
 
         # Add computed columns using numpy
         df["duration_zscore"] = np.abs(
-            (df["duration"] - df["duration"].mean()) / df["duration"].std()
+            (df["duration"] - df["duration"].mean()) / df["duration"].std(),
         )
         df["is_outlier"] = df["duration_zscore"] > 2
         df["success"] = df["status"] == "passed"
 
         return df.to_dict("records")  # Return as dict for serialization
 
-    def get_performance_insights(self) -> Dict[str, Any]:
+    def get_performance_insights(self) -> dict[str, Any]:
         """
         Generate performance insights using pandas analytics.
         """
@@ -739,7 +822,7 @@ class AdvancedTestReporter:
         # Create DataFrame from data
         df = pd.DataFrame(df_data)
 
-        insights = {
+        return {
             "execution_stats": {
                 "avg_duration": float(df["duration"].mean()),
                 "median_duration": float(df["duration"].median()),
@@ -760,9 +843,7 @@ class AdvancedTestReporter:
             },
         }
 
-        return insights
-
-    def export_to_csv(self, filename: str = None) -> str:
+    def export_to_csv(self, filename: Optional[str] = None) -> str:
         """
         Export test results to CSV using pandas for efficient processing.
         """
@@ -773,7 +854,7 @@ class AdvancedTestReporter:
         df = pd.DataFrame(df_data)
 
         if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             filename = f"test_results_{timestamp}.csv"
 
         filepath = self.reports_dir / filename

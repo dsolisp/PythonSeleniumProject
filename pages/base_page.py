@@ -5,9 +5,14 @@ essential functionality with intelligent error handling, performance monitoring,
 and test data integration.
 """
 
+import contextlib
+import json
+import statistics
 import time
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -19,6 +24,8 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+from utils.sql_connection import execute_query, fetch_all
 
 # Import advanced features
 try:
@@ -34,6 +41,8 @@ except ImportError:
     TestDataManager = None
     AdvancedTestReporter = None
 
+from typing import Optional
+
 
 class BasePage:
     """
@@ -48,7 +57,7 @@ class BasePage:
         driver,
         database=None,
         timeout: int = 10,
-        test_name: str = None,
+        test_name: Optional[str] = None,
         environment: str = "test",
     ):
         """
@@ -85,7 +94,7 @@ class BasePage:
             self.performance_metrics = {}
 
             # Element interaction history
-            self.interaction_history: List[Dict[str, Any]] = []
+            self.interaction_history: list[dict[str, Any]] = []
         else:
             self.error_handler = None
             self.test_data_manager = None
@@ -96,7 +105,9 @@ class BasePage:
     # === ELEMENT INTERACTION METHODS ===
 
     def find_element(
-        self, locator: Tuple[str, str], timeout: int = None
+        self,
+        locator: tuple[str, str],
+        timeout: Optional[int] = None,
     ) -> Optional[Any]:
         """
         Find element with optional timeout and enhanced error handling.
@@ -114,16 +125,10 @@ class BasePage:
         try:
             if timeout:
                 element = WebDriverWait(self.driver, timeout).until(
-                    EC.presence_of_element_located(locator)
+                    EC.presence_of_element_located(locator),
                 )
             else:
                 element = self.driver.find_element(*locator)
-
-            if ADVANCED_FEATURES_AVAILABLE:
-                self._record_interaction("find_element", locator, "SUCCESS")
-                self._end_performance_tracking("find_element")
-
-            return element
         except (TimeoutException, NoSuchElementException) as e:
             if ADVANCED_FEATURES_AVAILABLE:
                 self._record_interaction("find_element", locator, "FAILED", str(e))
@@ -131,14 +136,22 @@ class BasePage:
 
                 # Try error recovery
                 if self.error_handler and self.error_handler.handle_error(
-                    e, self.driver, self.test_name
+                    e,
+                    self.driver,
+                    self.test_name,
                 ):
                     # Retry after recovery
                     return self.find_element(locator, timeout)
 
             return None
+        else:
+            if ADVANCED_FEATURES_AVAILABLE:
+                self._record_interaction("find_element", locator, "SUCCESS")
+                self._end_performance_tracking("find_element")
 
-    def find_elements(self, locator: Tuple[str, str]) -> List[Any]:
+            return element
+
+    def find_elements(self, locator: tuple[str, str]) -> list[Any]:
         """
         Find multiple elements.
 
@@ -154,7 +167,9 @@ class BasePage:
             return []
 
     def wait_for_element(
-        self, locator: Tuple[str, str], timeout: int = None
+        self,
+        locator: tuple[str, str],
+        timeout: Optional[int] = None,
     ) -> Optional[Any]:
         """
         Wait for element to be visible.
@@ -169,13 +184,15 @@ class BasePage:
         wait_time = timeout or self.timeout
         try:
             return WebDriverWait(self.driver, wait_time).until(
-                EC.visibility_of_element_located(locator)
+                EC.visibility_of_element_located(locator),
             )
         except TimeoutException:
             return None
 
     def wait_for_clickable(
-        self, locator: Tuple[str, str], timeout: int = None
+        self,
+        locator: tuple[str, str],
+        timeout: Optional[int] = None,
     ) -> Optional[Any]:
         """
         Wait for element to be clickable.
@@ -190,15 +207,16 @@ class BasePage:
         wait_time = timeout or self.timeout
         try:
             return WebDriverWait(self.driver, wait_time).until(
-                EC.element_to_be_clickable(locator)
+                EC.element_to_be_clickable(locator),
             )
         except TimeoutException:
             return None
 
     def click(
         self,
-        locator: Tuple[str, str],
-        timeout: int = None,
+        locator: tuple[str, str],
+        *,
+        timeout: Optional[int] = None,
         scroll_to_element: bool = True,
         force_click: bool = False,
     ) -> bool:
@@ -229,53 +247,61 @@ class BasePage:
 
                 try:
                     element.click()
-                    if ADVANCED_FEATURES_AVAILABLE:
-                        self._record_interaction("click", locator, "SUCCESS")
-                        self._end_performance_tracking("click")
-                    return True
-
                 except ElementClickInterceptedException:
                     if force_click:
                         # Use JavaScript click as fallback
                         self.driver.execute_script("arguments[0].click();", element)
                         if ADVANCED_FEATURES_AVAILABLE:
                             self._record_interaction(
-                                "click", locator, "SUCCESS", "Used JS click"
+                                "click",
+                                locator,
+                                "SUCCESS",
+                                "Used JS click",
                             )
                             self._end_performance_tracking("click")
                         return True
-                    else:
-                        raise
+                    raise
 
-            if ADVANCED_FEATURES_AVAILABLE:
-                self._record_interaction(
-                    "click", locator, "FAILED", "Element not clickable"
-                )
-                self._end_performance_tracking("click")
-            return False
+                if ADVANCED_FEATURES_AVAILABLE:
+                    self._record_interaction("click", locator, "SUCCESS")
+                    self._end_performance_tracking("click")
+                return True
 
-        except Exception as e:
+        except (WebDriverException, TimeoutException) as e:
             if ADVANCED_FEATURES_AVAILABLE:
                 self._record_interaction("click", locator, "FAILED", str(e))
                 self._end_performance_tracking("click")
 
                 # Try error recovery
                 if self.error_handler and self.error_handler.handle_error(
-                    e, self.driver, self.test_name
+                    e,
+                    self.driver,
+                    self.test_name,
                 ):
                     # Retry after recovery
                     return self.click(locator, timeout, scroll_to_element, force_click)
 
             return False
+        else:
+            if ADVANCED_FEATURES_AVAILABLE:
+                self._record_interaction(
+                    "click",
+                    locator,
+                    "FAILED",
+                    "Element not clickable",
+                )
+                self._end_performance_tracking("click")
+            return False
 
     def send_keys(
         self,
-        locator: Tuple[str, str],
+        locator: tuple[str, str],
         text: str,
+        *,
         clear_first: bool = True,
-        timeout: int = None,
+        timeout: Optional[int] = None,
         use_test_data: bool = False,
-        data_key: str = None,
+        data_key: Optional[str] = None,
     ) -> bool:
         """
         Send keys to element with enhanced features.
@@ -298,7 +324,8 @@ class BasePage:
             # Get text from test data if requested
             if use_test_data and ADVANCED_FEATURES_AVAILABLE and self.test_data_manager:
                 test_data = self.test_data_manager.load_test_data(
-                    "test_data", self.environment
+                    "test_data",
+                    self.environment,
                 )
                 actual_text = test_data.get(data_key or text, text)
             else:
@@ -306,39 +333,74 @@ class BasePage:
 
             element = self.wait_for_element(locator, timeout)
             if element:
+                # Clear existing value using several fallbacks;
+                # suppress non-critical errors
                 if clear_first:
-                    element.clear()
-                element.send_keys(actual_text)
+                    with contextlib.suppress(Exception):
+                        self.driver.execute_script(
+                            "arguments[0].value = '';",
+                            element,
+                        )
+                    with contextlib.suppress(Exception):
+                        element.clear()
+                    with contextlib.suppress(Exception):
+                        element.send_keys("\ue009a\ue003")  # CTRL+A, DEL (may vary)
 
-                # Verify text was entered correctly
+                # Attempt to send keys; fall back to JS if necessary
+                with contextlib.suppress(Exception):
+                    element.send_keys(actual_text)
+
+                # Post-type verification and JS fallback
                 entered_value = element.get_attribute("value")
                 if entered_value != actual_text:
-                    raise ValueError(
-                        f"Text verification failed. Expected: "
-                        f"{actual_text}, Got: {entered_value}"
+                    js_script = (
+                        "arguments[0].value = arguments[1];"
+                        "arguments[0].dispatchEvent(new Event('input', "
+                        "{ bubbles: true }));"
                     )
+                    with contextlib.suppress(Exception):
+                        self.driver.execute_script(
+                            js_script,
+                            element,
+                            actual_text,
+                        )
+                    entered_value = element.get_attribute("value")
+
+                # Final verification
+                if entered_value != actual_text:
+                    message = (
+                        f"Text verification failed. Expected: {actual_text}, "
+                        f"Got: {entered_value}"
+                    )
+                    raise ValueError(message)
 
                 if ADVANCED_FEATURES_AVAILABLE:
                     self._record_interaction(
-                        "send_keys", locator, "SUCCESS", f"Text: {actual_text}"
+                        "send_keys",
+                        locator,
+                        "SUCCESS",
+                        f"Text: {actual_text}",
                     )
                     self._end_performance_tracking("send_keys")
                 return True
 
-            if ADVANCED_FEATURES_AVAILABLE:
-                self._record_interaction(
-                    "send_keys", locator, "FAILED", "Element not found"
-                )
-                self._end_performance_tracking("send_keys")
-            return False
-
-        except Exception as e:
+        except (WebDriverException, TimeoutException) as e:
             if ADVANCED_FEATURES_AVAILABLE:
                 self._record_interaction("send_keys", locator, "FAILED", str(e))
                 self._end_performance_tracking("send_keys")
             return False
+        else:
+            if ADVANCED_FEATURES_AVAILABLE:
+                self._record_interaction(
+                    "send_keys",
+                    locator,
+                    "FAILED",
+                    "Element not found",
+                )
+                self._end_performance_tracking("send_keys")
+            return False
 
-    def get_text(self, locator: Tuple[str, str], timeout: int = None) -> str:
+    def get_text(self, locator: tuple[str, str], timeout: Optional[int] = None) -> str:
         """
         Get element text.
 
@@ -358,7 +420,10 @@ class BasePage:
         return ""
 
     def get_attribute(
-        self, locator: Tuple[str, str], attribute: str, timeout: int = None
+        self,
+        locator: tuple[str, str],
+        attribute: str,
+        timeout: Optional[int] = None,
     ) -> str:
         """
         Get element attribute.
@@ -379,7 +444,7 @@ class BasePage:
                 return ""
         return ""
 
-    def is_element_visible(self, locator: Tuple[str, str], timeout: int = 1) -> bool:
+    def is_element_visible(self, locator: tuple[str, str], timeout: int = 1) -> bool:
         """
         Check if element is visible.
 
@@ -392,7 +457,7 @@ class BasePage:
         """
         return self.wait_for_element(locator, timeout) is not None
 
-    def is_element_present(self, locator: Tuple[str, str]) -> bool:
+    def is_element_present(self, locator: tuple[str, str]) -> bool:
         """
         Check if element is present in DOM (not necessarily visible).
 
@@ -418,9 +483,10 @@ class BasePage:
         """
         try:
             self.driver.get(url)
-            return True
         except WebDriverException:
             return False
+        else:
+            return True
 
     def refresh_page(self) -> bool:
         """
@@ -431,9 +497,10 @@ class BasePage:
         """
         try:
             self.driver.refresh()
-            return True
         except WebDriverException:
             return False
+        else:
+            return True
 
     def get_current_url(self) -> str:
         """
@@ -447,7 +514,7 @@ class BasePage:
         except WebDriverException:
             return ""
 
-    def get_title(self, timeout: int = None) -> str:
+    def get_title(self, timeout: Optional[int] = None) -> str:
         """
         Get page title with optional wait for non-empty title.
 
@@ -460,11 +527,12 @@ class BasePage:
         try:
             if timeout:
                 WebDriverWait(self.driver, timeout).until(
-                    lambda driver: driver.title != ""
+                    lambda driver: driver.title != "",
                 )
-            return self.driver.title
         except (TimeoutException, WebDriverException):
             return ""
+        else:
+            return self.driver.title
 
     def go_back(self) -> bool:
         """
@@ -475,9 +543,10 @@ class BasePage:
         """
         try:
             self.driver.back()
-            return True
         except WebDriverException:
             return False
+        else:
+            return True
 
     def go_forward(self) -> bool:
         """
@@ -488,11 +557,12 @@ class BasePage:
         """
         try:
             self.driver.forward()
-            return True
         except WebDriverException:
             return False
+        else:
+            return True
 
-    def wait_for_page_load(self, timeout: int = None) -> bool:
+    def wait_for_page_load(self, timeout: Optional[int] = None) -> bool:
         """
         Wait for page to load (document ready state).
 
@@ -506,41 +576,40 @@ class BasePage:
         try:
             WebDriverWait(self.driver, wait_time).until(
                 lambda driver: driver.execute_script("return document.readyState")
-                == "complete"
+                == "complete",
             )
-            return True
         except TimeoutException:
             return False
+        else:
+            return True
 
     # === UTILITY METHODS ===
 
-    def take_screenshot(self, filename: str = None) -> str:
+    def take_screenshot(self, filename: Optional[str] = None) -> str:
         """
         Take screenshot of current page.
 
         Args:
-            filename: Optional filename (auto-generated if None)
+            filename: Optional filename (can include directory, auto-generated if None)
 
         Returns:
             Path to saved screenshot or empty string if failed
         """
         try:
-            import os
-            import time
-
             if not filename:
                 timestamp = int(time.time())
                 filename = f"screenshot_{timestamp}.png"
 
-            # Ensure screenshots directory exists
-            screenshot_dir = "screenshots"
-            os.makedirs(screenshot_dir, exist_ok=True)
+            # If filename includes a directory, ensure it exists
+            filepath = Path(filename)
+            if filepath.parent and not filepath.parent.exists():
+                filepath.parent.mkdir(parents=True, exist_ok=True)
 
-            filepath = os.path.join(screenshot_dir, filename)
-            self.driver.save_screenshot(filepath)
-            return filepath
-        except Exception:
+            self.driver.save_screenshot(str(filepath))
+        except (WebDriverException, TimeoutException):
             return ""
+        else:
+            return str(filepath)
 
     def execute_script(self, script: str, *args) -> Any:
         """
@@ -558,7 +627,11 @@ class BasePage:
         except WebDriverException:
             return None
 
-    def scroll_to_element(self, locator: Tuple[str, str], timeout: int = None) -> bool:
+    def scroll_to_element(
+        self,
+        locator: tuple[str, str],
+        timeout: Optional[int] = None,
+    ) -> bool:
         """
         Scroll element into view.
 
@@ -573,14 +646,19 @@ class BasePage:
         if element:
             try:
                 ActionChains(self.driver).move_to_element(element).perform()
-                return True
             except WebDriverException:
                 return False
+            else:
+                return True
         return False
 
     # === DATABASE METHODS (if database connection provided) ===
 
-    def execute_query(self, query: str, parameters: tuple = None) -> List[dict]:
+    def execute_query(
+        self,
+        query: str,
+        parameters: Optional[tuple] = None,
+    ) -> list[dict]:
         """
         Execute database query if database connection available.
 
@@ -596,12 +674,10 @@ class BasePage:
 
         try:
             # Import here to avoid dependency if not using database features
-            from utils.sql_connection import execute_query, fetch_all
-
             cursor = execute_query(self.database, query, parameters)
             if cursor:
                 return fetch_all(cursor) or []
-        except Exception:
+        except (WebDriverException, TimeoutException):
             pass
 
         return []
@@ -610,9 +686,9 @@ class BasePage:
 
     def wait_for_element_advanced(
         self,
-        locator: Tuple[str, str],
+        locator: tuple[str, str],
         condition: str = "visible",
-        timeout: int = None,
+        timeout: Optional[int] = None,
         poll_frequency: float = 0.5,
     ) -> Any:
         """
@@ -631,10 +707,9 @@ class BasePage:
             # Fallback to basic wait
             if condition == "visible":
                 return self.wait_for_element(locator, timeout)
-            elif condition == "clickable":
+            if condition == "clickable":
                 return self.wait_for_clickable(locator, timeout)
-            else:
-                return self.find_element(locator, timeout)
+            return self.find_element(locator, timeout)
 
         self._start_performance_tracking("wait_for_element")
 
@@ -650,7 +725,8 @@ class BasePage:
         }
 
         if condition not in condition_map:
-            raise ValueError(f"Unknown condition: {condition}")
+            message = f"Unknown condition: {condition}"
+            raise ValueError(message)
 
         try:
             element = wait.until(condition_map[condition])
@@ -661,9 +737,7 @@ class BasePage:
                 f"Condition: {condition}",
             )
             self._end_performance_tracking("wait_for_element")
-            return element
-
-        except TimeoutException as e:
+        except TimeoutException:
             self._record_interaction(
                 "wait_for_element",
                 locator,
@@ -671,9 +745,11 @@ class BasePage:
                 f"Timeout waiting for {condition}",
             )
             self._end_performance_tracking("wait_for_element")
-            raise e
+            raise
+        else:
+            return element
 
-    def is_element_healthy(self, locator: Tuple[str, str]) -> Dict[str, Any]:
+    def is_element_healthy(self, locator: tuple[str, str]) -> dict[str, Any]:
         """
         Perform comprehensive element health check.
 
@@ -685,7 +761,7 @@ class BasePage:
         """
         health_report = {
             "locator": locator,
-            "timestamp": datetime.now(),
+            "timestamp": datetime.now(datetime.UTC),
             "checks": {},
             "overall_health": "unknown",
             "recommendations": [],
@@ -702,7 +778,7 @@ class BasePage:
             health_report["checks"]["visible"] = is_visible
             if not is_visible:
                 health_report["recommendations"].append(
-                    "Element exists but not visible"
+                    "Element exists but not visible",
                 )
 
             # Interactability check
@@ -728,7 +804,7 @@ class BasePage:
 
             # Stale element check
             try:
-                element.tag_name  # This will throw if element is stale
+                print(element.tag_name)  # This will throw if element is stale
                 health_report["checks"]["not_stale"] = True
             except StaleElementReferenceException:
                 health_report["checks"]["not_stale"] = False
@@ -757,7 +833,7 @@ class BasePage:
 
         return health_report
 
-    def load_test_scenario(self, scenario_name: str) -> Dict[str, Any]:
+    def load_test_scenario(self, scenario_name: str) -> dict[str, Any]:
         """
         Load test scenario data.
 
@@ -776,9 +852,10 @@ class BasePage:
             if scenario.get("name") == scenario_name:
                 return scenario
 
-        raise ValueError(f"Test scenario '{scenario_name}' not found")
+        message = f"Test scenario '{scenario_name}' not found"
+        raise ValueError(message)
 
-    def get_user_credentials(self, role: str = "standard") -> Dict[str, Any]:
+    def get_user_credentials(self, role: str = "standard") -> dict[str, Any]:
         """
         Get user credentials for the specified role.
 
@@ -799,7 +876,7 @@ class BasePage:
 
         return users[0]  # Return first user of the role
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """
         Get performance metrics report.
 
@@ -819,8 +896,6 @@ class BasePage:
 
         for action, times in self.performance_metrics.items():
             if times:
-                import statistics
-
                 report["action_metrics"][action] = {
                     "count": len(times),
                     "average_time": round(statistics.mean(times), 3),
@@ -847,7 +922,7 @@ class BasePage:
 
         return report
 
-    def get_interaction_summary(self) -> Dict[str, Any]:
+    def get_interaction_summary(self) -> dict[str, Any]:
         """
         Get summary of element interactions.
 
@@ -872,7 +947,8 @@ class BasePage:
             "total_interactions": total_interactions,
             "successful_interactions": successful_interactions,
             "success_rate": round(
-                (successful_interactions / total_interactions) * 100, 2
+                (successful_interactions / total_interactions) * 100,
+                2,
             ),
             "action_breakdown": action_counts,
             "most_recent_failures": [
@@ -880,7 +956,7 @@ class BasePage:
             ],
         }
 
-    def take_screenshot_with_context(self, name: str = None) -> str:
+    def take_screenshot_with_context(self, name: Optional[str] = None) -> str:
         """
         Take screenshot with additional context information.
 
@@ -890,14 +966,14 @@ class BasePage:
         Returns:
             Path to the saved screenshot
         """
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
         filename = name or f"{self.test_name}_{timestamp}"
 
         # Take the screenshot
         screenshot_path = f"screenshots/{filename}.png"
         try:
             self.driver.save_screenshot(screenshot_path)
-        except BaseException:
+        except WebDriverException:
             # Fallback to basic screenshot
             return self.take_screenshot(f"{filename}.png")
 
@@ -916,20 +992,18 @@ class BasePage:
             }
 
             # Save context as JSON
-            import json
-
             context_path = f"screenshots/{filename}_context.json"
             try:
-                with open(context_path, "w") as f:
+                with Path(context_path).open("w") as f:
                     json.dump(context, f, indent=2, default=str)
-            except BaseException:
+            except OSError:
                 pass  # Context saving is optional
 
         return screenshot_path
 
     # === PRIVATE HELPER METHODS FOR ADVANCED FEATURES ===
 
-    def _start_performance_tracking(self, action: str) -> None:
+    def _start_performance_tracking(self, _action: str) -> None:
         """Start tracking performance for an action."""
         if ADVANCED_FEATURES_AVAILABLE:
             self.action_start_time = time.time()
@@ -946,8 +1020,10 @@ class BasePage:
             self.action_start_time = None
 
     def load_test_configuration(
-        self, config_name: str = "browser_config", environment: str = "default"
-    ) -> Dict[str, Any]:
+        self,
+        config_name: str = "browser_config",
+        environment: str = "default",
+    ) -> dict[str, Any]:
         """
         Load YAML test configuration using TestDataManager.
         Demonstrates practical integration of YAML configuration management.
@@ -958,15 +1034,21 @@ class BasePage:
         try:
             config = self.data_manager.load_yaml_config(config_name, environment)
             self.logger.info(
-                f"Loaded configuration: {config_name} for environment: {environment}"
+                "Loaded configuration: %s for environment: %s",
+                config_name,
+                environment,
             )
-            return config
-        except Exception as e:
-            self.logger.warning(f"Failed to load configuration: {str(e)}")
+        except (OSError, ValueError) as e:
+            self.logger.warning("Failed to load configuration: %s", e)
             return {"error": str(e)}
+        else:
+            return config
 
     def execute_with_retry_analytics(
-        self, operation: Callable, operation_name: str = "operation", **kwargs
+        self,
+        operation: Callable,
+        operation_name: str = "operation",
+        **kwargs,
     ) -> Any:
         """
         Execute operation with tenacity retry and performance analytics.
@@ -997,25 +1079,28 @@ class BasePage:
                 "memory_before_mb": memory_before.get("memory_usage_mb", 0),
                 "memory_after_mb": memory_after.get("memory_usage_mb", 0),
                 "success": True,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(datetime.UTC).isoformat(),
             }
 
             self.performance_data.append(performance_data)
             self.logger.info(
-                f"Operation '{operation_name}' completed in {duration:.2f}s"
+                "Operation '%s' completed in %.2fs",
+                operation_name,
+                duration,
             )
 
-            return result
-
-        except Exception as e:
+        except (RuntimeError, ValueError):
             duration = time.time() - start_time
-            self.logger.error(
-                f"Operation '{operation_name}' failed after "
-                f"{duration:.2f}s: {str(e)}"
+            self.logger.exception(
+                "Operation '%s' failed after %.2fs",
+                operation_name,
+                duration,
             )
             raise
+        else:
+            return result
 
-    def generate_performance_report(self) -> Dict[str, Any]:
+    def generate_performance_report(self) -> dict[str, Any]:
         """
         Generate comprehensive performance report using pandas analytics.
         Integrates with AdvancedTestReporter for data analysis.
@@ -1036,23 +1121,23 @@ class BasePage:
                 "data_exported": csv_file,
             }
 
-        except Exception as e:
-            self.logger.error(f"Failed to generate performance report: {str(e)}")
+        except (OSError, RuntimeError) as e:
+            self.logger.exception("Failed to generate performance report")
             return {"error": str(e)}
 
     def _record_interaction(
         self,
         action: str,
-        locator: Tuple[str, str],
+        locator: tuple[str, str],
         status: str,
-        details: str = None,
+        details: Optional[str] = None,
     ) -> None:
         """Record interaction for analysis and debugging."""
         if not ADVANCED_FEATURES_AVAILABLE:
             return
 
         interaction = {
-            "timestamp": datetime.now(),
+            "timestamp": datetime.now(datetime.UTC),
             "action": action,
             "locator": locator,
             "status": status,

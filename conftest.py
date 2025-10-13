@@ -4,7 +4,8 @@ Pytest configuration and fixtures for test automation.
 
 import os
 import time
-from typing import Any, Dict, Tuple
+from collections.abc import Generator
+from typing import Any
 
 import pytest
 from selenium import webdriver
@@ -25,7 +26,7 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def test_config(request) -> Dict[str, Any]:
+def test_config(request) -> dict[str, Any]:
     """Test configuration from command line and environment."""
     # Check both command line flag and environment variable for headless mode
     headless_cli = request.config.getoption("--headless")
@@ -38,7 +39,14 @@ def test_config(request) -> Dict[str, Any]:
 
 
 @pytest.fixture
-def driver(request, test_config) -> Tuple[webdriver.Chrome, object]:
+def driver(
+    request,
+    test_config,
+) -> Generator[
+    tuple[webdriver.Chrome, object],
+    None,
+    None,
+]:
     """
     Main driver fixture providing WebDriver and database connection.
     """
@@ -47,7 +55,8 @@ def driver(request, test_config) -> Tuple[webdriver.Chrome, object]:
 
     # Setup phase
     driver, db = get_driver(
-        browser=test_config["browser"], headless=test_config["headless"]
+        browser=test_config["browser"],
+        headless=test_config["headless"],
     )
 
     try:
@@ -58,23 +67,24 @@ def driver(request, test_config) -> Tuple[webdriver.Chrome, object]:
         print(f"Test {test_name} completed in {duration:.2f}s")
 
         # Screenshot on failure
-        if hasattr(request.node, "rep_call") and request.node.rep_call.failed:
-            if settings.SCREENSHOT_ON_FAILURE:
-                try:
-                    screenshot_path = (
-                        settings.SCREENSHOTS_DIR / f"{test_name}_failure.png"
-                    )
-                    driver.save_screenshot(str(screenshot_path))
-                    print(f"Failure screenshot: {screenshot_path}")
-                except Exception as e:
-                    print(f"Screenshot failed: {e}")
+        if (
+            hasattr(request.node, "rep_call")
+            and request.node.rep_call.failed
+            and settings.SCREENSHOT_ON_FAILURE
+        ):
+            try:
+                screenshot_path = settings.SCREENSHOTS_DIR / f"{test_name}_failure.png"
+                driver.save_screenshot(str(screenshot_path))
+                print(f"Failure screenshot: {screenshot_path}")
+            except OSError as e:
+                print(f"Screenshot failed: {e}")
 
         # Centralized cleanup
         cleanup_driver_and_database(driver, db)
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item):
     """Capture test results for failure screenshots."""
     outcome = yield
     rep = outcome.get_result()

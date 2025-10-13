@@ -1,3 +1,9 @@
+import threading
+import time
+from datetime import datetime, timezone
+from unittest.mock import Mock, patch
+
+import pytest
 from hamcrest import (
     assert_that,
     contains_string,
@@ -11,17 +17,7 @@ from hamcrest import (
     none,
     not_none,
 )
-
-"""
-Unit tests for performance monitoring utilities.
-"""
-
-import threading
-import time
-from datetime import datetime
-from unittest.mock import Mock, patch
-
-import pytest
+from selenium.webdriver.common.by import By
 
 from utils.performance_monitor import (
     APIPerformanceMonitor,
@@ -32,13 +28,17 @@ from utils.performance_monitor import (
     performance_test,
 )
 
+"""
+Unit tests for performance monitoring utilities.
+"""
+
 
 class TestPerformanceMetric:
     """Test PerformanceMetric data class."""
 
     def test_performance_metric_creation(self):
         """Test creating performance metric with all fields."""
-        timestamp = datetime.now()
+        timestamp = datetime.now(timezone.utc)
         context = {"test": "data"}
 
         metric = PerformanceMetric(
@@ -58,7 +58,10 @@ class TestPerformanceMetric:
     def test_performance_metric_without_context(self):
         """Test creating performance metric without context."""
         metric = PerformanceMetric(
-            name="simple_metric", value=100.0, unit="s", timestamp=datetime.now()
+            name="simple_metric",
+            value=100.0,
+            unit="s",
+            timestamp=datetime.now(timezone.utc),
         )
 
         assert_that(metric.name, equal_to("simple_metric"))
@@ -145,7 +148,8 @@ class TestPerformanceMonitor:
         @self.monitor.timer(name="failing_function")
         def failing_function():
             time.sleep(0.01)
-            raise ValueError("Test error")
+            message = "Test error"
+            raise ValueError(message)
 
         with pytest.raises(ValueError, match="Test error"):
             failing_function()
@@ -170,7 +174,8 @@ class TestPerformanceMonitor:
         assert_that(result, equal_to("done"))
         assert_that(len(self.monitor.metrics), equal_to(1))
         assert_that(
-            self.monitor.metrics[0].name, equal_to("sample_function_execution_time")
+            self.monitor.metrics[0].name,
+            equal_to("sample_function_execution_time"),
         )
 
     @patch("psutil.Process")
@@ -316,8 +321,6 @@ class TestWebDriverPerformanceMonitor:
         mock_driver = Mock()
         mock_driver.find_element.return_value = mock_element
 
-        from selenium.webdriver.common.by import By
-
         find_time = self.web_monitor.monitor_element_find(mock_driver, By.ID, "test-id")
 
         mock_driver.find_element.assert_called_once_with(By.ID, "test-id")
@@ -354,7 +357,9 @@ class TestAPIPerformanceMonitor:
         mock_session.get.return_value = mock_response
 
         timing_data = self.api_monitor.monitor_api_request(
-            mock_session, "GET", "https://api.test.com/data"
+            mock_session,
+            "GET",
+            "https://api.test.com/data",
         )
 
         mock_session.get.assert_called_once_with("https://api.test.com/data")
@@ -422,7 +427,10 @@ class TestDecorators:
             time.sleep(0.05)  # 50ms - exceeds 10ms threshold
             return "completed"
 
-        with pytest.raises(AssertionError, match="Performance threshold exceeded"):
+        with (
+            patch.dict("os.environ", {"PERFORMANCE_FAIL_ON_THRESHOLD": "true"}),
+            pytest.raises(AssertionError, match="Performance threshold exceeded"),
+        ):
             slow_function()
 
     def test_performance_test_decorator_without_threshold(self):
@@ -448,7 +456,9 @@ class TestThreadSafety:
         def record_metrics(thread_id):
             for i in range(10):
                 monitor.record_metric(
-                    f"thread_{thread_id}_metric_{i}", float(i), "units"
+                    f"thread_{thread_id}_metric_{i}",
+                    float(i),
+                    "units",
                 )
                 time.sleep(0.001)  # Small delay
             results.append(f"thread_{thread_id}_completed")
@@ -466,7 +476,7 @@ class TestThreadSafety:
         assert_that(len(results), equal_to(3))
 
         # All metrics should be recorded
-        # 3 threads × 10 metrics
+        # 3 threads x 10 metrics
         assert_that(len(monitor.metrics), equal_to(30))
 
         # Verify metric names are unique

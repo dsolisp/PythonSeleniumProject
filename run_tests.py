@@ -21,10 +21,13 @@ Features:
 
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+
+from utils.test_data_manager import DataManager
 
 
 def run_command(command, description):
@@ -36,18 +39,13 @@ def run_command(command, description):
     try:
         # Convert string command to list for safer execution (no shell=True)
         # nosec B603 - Command constructed from trusted internal sources
-        if isinstance(command, str):
-            import shlex
-
-            command_list = shlex.split(command)
-        else:
-            command_list = command
+        command_list = shlex.split(command) if isinstance(command, str) else command
 
         result = subprocess.run(
             command_list,
             shell=False,  # Security: Avoid shell injection
             check=True,
-            cwd=os.getcwd(),
+            cwd=Path.getcwd(),
             capture_output=True,
             text=True,
         )
@@ -55,15 +53,16 @@ def run_command(command, description):
         if result.stderr:
             print(result.stderr, file=sys.stderr)
         print(f"✅ {description} - PASSED")
-        return True, result
     except subprocess.CalledProcessError as e:
         print(e.stdout if e.stdout else "")
         print(e.stderr if e.stderr else "", file=sys.stderr)
         print(f"❌ {description} - FAILED with exit code {e.returncode}")
         return False, e
+    else:
+        return True, result
 
 
-def export_test_results(test_type: str, success: bool, duration: float):
+def export_test_results(*, test_type: str, success: bool, duration: float):
     """
     Export test results to YAML for ML analysis.
 
@@ -74,8 +73,7 @@ def export_test_results(test_type: str, success: bool, duration: float):
     """
     try:
         # Import here to avoid dependency issues
-        sys.path.insert(0, os.getcwd())
-        from utils.test_data_manager import DataManager
+        sys.path.insert(0, Path.getcwd())
 
         manager = DataManager()
 
@@ -87,23 +85,23 @@ def export_test_results(test_type: str, success: bool, duration: float):
             "failed": "N/A",
             "success": success,
             "duration": duration,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
             "environment": os.getenv("TEST_ENV", "local"),
             "python_version": sys.version.split()[0],
             "platform": sys.platform,
         }
 
         # Export to YAML
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
         filename = f"test_run_{test_type}_{timestamp}.yml"
         yaml_file = manager.save_test_results_yaml(results, filename=filename)
 
         print(f"\n📊 Test results exported to: {yaml_file}")
-        return yaml_file
-
-    except Exception as e:
+    except (OSError, ValueError) as e:
         print(f"⚠️  Failed to export test results: {e}")
         return None
+    else:
+        return yaml_file
 
 
 def run_ml_analysis():
@@ -128,7 +126,8 @@ def run_ml_analysis():
 
         result = subprocess.run(
             [sys.executable, str(analyzer_script)],
-            cwd=os.getcwd(),
+            check=False,
+            cwd=Path.getcwd(),
             capture_output=True,
             text=True,
             timeout=60,
@@ -143,7 +142,7 @@ def run_ml_analysis():
         if report_path.exists():
             print(f"\n✅ ML analysis complete! Report: {report_path}")
             print("\n📋 Quick Summary:")
-            with open(report_path) as f:
+            with Path.open(report_path) as f:
                 lines = f.readlines()
                 # Print first 20 lines of report
                 for line in lines[:20]:
@@ -151,7 +150,7 @@ def run_ml_analysis():
 
     except subprocess.TimeoutExpired:
         print("⚠️  ML analysis timed out (>60s)")
-    except Exception as e:
+    except (OSError, RuntimeError) as e:
         print(f"⚠️  ML analysis failed: {e}")
         print("   Continuing without analysis...")
 
@@ -193,10 +192,15 @@ Test Counts:
         help="Type of tests to run (default: regression)",
     )
     parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Run tests with verbose output"
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Run tests with verbose output",
     )
     parser.add_argument(
-        "--coverage", action="store_true", help="Run tests with coverage report"
+        "--coverage",
+        action="store_true",
+        help="Run tests with coverage report",
     )
     parser.add_argument(
         "--no-export",
@@ -204,13 +208,15 @@ Test Counts:
         help="Skip test result export and ML analysis",
     )
     parser.add_argument(
-        "--no-ml", action="store_true", help="Skip ML analysis (still exports results)"
+        "--no-ml",
+        action="store_true",
+        help="Skip ML analysis (still exports results)",
     )
 
     args = parser.parse_args()
 
     # Track start time
-    start_time = datetime.now()
+    start_time = datetime.now(datetime.UTC)
 
     # Build base command
     base_cmd = "python -m pytest"
@@ -255,7 +261,7 @@ Test Counts:
         # Run API tests (5 tests with conditional Allure)
         success_result, _ = run_command(
             f"{base_cmd} tests/api/test_api.py",
-            "API Tests (5 tests: GET, POST, performance " "with conditional Allure)",
+            "API Tests (5 tests: GET, POST, performance with conditional Allure)",
         )
         success &= success_result
         test_runs.append(("api", success_result))
@@ -306,7 +312,7 @@ Test Counts:
             test_runs.append((test_type, success_result))
 
     # Calculate duration
-    duration = (datetime.now() - start_time).total_seconds()
+    duration = (datetime.now(datetime.UTC) - start_time).total_seconds()
 
     # Export results (unless disabled)
     if not args.no_export:

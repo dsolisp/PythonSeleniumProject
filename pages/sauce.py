@@ -1,3 +1,4 @@
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -6,7 +7,6 @@ from pages.base_page import BasePage
 
 
 class SaucePage(BasePage):
-
     def open(self):
         """Navigate to SauceDemo website."""
         self.navigate_to("https://www.saucedemo.com/")
@@ -18,7 +18,7 @@ class SaucePage(BasePage):
         wait = WebDriverWait(self.driver, 10)
 
         username_input = wait.until(
-            EC.presence_of_element_located(SauceLocators.USERNAME_INPUT)
+            EC.presence_of_element_located(SauceLocators.USERNAME_INPUT),
         )
         password_input = self.driver.find_element(*SauceLocators.PASSWORD_INPUT)
         login_button = self.driver.find_element(*SauceLocators.LOGIN_BUTTON)
@@ -34,9 +34,10 @@ class SaucePage(BasePage):
         try:
             wait = WebDriverWait(self.driver, 10)
             wait.until(EC.presence_of_element_located(SauceLocators.INVENTORY_LIST))
-            return True
-        except Exception:
+        except TimeoutException:
             return False
+        else:
+            return True
 
     def get_logout_button(self):
         return self.driver.find_elements(*SauceLocators.LOGOUT_BUTTON)
@@ -45,17 +46,17 @@ class SaucePage(BasePage):
         wait = WebDriverWait(self.driver, 10)
 
         add_backpack_to_cart_button = wait.until(
-            EC.element_to_be_clickable(SauceLocators.ADD_BACKPACK_BUTTON)
+            EC.element_to_be_clickable(SauceLocators.ADD_BACKPACK_BUTTON),
         )
         add_backpack_to_cart_button.click()
 
         add_bikelight_to_cart_button = wait.until(
-            EC.element_to_be_clickable(SauceLocators.ADD_BIKELIGHT_BUTTON)
+            EC.element_to_be_clickable(SauceLocators.ADD_BIKELIGHT_BUTTON),
         )
         add_bikelight_to_cart_button.click()
 
         add_shirt_to_cart_button = wait.until(
-            EC.element_to_be_clickable(SauceLocators.ADD_SHIRT_BUTTON)
+            EC.element_to_be_clickable(SauceLocators.ADD_SHIRT_BUTTON),
         )
         add_shirt_to_cart_button.click()
 

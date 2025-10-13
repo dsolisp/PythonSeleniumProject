@@ -3,6 +3,8 @@ Smoke Tests - Quick Framework Health Checks
 These tests verify that the framework is in a working state.
 """
 
+import sqlite3
+
 import pytest
 from hamcrest import (
     assert_that,
@@ -14,11 +16,16 @@ from hamcrest import (
     is_,
     is_in,
 )
+from selenium.webdriver.common.by import By
+
+from config.settings import Settings
+from locators.search_engine_locators import SearchEngineLocators
 
 
 class TestFrameworkSmoke:
     """Quick smoke tests to verify framework health."""
 
+    # TODO: test doing pass with true is true
     def test_all_core_imports_work(self):
         """Test that all core framework components can be imported."""
         # This is the most important test - if imports fail, nothing works
@@ -26,15 +33,13 @@ class TestFrameworkSmoke:
             pass
 
             # If we get here, all imports worked
-            assert_that(True, is_(True))
+            assert_that(True, is_(True))  # noqa: FBT003
 
         except ImportError as e:
             pytest.fail(f"Core import failed: {e}")
 
     def test_settings_provide_expected_values(self):
         """Test that settings provide sensible default values."""
-        from config.settings import Settings
-
         settings = Settings()
 
         # Should have basic required settings
@@ -50,10 +55,6 @@ class TestFrameworkSmoke:
 
     def test_locators_have_valid_format(self):
         """Test that locators follow the expected format."""
-        from selenium.webdriver.common.by import By
-
-        from locators.search_engine_locators import SearchEngineLocators
-
         # Check a few key locators
         search_box = SearchEngineLocators.SEARCH_BOX
         search_button = SearchEngineLocators.SEARCH_BUTTON
@@ -64,7 +65,7 @@ class TestFrameworkSmoke:
         assert_that(
             search_box[0],
             is_in(
-                [By.ID, By.NAME, By.CLASS_NAME, By.TAG_NAME, By.XPATH, By.CSS_SELECTOR]
+                [By.ID, By.NAME, By.CLASS_NAME, By.TAG_NAME, By.XPATH, By.CSS_SELECTOR],
             ),
         )
         assert_that(search_box[1], instance_of(str))
@@ -77,20 +78,19 @@ class TestFrameworkSmoke:
 class TestDependenciesAvailable:
     """Test that required dependencies are available."""
 
+    # TODO: test doing pass with true is true
     def test_selenium_available(self):
         """Test that Selenium is properly installed."""
         try:
             pass
 
-            assert_that(True, is_(True))
+            assert_that(True, is_(True))  # noqa: FBT003
         except ImportError as e:
             pytest.fail(f"Selenium not properly installed: {e}")
 
     def test_sqlite_available(self):
         """Test that SQLite support is available."""
         try:
-            import sqlite3
-
             # Test basic SQLite functionality
             conn = sqlite3.connect(":memory:")
             cursor = conn.cursor()
@@ -98,17 +98,18 @@ class TestDependenciesAvailable:
             result = cursor.fetchone()
             conn.close()
             assert_that(result[0], equal_to(1))
-        except Exception as e:
+        except (sqlite3.Error, OSError) as e:
             pytest.fail(f"SQLite not working properly: {e}")
 
+    # TODO: test doing pass with true is true
     def test_image_processing_available(self):
         """Test that image processing dependencies are available."""
         try:
             pass
 
-            assert_that(True, is_(True))
+            assert_that(True, is_(True))  # noqa: FBT003
         except ImportError:
             # PIL/numpy might not be installed, that's ok for basic framework
             pytest.skip(
-                "PIL/numpy not available - image processing features may be limited"
+                "PIL/numpy not available - image processing features may be limited",
             )

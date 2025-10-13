@@ -20,3 +20,5 @@ custom_reports/
 custom_logs/
 /data/results
 .coverage
+/venv-enhanced
+/screenshots

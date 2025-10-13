@@ -30,8 +30,7 @@ class PlaywrightSearchEngineLocators:
     # DuckDuckGo: article[data-testid], [data-area='mainline']
     # Google: #search, #rso
     RESULTS_CONTAINER = (
-        "#search, #rso, #links, .results, "
-        "article[data-testid], [data-area='mainline']"
+        "#search, #rso, #links, .results, article[data-testid], [data-area='mainline']"
     )
 
     # Individual result links
@@ -54,7 +53,7 @@ class PlaywrightSearchEngineLocators:
     # DuckDuckGo: article [data-result='snippet']
     # Google: .VwiC3b, .s3v9rd
     RESULT_DESCRIPTIONS = (
-        ".VwiC3b, .s3v9rd, .result__snippet, " "article [data-result='snippet']"
+        ".VwiC3b, .s3v9rd, .result__snippet, article [data-result='snippet']"
     )
 
     # CAPTCHA detection (generic selectors)
@@ -62,7 +61,7 @@ class PlaywrightSearchEngineLocators:
 
     # No results message
     NO_RESULTS = (
-        'p:has-text("did not match any documents"), ' ".no-results, .no-results-message"
+        'p:has-text("did not match any documents"), .no-results, .no-results-message'
     )
 
     # Fallback selectors for search completion detection

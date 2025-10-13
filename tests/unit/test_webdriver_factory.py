@@ -1,3 +1,6 @@
+from unittest.mock import Mock, patch
+
+import pytest
 from hamcrest import (
     assert_that,
     equal_to,
@@ -5,21 +8,17 @@ from hamcrest import (
     none,
 )
 
-"""
-Real Unit Tests for WebDriver Factory Functions
-Testing actual factory logic and configuration.
-"""
-
-from unittest.mock import Mock, patch
-
-import pytest
-
 from utils.webdriver_factory import (
     DatabaseFactory,
     WebDriverFactory,
     cleanup_driver_and_database,
     get_driver,
 )
+
+"""
+Real Unit Tests for WebDriver Factory Functions
+Testing actual factory logic and configuration.
+"""
 
 
 class TestWebDriverFactory:
@@ -114,10 +113,11 @@ class TestDatabaseFactory:
 
         assert_that(result, equal_to(mock_conn))
         assert_that(
-            mock_conn.row_factory, equal_to(mock_connect.return_value.row_factory)
+            mock_conn.row_factory,
+            equal_to(mock_connect.return_value.row_factory),
         )
 
-    @patch("utils.webdriver_factory.os.path.exists")
+    @patch("pathlib.Path.exists")
     def test_create_database_connection_file_not_found(self, mock_exists):
         """Test database connection when file doesn't exist."""
         mock_exists.return_value = False
@@ -211,7 +211,7 @@ class TestGetDriverFunction:
         mock_db.return_value = None
         mock_getenv.return_value = "15"  # Custom timeout
 
-        driver, database = get_driver("chrome")
+        _driver, _database = get_driver("chrome")
 
         mock_driver.implicitly_wait.assert_called_once_with(15)
 

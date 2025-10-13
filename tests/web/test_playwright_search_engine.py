@@ -2,7 +2,7 @@
 Playwright Search engine tests demonstrating modern browser automation.
 """
 
-import asyncio
+from urllib.parse import urlparse
 
 import pytest
 from hamcrest import (
@@ -27,7 +27,8 @@ async def test_playwright_search_basic():
     try:
         # Create Playwright session
         factory, playwright_page = await create_playwright_session(
-            browser_type="chromium", headless=settings.HEADLESS
+            browser_type="chromium",
+            headless=settings.HEADLESS,
         )
 
         # Create search engine page
@@ -47,25 +48,33 @@ async def test_playwright_search_basic():
 
         # Navigate to search engine
         search_success = await search_page.search_for(
-            search_term, wait_for_results=True
+            search_term,
+            wait_for_results=True,
         )
         assert_that(search_success, is_(True), "Search should succeed")
 
         # Wait for search completion
         completion_success = await search_page.wait_for_search_completion()
-        assert_that(
-            completion_success, is_(True)
-        ), "Search should complete within timeout"
+        (
+            assert_that(
+                completion_success,
+                is_(True),
+            ),
+            "Search should complete within timeout",
+        )
 
         # Verify search was performed (DuckDuckGo uses ?q= parameter)
         current_url = await search_page.get_url()
-        assert_that(
-            any(
-                indicator in current_url.lower()
-                for indicator in ["?q=", "/search", "&q="]
+        (
+            assert_that(
+                any(
+                    indicator in current_url.lower()
+                    for indicator in ["?q=", "/search", "&q="]
+                ),
+                is_(True),
             ),
-            is_(True),
-        ), f"Should be on search results page: {current_url}"
+            f"Should be on search results page: {current_url}",
+        )
 
         # Check for results
         if await search_page.has_results():
@@ -78,17 +87,21 @@ async def test_playwright_search_basic():
 
             # Verify search term relevance (basic check)
             titles_text = " ".join(titles).lower()
-            assert_that(
-                any(
-                    word in titles_text for word in ["python", "automation", "testing"]
+            (
+                assert_that(
+                    any(
+                        word in titles_text
+                        for word in ["python", "automation", "testing"]
+                    ),
+                    is_(True),
                 ),
-                is_(True),
-            ), "Results should be relevant to search term"
+                "Results should be relevant to search term",
+            )
 
             print(f"✅ Found {result_count} results for '{search_term}'")
             print(f"First result: {titles[0][:100]}...")
         else:
-            print("⚠️ No results found - may be blocked by anti-bot measures")
+            pytest.fail("No results found - may be blocked by anti-bot measures")
 
     except Exception as e:
         print(f"Test error: {e}")
@@ -110,7 +123,8 @@ async def test_playwright_search_with_suggestions():
 
     try:
         factory, playwright_page = await create_playwright_session(
-            browser_type="chromium", headless=settings.HEADLESS
+            browser_type="chromium",
+            headless=settings.HEADLESS,
         )
 
         search_page = PlaywrightSearchEnginePage(playwright_page.page)
@@ -121,29 +135,36 @@ async def test_playwright_search_with_suggestions():
 
         # Type partial search term to trigger suggestions
         await search_page.element_actions.send_keys(
-            search_page.locators.SEARCH_INPUT, "playwright browser", clear=True
+            search_page.locators.SEARCH_INPUT,
+            "playwright browser",
+            clear=True,
         )
 
         # Try to wait for suggestions to appear (may not always appear)
         try:
             await playwright_page.page.wait_for_selector(
-                search_page.locators.SEARCH_SUGGESTIONS, timeout=3000
+                search_page.locators.SEARCH_SUGGESTIONS,
+                timeout=3000,
             )
-        except Exception:
+        except (TimeoutError, ValueError, TypeError):
             print("⚠️ Suggestions did not appear - common in automated environments")
 
         # Try to get suggestions (may not always appear due to anti-bot measures)
         suggestions = await search_page.get_search_suggestions()
 
         if suggestions:
-            assert_that(
-                len(suggestions), greater_than(0)
-            ), "Should have search suggestions"
+            (
+                assert_that(
+                    len(suggestions),
+                    greater_than(0),
+                ),
+                "Should have search suggestions",
+            )
             print(f"✅ Found {len(suggestions)} search suggestions")
             for i, suggestion in enumerate(suggestions[:3]):
                 print(f"  {i + 1}. {suggestion}")
         else:
-            print("⚠️ No suggestions found - may be disabled for automation")
+            pytest.fail("No suggestions found - common in automated environments")
 
         # Complete the search
         await playwright_page.page.keyboard.press("Enter")
@@ -169,7 +190,8 @@ async def test_playwright_advanced_search():
 
     try:
         factory, playwright_page = await create_playwright_session(
-            browser_type="chromium", headless=settings.HEADLESS
+            browser_type="chromium",
+            headless=settings.HEADLESS,
         )
 
         search_page = PlaywrightSearchEnginePage(playwright_page.page)
@@ -180,19 +202,23 @@ async def test_playwright_advanced_search():
 
         # Perform advanced search with simpler, more realistic query
         search_success = await search_page.perform_advanced_search(
-            search_term="python", site_filter="github.com"
+            search_term="python",
+            site_filter="github.com",
         )
         assert_that(search_success, is_(True), "Advanced search should succeed")
 
         # Verify advanced search (DuckDuckGo uses ?q= parameter)
         current_url = await search_page.get_url()
-        assert_that(
-            any(
-                indicator in current_url.lower()
-                for indicator in ["?q=", "/search", "&q="]
+        (
+            assert_that(
+                any(
+                    indicator in current_url.lower()
+                    for indicator in ["?q=", "/search", "&q="]
+                ),
+                is_(True),
             ),
-            is_(True),
-        ), f"Should be on search results page: {current_url}"
+            f"Should be on search results page: {current_url}",
+        )
 
         # The URL should contain our search parameters
         url_lower = current_url.lower()
@@ -214,7 +240,7 @@ async def test_playwright_advanced_search():
                 ]
                 print(f"✅ Found {len(github_links)} GitHub links in top 5 results")
         else:
-            print("⚠️ No results found - search engine may not support site: filter")
+            pytest.fail("No results found - search engine may not support site: filter")
 
     finally:
         if factory:
@@ -237,7 +263,8 @@ async def test_playwright_multiple_browsers():
             print(f"\n🌐 Testing with {browser_type}")
 
             factory, playwright_page = await create_playwright_session(
-                browser_type=browser_type, headless=settings.HEADLESS
+                browser_type=browser_type,
+                headless=settings.HEADLESS,
             )
 
             search_page = PlaywrightSearchEnginePage(playwright_page.page)
@@ -256,16 +283,16 @@ async def test_playwright_multiple_browsers():
 
             # Perform basic search
             search_success = await search_page.search_for(
-                "playwright browser automation"
+                "playwright browser automation",
             )
 
             if search_success and await search_page.has_results():
                 result_count = await search_page.get_result_count()
                 print(f"✅ {browser_type}: Found {result_count} results")
             else:
-                print(f"⚠️ {browser_type}: Search blocked or no results")
+                pytest.fail(f"{browser_type}: Search blocked or no results")
 
-        except Exception as e:
+        except (TimeoutError, ValueError, TypeError, OSError) as e:
             print(f"❌ {browser_type}: Error - {e}")
         finally:
             if factory:
@@ -283,7 +310,8 @@ async def test_playwright_network_interception():
 
     try:
         factory, playwright_page = await create_playwright_session(
-            browser_type="chromium", headless=settings.HEADLESS
+            browser_type="chromium",
+            headless=settings.HEADLESS,
         )
 
         # Set up network interception
@@ -296,7 +324,7 @@ async def test_playwright_network_interception():
                     "url": request.url,
                     "method": request.method,
                     "resource_type": request.resource_type,
-                }
+                },
             )
             await route.continue_()
 
@@ -310,32 +338,78 @@ async def test_playwright_network_interception():
         assert_that(success, is_(True), "Should be able to open search engine")
 
         # Verify we intercepted requests
-        assert_that(
-            len(intercepted_requests), greater_than(0)
-        ), "Should have intercepted network requests"
+        (
+            assert_that(
+                len(intercepted_requests),
+                greater_than(0),
+            ),
+            "Should have intercepted network requests",
+        )
 
         # Analyze intercepted requests
         # Dynamically determine the search engine domain for filtering
-        from urllib.parse import urlparse
-
         search_engine_url = getattr(settings, "SEARCH_ENGINE_URL", None)
         if not search_engine_url:
             # Fallback: try to get from the page object if available
             search_engine_url = getattr(search_page, "SEARCH_ENGINE_URL", None)
+
+        # Next fallback: try to use the current page URL
         if not search_engine_url:
-            raise RuntimeError(
-                "Could not determine search engine URL for request filtering"
-            )
+            try:
+                page_url = await playwright_page.page.evaluate("() => location.href")
+                if page_url:
+                    parsed = urlparse(page_url)
+                    if parsed.scheme and parsed.netloc:
+                        search_engine_url = f"{parsed.scheme}://{parsed.netloc}"
+            except (ValueError, TypeError):
+                pass
+
+        # Next fallback: inspect intercepted requests for a document/fetch URL
+        if not search_engine_url:
+            for req in intercepted_requests:
+                try:
+                    if req.get("resource_type") in ("document", "fetch") and req.get(
+                        "url",
+                    ):
+                        parsed = urlparse(req["url"])
+                        if parsed.scheme and parsed.netloc:
+                            search_engine_url = f"{parsed.scheme}://{parsed.netloc}"
+                            break
+                except (ValueError, TypeError):
+                    continue
+
+        # Final fallback: pick any host from intercepted requests
+        if not search_engine_url:
+            for req in intercepted_requests:
+                try:
+                    if req.get("url"):
+                        parsed = urlparse(req["url"])
+                        if parsed.scheme and parsed.netloc:
+                            search_engine_url = f"{parsed.scheme}://{parsed.netloc}"
+                            break
+                except (ValueError, TypeError):
+                    continue
+
+        if not search_engine_url:
+            message = "Could not determine search engine URL for request filtering"
+            raise RuntimeError(message)
+
         search_engine_domain = urlparse(search_engine_url).netloc
         search_engine_requests = [
-            req for req in intercepted_requests if search_engine_domain in req["url"]
+            req
+            for req in intercepted_requests
+            if search_engine_domain in (req.get("url") or "")
         ]
-        assert_that(
-            len(search_engine_requests), greater_than(0)
-        ), "Should have Search engine-related requests"
+        (
+            assert_that(
+                len(search_engine_requests),
+                greater_than(0),
+            ),
+            "Should have Search engine-related requests",
+        )
 
         # Check for different resource types
-        resource_types = set(req["resource_type"] for req in intercepted_requests)
+        resource_types = {req["resource_type"] for req in intercepted_requests}
         print(f"✅ Intercepted {len(intercepted_requests)} requests")
         print(f"Resource types: {sorted(resource_types)}")
 
@@ -343,9 +417,13 @@ async def test_playwright_network_interception():
         document_requests = [
             req for req in intercepted_requests if req["resource_type"] == "document"
         ]
-        assert_that(
-            len(document_requests), greater_than(0)
-        ), "Should have document requests"
+        (
+            assert_that(
+                len(document_requests),
+                greater_than(0),
+            ),
+            "Should have document requests",
+        )
 
     finally:
         if factory:
@@ -383,19 +461,29 @@ async def test_playwright_mobile_emulation():
         # Test mobile navigation
         success = await search_page.open_search_engine()
         assert_that(
-            success, is_(True), "Should be able to open search engine on mobile"
+            success,
+            is_(True),
+            "Should be able to open search engine on mobile",
         )
 
         # Verify mobile layout
         viewport_size = await page.evaluate(
-            "() => ({width: window.innerWidth, height: window.innerHeight})"
+            "() => ({width: window.innerWidth, height: window.innerHeight})",
         )
-        assert_that(
-            viewport_size["width"], equal_to(390)
-        ), "Should have mobile viewport width"
-        assert_that(
-            viewport_size["height"], equal_to(844)
-        ), "Should have mobile viewport height"
+        (
+            assert_that(
+                viewport_size["width"],
+                equal_to(390),
+            ),
+            "Should have mobile viewport width",
+        )
+        (
+            assert_that(
+                viewport_size["height"],
+                equal_to(844),
+            ),
+            "Should have mobile viewport height",
+        )
 
         # Test mobile search
         search_success = await search_page.search_for("mobile testing playwright")
@@ -404,7 +492,7 @@ async def test_playwright_mobile_emulation():
             result_count = await search_page.get_result_count()
             print(f"✅ Mobile: Found {result_count} results")
         else:
-            print("⚠️ Mobile search blocked or no results")
+            pytest.fail("Mobile search blocked or no results")
 
         print("✅ Mobile emulation test completed")
 
@@ -425,7 +513,8 @@ async def test_playwright_performance_metrics():
 
     try:
         factory, playwright_page = await create_playwright_session(
-            browser_type="chromium", headless=settings.HEADLESS
+            browser_type="chromium",
+            headless=settings.HEADLESS,
         )
 
         search_page = PlaywrightSearchEnginePage(playwright_page.page)
@@ -464,7 +553,7 @@ async def test_playwright_performance_metrics():
                         totalTime: perfData.loadEventEnd - perfData.fetchStart
                     };
                 }
-            """
+            """,
             )
 
             print("✅ Performance metrics:")
@@ -473,13 +562,21 @@ async def test_playwright_performance_metrics():
             print(f"  Total Time: {metrics['totalTime']:.2f}ms")
 
             # Performance assertions
-            assert_that(
-                navigation_time, less_than(10000)
-            ), "Navigation should complete within 10 seconds"
-            if search_time > 0:  # Only expect assertion if search actually happened
+            (
                 assert_that(
-                    search_time, less_than(15000)
-                ), "Search should complete within 15 seconds"
+                    navigation_time,
+                    less_than(10000),
+                ),
+                "Navigation should complete within 10 seconds",
+            )
+            if search_time > 0:  # Only expect assertion if search actually happened
+                (
+                    assert_that(
+                        search_time,
+                        less_than(15000),
+                    ),
+                    "Search should complete within 15 seconds",
+                )
 
     finally:
         if factory:
@@ -492,8 +589,6 @@ async def playwright_factory():
     """Fixture providing Playwright factory with automatic cleanup."""
     factory = None
     try:
-        from utils.playwright_factory import PlaywrightFactory
-
         factory = PlaywrightFactory()
         yield factory
     finally:

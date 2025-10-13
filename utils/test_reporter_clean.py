@@ -6,9 +6,9 @@ Provides detailed test execution analysis and multiple report formats.
 import json
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -25,7 +25,7 @@ class TestResult:
     browser: Optional[str] = None
     environment: Optional[str] = None
     screenshot_path: Optional[str] = None
-    metadata: Dict[str, Any] = None
+    metadata: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         if self.metadata is None:
@@ -45,7 +45,7 @@ class TestSuite:
     skipped_tests: int
     total_duration: float
     success_rate: float
-    tests: List[TestResult]
+    tests: list[TestResult]
 
 
 class TestReporter:
@@ -63,23 +63,22 @@ class TestReporter:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
 
-        self.test_results: List[TestResult] = []
-        self.test_suites: List[TestSuite] = []
+        self.test_results: list[TestResult] = []
+        self.test_suites: list[TestSuite] = []
         self.current_suite: Optional[TestSuite] = None
-
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def add_test_result(self, result: TestResult) -> None:
         """Add a test result to the reporter."""
         self.test_results.append(result)
-        self.logger.debug(f"Added test result: {result.name} - {result.status}")
+        self.logger.debug("Added test result: %s - %s", result.name, result.status)
 
     def start_test_suite(self, suite_name: str) -> None:
         """Start a new test suite."""
         self.current_suite = TestSuite(
             name=suite_name,
-            start_time=datetime.now(),
-            end_time=datetime.now(),  # Will be updated when finished
+            start_time=datetime.now(timezone.utc),
+            end_time=datetime.now(timezone.utc),  # Will be updated when finished
             total_tests=0,
             passed_tests=0,
             failed_tests=0,
@@ -88,15 +87,18 @@ class TestReporter:
             success_rate=0.0,
             tests=[],
         )
-        self.logger.info(f"Started test suite: {suite_name}")
+        self.logger.info("Started test suite: %s", suite_name)
 
-    def generate_json_report(self, filename: str = None) -> str:
+    def generate_json_report(self, filename: Optional[str] = None) -> str:
         """Generate JSON format report."""
         if filename is None:
-            filename = f"test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            filename = (
+                f"test_report_"
+                f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+            )
 
         report_data = {
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "summary": {
                 "total_tests": len(self.test_results),
                 "passed_tests": sum(
@@ -116,25 +118,25 @@ class TestReporter:
         }
 
         output_path = self.output_dir / filename
-        with open(output_path, "w") as f:
+        with Path.open(output_path, "w") as f:
             json.dump(report_data, f, indent=2, default=str)
 
-        self.logger.info(f"JSON report generated: {output_path}")
+        self.logger.info("JSON report generated: %s", output_path)
         return str(output_path)
 
-    def generate_html_report(self, filename: str = None) -> str:
+    def generate_html_report(self, filename: Optional[str] = None) -> str:
         """Generate HTML format report."""
         if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             filename = f"test_report_{timestamp}.html"
 
         html_content = self._generate_html_content()
 
         output_path = self.output_dir / filename
-        with open(output_path, "w") as f:
+        with Path.open(output_path, "w") as f:
             f.write(html_content)
 
-        self.logger.info(f"HTML report generated: {output_path}")
+        self.logger.info("HTML report generated: %s", output_path)
         return str(output_path)
 
     def _calculate_success_rate(self) -> float:
@@ -150,9 +152,8 @@ class TestReporter:
         passed_count = sum(1 for r in self.test_results if r.status == "passed")
         failed_count = sum(1 for r in self.test_results if r.status == "failed")
         success_rate = self._calculate_success_rate()
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        html_template = (
+        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        return (
             """<!DOCTYPE html>
 <html>
 <head>
@@ -230,8 +231,6 @@ class TestReporter:
 </body>
 </html>"""
         )
-
-        return html_template
 
     def _generate_test_rows(self) -> str:
         """Generate HTML table rows for test results."""

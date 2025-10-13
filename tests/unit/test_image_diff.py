@@ -1,18 +1,17 @@
+from unittest.mock import Mock, patch
+
+import pytest
 from hamcrest import (
     assert_that,
     equal_to,
 )
 
+from utils.diff_handler import compare_images
+
 """
 Real Unit Tests for Image Diff Handler
 Testing actual image comparison logic.
 """
-
-from unittest.mock import Mock, patch
-
-import pytest
-
-from utils.diff_handler import compare_images
 
 
 class TestImageDiffHandler:
@@ -40,7 +39,10 @@ class TestImageDiffHandler:
         mock_open.assert_any_call("img2.png")
         mock_new.assert_called_once_with("RGBA", (100, 100))
         mock_pixelmatch.assert_called_once_with(
-            mock_img1, mock_img2, mock_img_diff, includeAA=True
+            mock_img1,
+            mock_img2,
+            mock_img_diff,
+            includeAA=True,
         )
         mock_img_diff.save.assert_called_once_with("diff.png")
 
@@ -131,7 +133,9 @@ class TestImageDiffHandler:
         mock_pixelmatch.return_value = 50000  # Large difference
 
         result = compare_images(
-            "very_different1.png", "very_different2.png", "big_diff.png"
+            "very_different1.png",
+            "very_different2.png",
+            "big_diff.png",
         )
 
         assert_that(result, equal_to(50000))

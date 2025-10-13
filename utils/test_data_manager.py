@@ -7,9 +7,9 @@ import csv
 import json
 import random
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Optional, Union
 
 import yaml
 
@@ -19,10 +19,10 @@ class DataSet:
     """Represents a complete test data set with metadata."""
 
     name: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     created_at: datetime
     environment: str
-    tags: List[str]
+    tags: list[str]
 
 
 class DataManager:
@@ -37,7 +37,7 @@ class DataManager:
     - Test data versioning
     """
 
-    def __init__(self, data_directory: Union[str, Path] = None):
+    def __init__(self, data_directory: Optional[Union[str, Path]] = None):
         """Initialize test data manager."""
         self.data_dir = (
             Path(data_directory)
@@ -49,8 +49,10 @@ class DataManager:
         self._generators = self._setup_generators()
 
     def load_test_data(
-        self, filename: str, environment: str = "default"
-    ) -> Dict[str, Any]:
+        self,
+        filename: str,
+        environment: str = "default",
+    ) -> dict[str, Any]:
         """
         Load test data from file with environment support.
 
@@ -82,8 +84,10 @@ class DataManager:
         return {}
 
     def load_yaml_config(
-        self, config_name: str, environment: str = "default"
-    ) -> Dict[str, Any]:
+        self,
+        config_name: str,
+        environment: str = "default",
+    ) -> dict[str, Any]:
         """
         Load YAML configuration files for complex test setups.
         Demonstrates meaningful YAML integration for configuration management.
@@ -142,24 +146,24 @@ class DataManager:
                 },
             }
 
-            with open(config_path, "w") as f:
+            with Path.open(config_path, "w") as f:
                 yaml.dump(default_config, f, default_flow_style=False, indent=2)
 
         # Load and return the YAML config
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
-
-        return config
+        with config_path.open() as f:
+            return yaml.safe_load(f)
 
     def save_test_results_yaml(
-        self, results: Dict[str, Any], filename: str = None
+        self,
+        results: dict[str, Any],
+        filename: Optional[str] = None,
     ) -> str:
         """
         Save test results in YAML format for human-readable reports.
         Demonstrates YAML output functionality.
         """
         if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             filename = f"test_results_{timestamp}.yml"
 
         filepath = self.data_dir / "results" / filename
@@ -168,7 +172,7 @@ class DataManager:
         # Format results for YAML output
         yaml_results = {
             "test_execution": {
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "total_tests": results.get("total_tests", 0),
                 "passed": results.get("passed", 0),
                 "failed": results.get("failed", 0),
@@ -179,21 +183,24 @@ class DataManager:
             "environment_info": results.get("environment_info", {}),
         }
 
-        with open(filepath, "w") as f:
+        with filepath.open("w") as f:
             yaml.dump(yaml_results, f, default_flow_style=False, indent=2)
 
         return str(filepath)
 
     def get_search_scenarios(
-        self, environment: str = "default"
-    ) -> List[Dict[str, Any]]:
+        self,
+        environment: str = "default",
+    ) -> list[dict[str, Any]]:
         """Get search test scenarios."""
         data = self.load_test_data("test_data", environment)
         return data.get("search_scenarios", [])
 
     def get_user_accounts(
-        self, role: str = None, environment: str = "default"
-    ) -> List[Dict[str, Any]]:
+        self,
+        role: Optional[str] = None,
+        environment: str = "default",
+    ) -> list[dict[str, Any]]:
         """
         Get user account data, optionally filtered by role.
 
@@ -213,8 +220,10 @@ class DataManager:
         return accounts
 
     def get_api_endpoints(
-        self, method: str = None, environment: str = "default"
-    ) -> List[Dict[str, Any]]:
+        self,
+        method: Optional[str] = None,
+        environment: str = "default",
+    ) -> list[dict[str, Any]]:
         """
         Get API endpoint configurations.
 
@@ -236,11 +245,12 @@ class DataManager:
         return endpoints
 
     def get_browser_configurations(
+        *,
         self,
-        browser: str = None,
-        mobile: bool = None,
+        browser: Optional[str] = None,
+        mobile: Optional[bool] = None,
         environment: str = "default",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get browser configuration data.
 
@@ -262,7 +272,7 @@ class DataManager:
 
         return configs
 
-    def generate_test_user(self, role: str = "standard") -> Dict[str, Any]:
+    def generate_test_user(self, role: str = "standard") -> dict[str, Any]:
         """
         Generate dynamic test user data.
 
@@ -272,7 +282,7 @@ class DataManager:
         Returns:
             Dictionary with generated user data
         """
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         user_id = random.randint(1000, 9999)
 
         base_permissions = {
@@ -287,12 +297,12 @@ class DataManager:
             "email": f"{role}{user_id}@testdomain.com",
             "role": role,
             "permissions": base_permissions.get(role, ["read"]),
-            "created_at": datetime.now().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "active": True,
             "user_id": user_id,
         }
 
-    def generate_search_data(self, count: int = 5) -> List[Dict[str, Any]]:
+    def generate_search_data(self, count: int = 5) -> list[dict[str, Any]]:
         """
         Generate dynamic search test data.
 
@@ -326,16 +336,16 @@ class DataManager:
                     "expected_title_contains": term.split()[0],
                     "timeout": random.randint(10, 20),
                     "generated": True,
-                    "created_at": datetime.now().isoformat(),
-                }
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                },
             )
 
         return scenarios
 
     def save_test_results(
         self,
-        test_name: str,
-        results: Dict[str, Any],
+        _test_name: str,
+        _results: dict[str, Any],
         environment: str = "default",
     ) -> None:
         """
@@ -349,8 +359,19 @@ class DataManager:
         results_dir = self.data_dir / "results" / environment
         results_dir.mkdir(parents=True, exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    def save_test_results_json(
+        self,
+        test_name: str,
+        results: list[dict[str, Any]],
+        environment: str = "default",
+    ) -> str:
+        """
+        Save test results in JSON format.
+        """
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"{test_name}_{timestamp}.json"
+        results_dir = self.data_dir / "results"
+        results_dir.mkdir(exist_ok=True)
         file_path = results_dir / filename
 
         # Add metadata
@@ -358,12 +379,13 @@ class DataManager:
             "test_name": test_name,
             "environment": environment,
             "timestamp": timestamp,
-            "execution_time": datetime.now().isoformat(),
+            "execution_time": datetime.now(timezone.utc).isoformat(),
             "results": results,
         }
 
-        with open(file_path, "w") as f:
+        with file_path.open("w") as f:
             json.dump(results_with_metadata, f, indent=2, default=str)
+        return str(file_path)
 
     def cleanup_old_results(self, days_to_keep: int = 30) -> None:
         """
@@ -372,7 +394,7 @@ class DataManager:
         Args:
             days_to_keep: Number of days to keep results (default: 30)
         """
-        cutoff_date = datetime.now() - timedelta(days=days_to_keep)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
         results_dir = self.data_dir / "results"
 
         if not results_dir.exists():
@@ -380,13 +402,19 @@ class DataManager:
 
         for file_path in results_dir.rglob("*.json"):
             try:
-                file_date = datetime.fromtimestamp(file_path.stat().st_mtime)
-                if file_date < cutoff_date:
-                    file_path.unlink()
+                file_date = datetime.fromtimestamp(
+                    file_path.stat().st_mtime,
+                    tz=timezone.utc,
+                )
             except (OSError, ValueError):
                 continue
+            if file_date < cutoff_date:
+                try:
+                    file_path.unlink()
+                except (OSError, ValueError):
+                    continue
 
-    def validate_data_schema(self, data: Dict[str, Any], schema_name: str) -> bool:
+    def validate_data_schema(self, data: dict[str, Any], schema_name: str) -> bool:
         """
         Validate test data against predefined schemas.
 
@@ -421,47 +449,46 @@ class DataManager:
             return False
 
         # Check required fields
-        for field in schema["required"]:
-            if field not in data:
-                return False
-
-        return True
+        return all(field in data for field in schema["required"])
 
     def _get_env_file_path(
-        self, filename: str, environment: str, extension: str
+        self,
+        filename: str,
+        environment: str,
+        extension: str,
     ) -> Path:
         """Get environment-specific file path."""
         if environment == "default":
             return self.data_dir / f"{filename}{extension}"
-        else:
-            return self.data_dir / environment / f"{filename}{extension}"
+        return self.data_dir / environment / f"{filename}{extension}"
 
-    def _load_file(self, file_path: Path) -> Dict[str, Any]:
+    def _load_file(self, file_path: Path) -> dict[str, Any]:
         """Load data from file based on extension."""
         if file_path.suffix.lower() == ".json":
-            with open(file_path, "r") as f:
+            with file_path.open() as f:
                 return json.load(f)
         elif file_path.suffix.lower() in [".yaml", ".yml"]:
-            with open(file_path, "r") as f:
+            with file_path.open() as f:
                 return yaml.safe_load(f) or {}
         elif file_path.suffix.lower() == ".csv":
             return self._load_csv(file_path)
         else:
-            raise ValueError(f"Unsupported file format: {file_path.suffix}")
+            msg = f"Unsupported file format: {file_path.suffix}"
+            raise ValueError(msg)
 
-    def _load_csv(self, file_path: Path) -> Dict[str, List[Dict[str, Any]]]:
+    def _load_csv(self, file_path: Path) -> dict[str, list[dict[str, Any]]]:
         """Load CSV file and convert to dictionary format."""
-        with open(file_path, "r") as f:
+        with file_path.open() as f:
             reader = csv.DictReader(f)
             data = list(reader)
 
         # Group by first column if it looks like a category
         if data and len(data[0]) > 1:
-            first_key = list(data[0].keys())[0]
+            first_key = next(iter(data[0].keys()))
             return {first_key: data}
         return {"data": data}
 
-    def _setup_generators(self) -> Dict[str, Any]:
+    def _setup_generators(self) -> dict[str, Any]:
         """Setup data generators for dynamic content."""
         return {
             "email": lambda: f"user{random.randint(1000, 9999)}@testdomain.com",
@@ -472,13 +499,13 @@ class DataManager:
             "url": lambda: f"https://example{random.randint(1, 100)}.com",
             "user_agent": lambda: random.choice(
                 [
-                    ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36"),
+                    ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"),
                     (
                         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                         "AppleWebKit/537.36"
                     ),
                     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-                ]
+                ],
             ),
         }
 

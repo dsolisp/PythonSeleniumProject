@@ -35,7 +35,8 @@ class Settings:
         # URLs
         self.BASE_URL = os.getenv("BASE_URL", "https://duckduckgo.com")
         self.API_BASE_URL = os.getenv(
-            "API_BASE_URL", "https://jsonplaceholder.typicode.com"
+            "API_BASE_URL",
+            "https://jsonplaceholder.typicode.com",
         )
         self.SEARCH_URL = os.getenv("SEARCH_URL", "https://duckduckgo.com/?q=test")
 
@@ -46,19 +47,23 @@ class Settings:
         self.TEST_URL = os.getenv("TEST_URL", "https://test.com")
         self.API_TEST_URL = os.getenv("API_TEST_URL", "https://api.test.com/data")
         self.INVALID_URL = os.getenv(
-            "INVALID_URL", "https://nonexistent-domain-12345.com"
+            "INVALID_URL",
+            "https://nonexistent-domain-12345.com",
         )
 
         # Test Data - Search Terms
         self.DEFAULT_SEARCH_TERM = os.getenv(
-            "DEFAULT_SEARCH_TERM", "Python automation testing"
+            "DEFAULT_SEARCH_TERM",
+            "Python automation testing",
         )
         self.SELENIUM_SEARCH_TERM = os.getenv("SELENIUM_SEARCH_TERM", "Selenium Python")
         self.PERFORMANCE_SEARCH_TERM = os.getenv(
-            "PERFORMANCE_SEARCH_TERM", "selenium testing performance"
+            "PERFORMANCE_SEARCH_TERM",
+            "selenium testing performance",
         )
         self.PLAYWRIGHT_SEARCH_TERM = os.getenv(
-            "PLAYWRIGHT_SEARCH_TERM", "Python automation testing playwright"
+            "PLAYWRIGHT_SEARCH_TERM",
+            "Python automation testing playwright",
         )
 
         # Test Data - Lists
@@ -87,7 +92,8 @@ class Settings:
         self.PROJECT_ROOT = Path(__file__).parent.parent
         self.REPORTS_DIR = self.PROJECT_ROOT / os.getenv("REPORTS_DIR", "reports")
         self.SCREENSHOTS_DIR = self.PROJECT_ROOT / os.getenv(
-            "SCREENSHOTS_DIR", "screenshots"
+            "SCREENSHOTS_DIR",
+            "screenshots",
         )
         self.LOGS_DIR = self.PROJECT_ROOT / os.getenv("LOGS_DIR", "logs")
 

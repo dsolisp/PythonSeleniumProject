@@ -130,32 +130,24 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ needs.setup.outputs.python-version }}
+        python-version: '3.9'
     
     - name: Cache pip dependencies
       uses: actions/cache@v3
       with:
         path: ~/.cache/pip
-        key: ${{ needs.setup.outputs.cache-key }}
+        key: pip-${{ runner.os }}-3.9-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
-          pip-${{ runner.os }}-${{ needs.setup.outputs.python-version }}-
+          pip-${{ runner.os }}-3.9-
     
     - name: Install code quality tools
       run: |
-        pip install black isort flake8 mypy
+        pip install ruff mypy bandit safety
     
-    - name: Check code formatting with Black
+    - name: Check code formatting and linting with Ruff
       run: |
-        black --check --diff .
-    
-    - name: Check import sorting with isort
-      run: |
-        isort --check-only --diff .
-    
-    - name: Lint with flake8
-      run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        ruff check --target-version=py39 .
+        ruff format --check --target-version=py39 .
     
     - name: Type check with mypy
       run: |

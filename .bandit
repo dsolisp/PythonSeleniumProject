@@ -1,1 +1,11 @@
-skips = ['B101', 'B105', 'B110', 'B112', 'B311', 'B404', 'B603']
+
+# Project Bandit configuration
+# Converted to INI-style [bandit] section so Bandit CLI can parse it locally.
+[bandit]
+# Comma-separated list of test IDs to skip (same codes as used by Bandit)
+skips = B101,B105,B110,B112,B311,B404,B603
+
+# Directories and files to exclude from scanning (comma-separated)
+exclude = venv,venv-enhanced,.venv,__pycache__,.pytest_cache,.git,build,dist,data/results,downloads,drivers,reports,test_reports,logs,screenshots,screenshots_diff,resources
+
+# Note: CI also uses CLI flags (e.g. --exclude) — keep this file for local runs.

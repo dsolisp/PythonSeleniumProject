@@ -2,6 +2,7 @@
 Search engine tests demonstrating page object model patterns.
 """
 
+import sqlite3
 import time
 
 import pytest
@@ -32,7 +33,7 @@ def test_simple_search_engine(driver):
     results_displayed = result_page.is_results_displayed()
 
     if results_displayed:
-        assert_that(results_displayed, equal_to(True))
+        assert_that(results_displayed, equal_to(True))  # noqa: FBT003
         assert_that(base_page.get_title(), contains_string("Python"))
         results_count = result_page.get_results_count()
         assert_that(results_count, greater_than(0))
@@ -41,7 +42,7 @@ def test_simple_search_engine(driver):
         assert_that(current_url, contains_string("search"))
         print(
             "⚠️ Results page detected but results may be blocked - "
-            "this is expected with search engine"
+            "this is expected with search engine",
         )
 
 
@@ -66,18 +67,18 @@ def test_database_search(driver):
     results_displayed = result_page.is_results_displayed()
 
     if results_displayed:
-        assert_that(results_displayed, equal_to(True))
+        assert_that(results_displayed, equal_to(True))  # noqa: FBT003
         title = base_page.get_title()
         search_performed = (
             "search" in title.lower() or name.split()[0].lower() in title.lower()
         )
-        assert_that(search_performed, equal_to(True))
+        assert_that(search_performed, equal_to(True))  # noqa: FBT003
     else:
         current_url = base_page.get_current_url()
         assert_that(current_url, contains_string("search"))
         print(
             f"⚠️ Search performed for '{name}' but results may be blocked - "
-            f"this is expected"
+            f"this is expected",
         )
 
 
@@ -101,7 +102,7 @@ def test_search_with_action_chains(driver):
     if suggestions_appeared:
         print("✅ Search suggestions detected")
     else:
-        print("ℹ️ No search suggestions appeared")
+        print("❌ No search suggestions appeared")
 
     search_page.submit_search_with_enter()
 
@@ -110,7 +111,7 @@ def test_search_with_action_chains(driver):
     results_displayed = result_page.is_results_displayed()
 
     if results_displayed:
-        assert_that(results_displayed, equal_to(True))
+        assert_that(results_displayed, equal_to(True))  # noqa: FBT003
         title = base_page.get_title()
         # Check if we're on a results page (title contains search term or "search")
         search_performed = (
@@ -118,7 +119,7 @@ def test_search_with_action_chains(driver):
         )
         assert_that(
             search_performed,
-            equal_to(True),
+            equal_to(True),  # noqa: FBT003
             f"Expected search results but got title: {title}",
         )
         results_count = result_page.get_results_count()
@@ -127,7 +128,7 @@ def test_search_with_action_chains(driver):
         current_url = base_page.get_current_url()
         assert_that(current_url, contains_string("search"))
         print(
-            "⚠️ Advanced search completed but results may be blocked - this is expected"
+            "⚠️ Advanced search completed but results may be blocked - this is expected",
         )
 
 
@@ -163,7 +164,7 @@ def test_database_search_with_performance_monitoring(driver):
     results_displayed = result_page.is_results_displayed()
 
     if results_displayed:
-        assert_that(results_displayed, equal_to(True))
+        assert_that(results_displayed, equal_to(True))  # noqa: FBT003
         results_count = result_page.get_results_count()
         assert_that(results_count, greater_than(0))
     else:
@@ -171,27 +172,25 @@ def test_database_search_with_performance_monitoring(driver):
         assert_that(current_url, contains_string("search"))
         print(
             f"⚠️ Monitored search for '{search_term}' completed "
-            f"but results may be blocked"
+            f"but results may be blocked",
         )
 
     print(
         f"✅ Performance monitoring - Page: {page_open_time:.2f}s, "
-        f"DB: {db_query_time:.2f}s, Search: {search_execution_time:.2f}s"
+        f"DB: {db_query_time:.2f}s, Search: {search_execution_time:.2f}s",
     )
 
 
 @pytest.mark.api
 def test_framework_api_functionality():
-    from config.settings import settings
-
     response = requests.get(f"{settings.API_BASE_URL}/posts/1", timeout=10)
 
     assert_that(response.status_code, equal_to(200))
 
     data = response.json()
-    assert_that("title" in data, equal_to(True))
-    assert_that("body" in data, equal_to(True))
-    assert_that("userId" in data, equal_to(True))
+    assert_that("title" in data, equal_to(True))  # noqa: FBT003
+    assert_that("body" in data, equal_to(True))  # noqa: FBT003
+    assert_that("userId" in data, equal_to(True))  # noqa: FBT003
 
     print(f"✅ API test passed - Post title: {data['title'][:50]}...")
 
@@ -203,9 +202,9 @@ def test_element_health_monitoring(driver):
 
     element_health = search_page.get_search_input_health()
 
-    assert_that(element_health["exists"], equal_to(True))
-    assert_that(element_health["is_displayed"], equal_to(True))
-    assert_that(element_health["is_enabled"], equal_to(True))
+    assert_that(element_health["exists"], equal_to(True))  # noqa: FBT003
+    assert_that(element_health["is_displayed"], equal_to(True))  # noqa: FBT003
+    assert_that(element_health["is_enabled"], equal_to(True))  # noqa: FBT003
     assert_that(element_health["tag_name"], equal_to("input"))
 
     search_page.enter_search_term("health test")
@@ -215,13 +214,13 @@ def test_element_health_monitoring(driver):
 
     input_value = search_page.get_search_input_value()
     # DuckDuckGo may clear or modify the input, so check if text was entered
-    assert_that(len(input_value) >= 0, equal_to(True), "Input should accept text")
+    assert_that(len(input_value) >= 0, equal_to(True), "Input should accept text")  # noqa: FBT003
 
     element_dimensions = search_page.get_search_input_dimensions()
     assert_that(element_dimensions["width"], greater_than(0))
     assert_that(element_dimensions["height"], greater_than(0))
-    assert_that(element_dimensions["x"] >= 0, equal_to(True))
-    assert_that(element_dimensions["y"] >= 0, equal_to(True))
+    assert_that(element_dimensions["x"] >= 0, equal_to(True))  # noqa: FBT003
+    assert_that(element_dimensions["y"] >= 0, equal_to(True))  # noqa: FBT003
 
 
 @pytest.mark.advanced
@@ -230,10 +229,10 @@ def test_webdriver_wait_conditions(driver):
     search_page.open_search_engine()
 
     is_clickable = search_page.wait_for_search_input_clickable()
-    assert_that(is_clickable, equal_to(True))
+    assert_that(is_clickable, equal_to(True))  # noqa: FBT003
 
     is_visible = search_page.wait_for_search_input_visible()
-    assert_that(is_visible, equal_to(True))
+    assert_that(is_visible, equal_to(True))  # noqa: FBT003
 
     search_page.click_search_input()
     has_focus = search_page.wait_for_search_input_focus()
@@ -247,7 +246,7 @@ def test_webdriver_wait_conditions(driver):
 
     search_page.enter_search_term("selenium")
     text_appeared = search_page.wait_for_text_in_search_input("selenium")
-    assert_that(text_appeared, equal_to(True))
+    assert_that(text_appeared, equal_to(True))  # noqa: FBT003
 
     final_value = search_page.get_search_input_value()
     assert_that(final_value, equal_to("selenium"))
@@ -274,7 +273,7 @@ def test_page_interaction_timing(driver):
     print(
         f"✅ Performance metrics - Page: {page_load_time:.2f}s, "
         f"Find: {element_find_time:.2f}s, Type: {typing_time:.2f}s, "
-        f"Clear+Type: {clear_retype_time:.2f}s"
+        f"Clear+Type: {clear_retype_time:.2f}s",
     )
 
 
@@ -286,10 +285,9 @@ def get_track_name_from_db(sql_conn):
 
         if result and len(result) > 0:
             return result[0]
-        else:
-            print("No track found in database")
-            return None
-
-    except Exception as e:
+        print("No track found in database")
+    except (sqlite3.Error, ValueError, TypeError) as e:
         print(f"Error querying database: {e}")
+        return None
+    else:
         return None
