@@ -53,13 +53,76 @@ That's it! Runs tests, analytics, ML predictions, and generates reports automati
 
 ```
 PythonSeleniumProject/
-├── 🐍 run_full_workflow.py    # 🚀 Complete QA automation pipeline
-├── 🐚 setup_env.sh           # ⚙️ Auto environment setup
-├── 📁 documentation/         # 📚 Feature tutorials & guides
-├── 📁 tests/                 # 293+ test cases
-├── 📁 utils/                 # Framework utilities
-├── 📁 scripts/               # Automation scripts
-└── 📁 reports/               # Generated reports
+├── 🐍 run_full_workflow.py          # 🚀 Complete QA automation pipeline
+├── 🐚 setup_env.sh                  # ⚙️ Auto environment setup
+├── 📁 documentation/                # 📚 Feature tutorials & guides
+│   ├── INDEX.md                     # Complete documentation index
+│   ├── LOCAL_DEV_GUIDE.md           # Development tools guide
+│   ├── PYTEST_README.md             # Pytest configuration guide
+│   ├── ANALYTICS_AND_REPORTING.md   # Test analytics & reporting
+│   ├── ML_INTEGRATION.md            # AI-powered test intelligence
+│   ├── API_TESTING.md               # REST API automation
+│   ├── PLAYWRIGHT_INTEGRATION.md    # Modern browser automation
+│   ├── TEST_DATA_MANAGEMENT.md      # Data management & export
+│   ├── ERROR_RECOVERY_AND_MONITORING.md  # Self-healing & monitoring
+│   ├── PERFORMANCE_MONITORING.md    # Load testing & benchmarking
+│   └── RECOMMENDATIONS.md           # Framework usage patterns
+├── 📁 tests/                        # 🧪 293+ test cases across categories
+│   ├── unit/                        # Fast, isolated unit tests
+│   ├── integration/                 # End-to-end & visual regression tests
+│   ├── api/                         # REST API validation tests
+│   ├── web/                         # UI automation tests (Selenium/Playwright)
+│   └── performance/                 # Load & performance benchmarking
+├── 📁 pages/                        # 📄 Page Object Model implementations
+│   ├── base_page.py                 # Base page with common functionality
+│   ├── search_engine_page.py        # Search engine page objects
+│   ├── playwright_search_engine_page.py  # Playwright-specific pages
+│   └── playwright_base_page.py      # Playwright base page
+├── 📁 utils/                        # 🔧 Core framework utilities
+│   ├── test_data_manager.py         # Data loading & export
+│   ├── test_reporter.py             # Analytics & HTML reporting
+│   ├── ml_test_analyzer.py          # AI failure prediction
+│   ├── performance_monitor.py       # Real-time performance tracking
+│   ├── webdriver_factory.py         # Selenium driver management
+│   ├── playwright_factory.py        # Playwright browser management
+│   └── error_handler.py             # Self-healing error recovery
+├── 📁 config/                       # ⚙️ Environment configurations
+│   ├── settings.py                  # Core configuration management
+│   ├── local.yaml                   # Local development settings
+│   ├── ci.yaml                      # CI/CD environment settings
+│   └── capabilities.json            # Browser capabilities
+├── 📁 locators/                     # 🎯 Element locators & selectors
+│   ├── search_engine_locators.py    # Search page locators
+│   ├── playwright_search_engine_locators.py  # Playwright locators
+│   ├── result_page_locators.py      # Results page locators
+│   └── test_framework_locators.py   # Framework-specific locators
+├── 📁 scripts/                      # 🛠️ Automation & utility scripts
+│   ├── run_ci_checks.sh             # Code quality validation
+│   ├── run_ci_checks_legacy.sh      # Legacy quality checks
+│   └── normalize_results.py         # Data processing utilities
+├── 📁 data/                         # 💾 Test data & results storage
+│   ├── configs/                     # Environment-specific configs
+│   └── results/                     # Test execution data for ML analysis
+│       ├── local/                   # Local environment results
+│       ├── staging/                 # Staging environment results
+│       └── production/              # Production environment results
+├── 📁 reports/                      # 📊 Generated test reports
+│   ├── html/                        # HTML test reports
+│   ├── json/                        # JSON test data
+│   ├── allure-results/              # Allure reporting data
+│   ├── analytics/                   # ML analytics & trends
+│   ├── trends/                      # Performance trend analysis
+│   └── coverage_html/               # Code coverage reports
+├── 📁 screenshots/                  # 📸 Visual testing artifacts
+│   ├── visual-baselines/            # Baseline screenshots
+│   └── [test-screenshots]/          # Test execution screenshots
+├── 📁 screenshots_diff/             # 🔍 Visual comparison differences
+├── 📁 logs/                         # 📝 Test execution logs
+├── 📁 drivers/                      # 🚗 WebDriver executables
+├── 📁 downloads/                    # 📥 Downloaded test artifacts
+├── 📁 examples/                     # 💡 Usage examples & demos
+├── 📁 resources/                    # 📦 Test resources & fixtures
+└── 📁 test_reports/                 # 📋 Legacy test report storage
 ```
 
 ## 🧪 Running Tests
@@ -261,25 +324,6 @@ ruff check . && mypy .
 
 # Run full pipeline before committing
 python run_full_workflow.py
-```
-
-## 🏗️ Architecture Overview
-
-```
-PythonSeleniumProject/
-├── 🧪 tests/                 # Test suites (unit, integration, performance)
-│   ├── unit/                 # Fast, isolated unit tests
-│   ├── integration/          # End-to-end and visual regression tests
-│   ├── api/                  # REST API testing
-│   └── performance/          # Load testing and benchmarking
-├── 📄 pages/                 # Page Object Model implementations
-├── 🔧 utils/                 # Core framework utilities
-│   ├── test_data_manager.py  # Data loading and export
-│   ├── test_reporter.py      # Analytics and reporting
-│   ├── ml_test_analyzer.py   # AI-powered test intelligence
-│   └── performance_monitor.py # Performance tracking
-├── ⚙️ config/                # Environment configurations
-└── 📊 data/results/          # Test execution data for ML analysis
 ```
 
 ---
