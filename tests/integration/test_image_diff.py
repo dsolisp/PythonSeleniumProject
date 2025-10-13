@@ -22,6 +22,7 @@ def test_visual_comparison_applitools(driver):
     pytest.skip(
         "Skipping Applitools test: API key not configured or test disabled by user request."
     )
+
     # --- original test body preserved below ---
     driver, _ = driver  # Unpack driver fixture
     eyes = Eyes()

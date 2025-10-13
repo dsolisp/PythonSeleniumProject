@@ -146,8 +146,8 @@ jobs:
     
     - name: Check code formatting and linting with Ruff
       run: |
-        ruff check .
-        ruff format --check .
+        ruff check --target-version=py39 .
+        ruff format --check --target-version=py39 .
     
     - name: Type check with mypy
       run: |
