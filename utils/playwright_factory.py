@@ -1,17 +1,17 @@
 """
 Playwright factory for modern browser automation.
-Provides async browser automation capabilities alongside existing Selenium support.
+Provides sync browser automation capabilities alongside existing Selenium support.
 """
 
 from typing import Any, Optional
 
-from playwright.async_api import (
+from playwright.sync_api import (
     Browser,
     BrowserContext,
     Page,
-    async_playwright,
+    sync_playwright,
 )
-from playwright.async_api import (
+from playwright.sync_api import (
     Error as PlaywrightError,
 )
 
@@ -29,7 +29,7 @@ class PlaywrightFactory:
         self.browser = None
         self.context = None
 
-    async def create_browser(
+    def create_browser(
         self,
         browser_type: str = "chromium",
         *,
@@ -50,7 +50,7 @@ class PlaywrightFactory:
         if headless is None:
             headless = settings.HEADLESS
 
-        self.playwright = await async_playwright().start()
+        self.playwright = sync_playwright().start()
 
         browser_options = {
             "headless": headless,
@@ -59,18 +59,18 @@ class PlaywrightFactory:
         }
 
         if browser_type.lower() == "chromium":
-            self.browser = await self.playwright.chromium.launch(**browser_options)
+            self.browser = self.playwright.chromium.launch(**browser_options)
         elif browser_type.lower() == "firefox":
-            self.browser = await self.playwright.firefox.launch(**browser_options)
+            self.browser = self.playwright.firefox.launch(**browser_options)
         elif browser_type.lower() == "webkit":
-            self.browser = await self.playwright.webkit.launch(**browser_options)
+            self.browser = self.playwright.webkit.launch(**browser_options)
         else:
             message = f"Unsupported browser type: {browser_type}"
             raise ValueError(message)
 
         return self.browser
 
-    async def create_context(self, browser: Browser = None, **kwargs) -> BrowserContext:
+    def create_context(self, browser: Browser = None, **kwargs) -> BrowserContext:
         """
         Create a browser context with optional configuration.
 
@@ -116,10 +116,10 @@ class PlaywrightFactory:
             **kwargs,
         }
 
-        self.context = await browser.new_context(**context_options)
+        self.context = browser.new_context(**context_options)
         return self.context
 
-    async def create_page(self, context: BrowserContext = None) -> Page:
+    def create_page(self, context: BrowserContext = None) -> Page:
         """
         Create a new page in the browser context.
 
@@ -136,28 +136,37 @@ class PlaywrightFactory:
             message = "No browser context available"
             raise ValueError(message)
 
-        page = await context.new_page()
+        page = context.new_page()
 
         # Set default timeout
         page.set_default_timeout(settings.TIMEOUT * SECONDS_TO_MILLISECONDS)
 
         return page
 
-    async def cleanup(self):
-        """Clean up browser resources."""
-        if self.context:
-            await self.context.close()
-            self.context = None
+    def cleanup(self):
+        """Clean up browser resources with debug and timeouts."""
+        try:
+            if self.context:
+                self.context.close(timeout=10000)
+                self.context = None
+        except Exception:  # noqa: BLE001
+            pass
 
-        if self.browser:
-            await self.browser.close()
-            self.browser = None
+        try:
+            if self.browser:
+                self.browser.close(timeout=10000)
+                self.browser = None
+        except Exception:  # noqa: BLE001
+            pass
 
-        if self.playwright:
-            await self.playwright.stop()
-            self.playwright = None
+        try:
+            if self.playwright:
+                self.playwright.stop()
+                self.playwright = None
+        except Exception:  # noqa: BLE001
+            pass
 
-    async def safe_cleanup(self):
+    def safe_cleanup(self):
         """
         Safely clean up browser resources with exception handling.
 
@@ -168,10 +177,10 @@ class PlaywrightFactory:
         Example:
             >>> factory = PlaywrightFactory()
             >>> # ... use factory ...
-            >>> await factory.safe_cleanup()  # Won't raise on cleanup errors
+            >>> factory.safe_cleanup()  # Won't raise on cleanup errors
         """
         try:
-            await self.cleanup()
+            self.cleanup()
         except (AttributeError, ValueError, TypeError) as e:
             print(f"Cleanup warning: {e}")
 
@@ -191,62 +200,62 @@ class PlaywrightPage:
         """
         self.page = page
 
-    async def navigate_to(self, url: str) -> None:
+    def navigate_to(self, url: str) -> None:
         """Navigate to URL."""
-        await self.page.goto(url)
+        self.page.goto(url)
 
-    async def find_element(self, selector: str) -> Optional[Any]:
+    def find_element(self, selector: str) -> Optional[Any]:
         """Find element by selector."""
         try:
-            return await self.page.wait_for_selector(selector, timeout=5000)
+            return self.page.wait_for_selector(selector, timeout=5000)
         except (TimeoutError, PlaywrightError):
             # Return None if element not found or timeout
             return None
 
-    async def click(self, selector: str) -> None:
+    def click(self, selector: str) -> None:
         """Click element by selector."""
-        await self.page.click(selector)
+        self.page.click(selector)
 
-    async def fill_text(self, selector: str, text: str) -> None:
+    def fill_text(self, selector: str, text: str) -> None:
         """Fill text in input field."""
-        await self.page.fill(selector, text)
+        self.page.fill(selector, text)
 
-    async def get_text(self, selector: str) -> str:
+    def get_text(self, selector: str) -> str:
         """Get text content of element."""
-        element = await self.page.wait_for_selector(selector)
-        return await element.text_content() or ""
+        element = self.page.wait_for_selector(selector)
+        return element.text_content() or ""
 
-    async def get_title(self) -> str:
+    def get_title(self) -> str:
         """Get page title."""
-        return await self.page.title()
+        return self.page.title()
 
-    async def get_url(self) -> str:
+    def get_url(self) -> str:
         """Get current URL."""
         return self.page.url
 
-    async def wait_for_element(
+    def wait_for_element(
         self,
         selector: str,
         timeout: Optional[int] = None,
     ) -> Any:
         """Wait for element to be visible."""
         timeout_ms = (timeout or settings.TIMEOUT) * SECONDS_TO_MILLISECONDS
-        return await self.page.wait_for_selector(selector, timeout=timeout_ms)
+        return self.page.wait_for_selector(selector, timeout=timeout_ms)
 
-    async def screenshot(self, path: Optional[str] = None) -> bytes:
+    def screenshot(self, path: Optional[str] = None) -> bytes:
         """Take screenshot."""
         if path:
-            await self.page.screenshot(path=path)
+            self.page.screenshot(path=path)
             return b""
-        return await self.page.screenshot()
+        return self.page.screenshot()
 
-    async def evaluate_script(self, script: str) -> Any:
+    def evaluate_script(self, script: str) -> Any:
         """Execute JavaScript on the page."""
-        return await self.page.evaluate(script)
+        return self.page.evaluate(script)
 
 
 # Utility functions for easy usage
-async def create_playwright_session(
+def create_playwright_session(
     *,
     browser_type: str = "chromium",
     headless: Optional[bool] = None,
@@ -262,9 +271,9 @@ async def create_playwright_session(
         Tuple of (factory, page_wrapper)
     """
     factory = PlaywrightFactory()
-    browser = await factory.create_browser(browser_type=browser_type, headless=headless)
-    context = await factory.create_context(browser)
-    page = await factory.create_page(context)
+    browser = factory.create_browser(browser_type=browser_type, headless=headless)
+    context = factory.create_context(browser)
+    page = factory.create_page(context)
 
     playwright_page = PlaywrightPage(page)
 

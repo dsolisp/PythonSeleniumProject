@@ -186,14 +186,9 @@ class SearchEnginePage(BasePage):
         """
         element = self.find_element(SearchEngineLocators.SEARCH_BOX)
         if not element:
-            print(
-                f"[DEBUG] Search input element not found for screenshot. "
-                f"Still taking full page screenshot: {filename}",
-            )
+            pass
         else:
-            print(
-                f"[DEBUG] Search input element found. Taking screenshot: {filename}",
-            )
+            pass
         return self.take_screenshot(filename)
 
     def click_search_input_advanced(self) -> bool:

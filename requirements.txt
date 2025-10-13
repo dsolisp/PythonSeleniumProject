@@ -49,7 +49,7 @@ pytest
 pytest-xdist
 pytest-html
 pytest-cov
-pytest-asyncio
+# pytest-asyncio  # Not needed with pytest-playwright
 pytest-benchmark
 pytest-json-report
 pytest-rerunfailures

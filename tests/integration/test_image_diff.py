@@ -158,9 +158,6 @@ def test_screenshot_functionality():
 
         # Take screenshot in the correct directory
         screenshot_filepath = base_page.take_screenshot(str(screenshot_path))
-        print(f"[DEBUG] Screenshot attempted at: {screenshot_filepath}")
-        file_exists = Path(screenshot_filepath).exists()
-        print(f"[DEBUG] File exists after take_screenshot: {file_exists}")
 
         # Assert screenshot file was created and is non-empty
         assert_that(

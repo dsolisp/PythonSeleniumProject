@@ -20,13 +20,12 @@ from utils.playwright_factory import PlaywrightFactory, create_playwright_sessio
 
 
 @pytest.mark.playwright
-@pytest.mark.asyncio
-async def test_playwright_search_basic():
+def test_playwright_search_basic():
     factory, playwright_page = None, None
 
     try:
         # Create Playwright session
-        factory, playwright_page = await create_playwright_session(
+        factory, playwright_page = create_playwright_session(
             browser_type="chromium",
             headless=settings.HEADLESS,
         )
@@ -35,11 +34,11 @@ async def test_playwright_search_basic():
         search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
         # Test navigation
-        success = await search_page.open_search_engine()
+        success = search_page.open_search_engine()
         assert_that(success, is_(True), "Should be able to open search engine")
 
         # Verify page loaded
-        title = await search_page.get_title()
+        title = search_page.get_title()
         assert_that(title, contains_string("DuckDuckGo"))
 
         # Perform search
@@ -47,14 +46,14 @@ async def test_playwright_search_basic():
         search_term = settings.PLAYWRIGHT_SEARCH_TERM
 
         # Navigate to search engine
-        search_success = await search_page.search_for(
+        search_success = search_page.search_for(
             search_term,
             wait_for_results=True,
         )
         assert_that(search_success, is_(True), "Search should succeed")
 
         # Wait for search completion
-        completion_success = await search_page.wait_for_search_completion()
+        completion_success = search_page.wait_for_search_completion()
         (
             assert_that(
                 completion_success,
@@ -64,7 +63,7 @@ async def test_playwright_search_basic():
         )
 
         # Verify search was performed (DuckDuckGo uses ?q= parameter)
-        current_url = await search_page.get_url()
+        current_url = search_page.get_url()
         (
             assert_that(
                 any(
@@ -77,12 +76,12 @@ async def test_playwright_search_basic():
         )
 
         # Check for results
-        if await search_page.has_results():
-            result_count = await search_page.get_result_count()
+        if search_page.has_results():
+            result_count = search_page.get_result_count()
             assert_that(result_count, greater_than(0)), "Should have search results"
 
             # Get result titles
-            titles = await search_page.get_result_titles()
+            titles = search_page.get_result_titles()
             assert_that(len(titles), greater_than(0)), "Should have result titles"
 
             # Verify search term relevance (basic check)
@@ -109,12 +108,11 @@ async def test_playwright_search_basic():
     finally:
         # Clean up
         if factory:
-            await factory.cleanup()
+            factory.cleanup()
 
 
 @pytest.mark.playwright
-@pytest.mark.asyncio
-async def test_playwright_search_with_suggestions():
+def test_playwright_search_with_suggestions():
     """
     Test search engine suggestions using Playwright.
     Demonstrates advanced element interactions.
@@ -122,7 +120,7 @@ async def test_playwright_search_with_suggestions():
     factory, playwright_page = None, None
 
     try:
-        factory, playwright_page = await create_playwright_session(
+        factory, playwright_page = create_playwright_session(
             browser_type="chromium",
             headless=settings.HEADLESS,
         )
@@ -130,11 +128,11 @@ async def test_playwright_search_with_suggestions():
         search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
         # Open search engine
-        success = await search_page.open_search_engine()
+        success = search_page.open_search_engine()
         assert_that(success, is_(True), "Should be able to open search engine")
 
         # Type partial search term to trigger suggestions
-        await search_page.element_actions.send_keys(
+        search_page.element_actions.send_keys(
             search_page.locators.SEARCH_INPUT,
             "playwright browser",
             clear=True,
@@ -142,7 +140,7 @@ async def test_playwright_search_with_suggestions():
 
         # Try to wait for suggestions to appear (may not always appear)
         try:
-            await playwright_page.page.wait_for_selector(
+            playwright_page.page.wait_for_selector(
                 search_page.locators.SEARCH_SUGGESTIONS,
                 timeout=3000,
             )
@@ -150,7 +148,7 @@ async def test_playwright_search_with_suggestions():
             print("⚠️ Suggestions did not appear - common in automated environments")
 
         # Try to get suggestions (may not always appear due to anti-bot measures)
-        suggestions = await search_page.get_search_suggestions()
+        suggestions = search_page.get_search_suggestions()
 
         if suggestions:
             (
@@ -167,21 +165,20 @@ async def test_playwright_search_with_suggestions():
             pytest.fail("No suggestions found - common in automated environments")
 
         # Complete the search
-        await playwright_page.page.keyboard.press("Enter")
+        playwright_page.page.keyboard.press("Enter")
 
         # Verify search completed
-        await search_page.wait_for_search_completion()
-        current_url = await search_page.get_url()
+        search_page.wait_for_search_completion()
+        current_url = search_page.get_url()
         assert_that(current_url.lower(), contains_string("duckduckgo.com"))
 
     finally:
         if factory:
-            await factory.cleanup()
+            factory.cleanup()
 
 
 @pytest.mark.playwright
-@pytest.mark.asyncio
-async def test_playwright_advanced_search():
+def test_playwright_advanced_search():
     """
     Test advanced Search engine with filters using Playwright.
     Demonstrates advanced search capabilities.
@@ -189,7 +186,7 @@ async def test_playwright_advanced_search():
     factory, playwright_page = None, None
 
     try:
-        factory, playwright_page = await create_playwright_session(
+        factory, playwright_page = create_playwright_session(
             browser_type="chromium",
             headless=settings.HEADLESS,
         )
@@ -197,18 +194,18 @@ async def test_playwright_advanced_search():
         search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
         # Open Search engine
-        success = await search_page.open_search_engine()
+        success = search_page.open_search_engine()
         assert_that(success, is_(True), "Should be able to open search engine")
 
         # Perform advanced search with simpler, more realistic query
-        search_success = await search_page.perform_advanced_search(
+        search_success = search_page.perform_advanced_search(
             search_term="python",
             site_filter="github.com",
         )
         assert_that(search_success, is_(True), "Advanced search should succeed")
 
         # Verify advanced search (DuckDuckGo uses ?q= parameter)
-        current_url = await search_page.get_url()
+        current_url = search_page.get_url()
         (
             assert_that(
                 any(
@@ -228,12 +225,12 @@ async def test_playwright_advanced_search():
 
         # Check if we have results (should have many for "python
         # site:github.com")
-        if await search_page.has_results():
-            result_count = await search_page.get_result_count()
+        if search_page.has_results():
+            result_count = search_page.get_result_count()
             print(f"✅ Advanced search returned {result_count} results")
 
             # Get some result links to verify they're from GitHub
-            links = await search_page.get_result_links()
+            links = search_page.get_result_links()
             if links:
                 github_links = [
                     link for link in links[:5] if "github.com" in link.lower()
@@ -244,12 +241,11 @@ async def test_playwright_advanced_search():
 
     finally:
         if factory:
-            await factory.cleanup()
+            factory.cleanup()
 
 
 @pytest.mark.playwright
-@pytest.mark.asyncio
-async def test_playwright_multiple_browsers():
+def test_playwright_multiple_browsers():
     """
     Test the same search across multiple browsers.
     Demonstrates Playwright's multi-browser capabilities.
@@ -262,7 +258,7 @@ async def test_playwright_multiple_browsers():
         try:
             print(f"\n🌐 Testing with {browser_type}")
 
-            factory, playwright_page = await create_playwright_session(
+            factory, playwright_page = create_playwright_session(
                 browser_type=browser_type,
                 headless=settings.HEADLESS,
             )
@@ -270,7 +266,7 @@ async def test_playwright_multiple_browsers():
             search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
             # Open Search engine
-            success = await search_page.open_search_engine()
+            success = search_page.open_search_engine()
             assert_that(
                 success,
                 is_(True),
@@ -278,16 +274,16 @@ async def test_playwright_multiple_browsers():
             )
 
             # Verify browser-specific behavior
-            user_agent = await playwright_page.page.evaluate("navigator.userAgent")
+            user_agent = playwright_page.page.evaluate("navigator.userAgent")
             print(f"User-Agent: {user_agent[:100]}...")
 
             # Perform basic search
-            search_success = await search_page.search_for(
+            search_success = search_page.search_for(
                 "playwright browser automation",
             )
 
-            if search_success and await search_page.has_results():
-                result_count = await search_page.get_result_count()
+            if search_success and search_page.has_results():
+                result_count = search_page.get_result_count()
                 print(f"✅ {browser_type}: Found {result_count} results")
             else:
                 pytest.fail(f"{browser_type}: Search blocked or no results")
@@ -296,12 +292,11 @@ async def test_playwright_multiple_browsers():
             print(f"❌ {browser_type}: Error - {e}")
         finally:
             if factory:
-                await factory.cleanup()
+                factory.cleanup()
 
 
 @pytest.mark.playwright
-@pytest.mark.asyncio
-async def test_playwright_network_interception():
+def test_playwright_network_interception():
     """
     Test with network interception capabilities.
     Demonstrates Playwright's advanced network features.
@@ -309,7 +304,7 @@ async def test_playwright_network_interception():
     factory, playwright_page = None, None
 
     try:
-        factory, playwright_page = await create_playwright_session(
+        factory, playwright_page = create_playwright_session(
             browser_type="chromium",
             headless=settings.HEADLESS,
         )
@@ -317,7 +312,7 @@ async def test_playwright_network_interception():
         # Set up network interception
         intercepted_requests = []
 
-        async def handle_request(route):
+        def handle_request(route):
             request = route.request
             intercepted_requests.append(
                 {
@@ -326,15 +321,15 @@ async def test_playwright_network_interception():
                     "resource_type": request.resource_type,
                 },
             )
-            await route.continue_()
+            route.continue_()
 
         # Enable request interception
-        await playwright_page.page.route("**/*", handle_request)
+        playwright_page.page.route("**/*", handle_request)
 
         search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
         # Navigate to Search engine (this will trigger network requests)
-        success = await search_page.open_search_engine()
+        success = search_page.open_search_engine()
         assert_that(success, is_(True), "Should be able to open search engine")
 
         # Verify we intercepted requests
@@ -356,7 +351,7 @@ async def test_playwright_network_interception():
         # Next fallback: try to use the current page URL
         if not search_engine_url:
             try:
-                page_url = await playwright_page.page.evaluate("() => location.href")
+                page_url = playwright_page.page.evaluate("() => location.href")
                 if page_url:
                     parsed = urlparse(page_url)
                     if parsed.scheme and parsed.netloc:
@@ -427,12 +422,11 @@ async def test_playwright_network_interception():
 
     finally:
         if factory:
-            await factory.cleanup()
+            factory.cleanup()
 
 
 @pytest.mark.playwright
-@pytest.mark.asyncio
-async def test_playwright_mobile_emulation():
+def test_playwright_mobile_emulation():
     """
     Test Search engine with mobile device emulation.
     Demonstrates responsive testing capabilities.
@@ -442,10 +436,10 @@ async def test_playwright_mobile_emulation():
     try:
         # Create factory
         factory = PlaywrightFactory()
-        browser = await factory.create_browser("chromium", headless=settings.HEADLESS)
+        browser = factory.create_browser("chromium", headless=settings.HEADLESS)
 
         # Create mobile context (iPhone 12 Pro)
-        context = await factory.create_context(
+        context = factory.create_context(
             browser,
             viewport={"width": 390, "height": 844},
             user_agent=(
@@ -455,11 +449,11 @@ async def test_playwright_mobile_emulation():
             ),
         )
 
-        page = await factory.create_page(context)
+        page = factory.create_page(context)
         search_page = PlaywrightSearchEnginePage(page)
 
         # Test mobile navigation
-        success = await search_page.open_search_engine()
+        success = search_page.open_search_engine()
         assert_that(
             success,
             is_(True),
@@ -467,7 +461,7 @@ async def test_playwright_mobile_emulation():
         )
 
         # Verify mobile layout
-        viewport_size = await page.evaluate(
+        viewport_size = page.evaluate(
             "() => ({width: window.innerWidth, height: window.innerHeight})",
         )
         (
@@ -486,10 +480,10 @@ async def test_playwright_mobile_emulation():
         )
 
         # Test mobile search
-        search_success = await search_page.search_for("mobile testing playwright")
+        search_success = search_page.search_for("mobile testing playwright")
 
-        if search_success and await search_page.has_results():
-            result_count = await search_page.get_result_count()
+        if search_success and search_page.has_results():
+            result_count = search_page.get_result_count()
             print(f"✅ Mobile: Found {result_count} results")
         else:
             pytest.fail("Mobile search blocked or no results")
@@ -498,13 +492,12 @@ async def test_playwright_mobile_emulation():
 
     finally:
         if factory:
-            await factory.cleanup()
+            factory.cleanup()
 
 
 @pytest.mark.playwright
-@pytest.mark.asyncio
 @pytest.mark.slow
-async def test_playwright_performance_metrics():
+def test_playwright_performance_metrics():
     """
     Test with performance metrics collection.
     Demonstrates Playwright's performance monitoring capabilities.
@@ -512,7 +505,7 @@ async def test_playwright_performance_metrics():
     factory, playwright_page = None, None
 
     try:
-        factory, playwright_page = await create_playwright_session(
+        factory, playwright_page = create_playwright_session(
             browser_type="chromium",
             headless=settings.HEADLESS,
         )
@@ -520,28 +513,28 @@ async def test_playwright_performance_metrics():
         search_page = PlaywrightSearchEnginePage(playwright_page.page)
 
         # Start performance monitoring
-        await playwright_page.page.evaluate("performance.mark('test-start')")
+        playwright_page.page.evaluate("performance.mark('test-start')")
 
         # Navigate and measure
-        navigation_start = await playwright_page.page.evaluate("performance.now()")
-        success = await search_page.open_search_engine()
-        navigation_end = await playwright_page.page.evaluate("performance.now()")
+        navigation_start = playwright_page.page.evaluate("performance.now()")
+        success = search_page.open_search_engine()
+        navigation_end = playwright_page.page.evaluate("performance.now()")
         assert_that(success, is_(True), "Should be able to open search engine")
 
         navigation_time = navigation_end - navigation_start
         print(f"✅ Navigation time: {navigation_time:.2f}ms")
 
         # Measure search performance
-        search_start = await playwright_page.page.evaluate("performance.now()")
-        search_success = await search_page.search_for("performance testing")
-        search_end = await playwright_page.page.evaluate("performance.now()")
+        search_start = playwright_page.page.evaluate("performance.now()")
+        search_success = search_page.search_for("performance testing")
+        search_end = playwright_page.page.evaluate("performance.now()")
 
         if search_success:
             search_time = search_end - search_start
             print(f"✅ Search time: {search_time:.2f}ms")
 
             # Get basic performance metrics
-            metrics = await playwright_page.page.evaluate(
+            metrics = playwright_page.page.evaluate(
                 """
                 () => {
                     const perfData = performance.getEntriesByType('navigation')[0];
@@ -580,12 +573,12 @@ async def test_playwright_performance_metrics():
 
     finally:
         if factory:
-            await factory.cleanup()
+            factory.cleanup()
 
 
 # Fixture for Playwright factory cleanup
 @pytest.fixture
-async def playwright_factory():
+def playwright_factory():
     """Fixture providing Playwright factory with automatic cleanup."""
     factory = None
     try:
@@ -593,4 +586,4 @@ async def playwright_factory():
         yield factory
     finally:
         if factory:
-            await factory.safe_cleanup()
+            factory.safe_cleanup()

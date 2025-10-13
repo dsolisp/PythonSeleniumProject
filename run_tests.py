@@ -24,7 +24,7 @@ import os
 import shlex
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from utils.test_data_manager import DataManager
@@ -45,7 +45,7 @@ def run_command(command, description):
             command_list,
             shell=False,  # Security: Avoid shell injection
             check=True,
-            cwd=Path.getcwd(),
+            cwd=Path.cwd(),
             capture_output=True,
             text=True,
         )
@@ -73,7 +73,7 @@ def export_test_results(*, test_type: str, success: bool, duration: float):
     """
     try:
         # Import here to avoid dependency issues
-        sys.path.insert(0, Path.getcwd())
+        sys.path.insert(0, str(Path.cwd()))
 
         manager = DataManager()
 
@@ -85,14 +85,14 @@ def export_test_results(*, test_type: str, success: bool, duration: float):
             "failed": "N/A",
             "success": success,
             "duration": duration,
-            "timestamp": datetime.now(datetime.UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "environment": os.getenv("TEST_ENV", "local"),
             "python_version": sys.version.split()[0],
             "platform": sys.platform,
         }
 
         # Export to YAML
-        timestamp = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"test_run_{test_type}_{timestamp}.yml"
         yaml_file = manager.save_test_results_yaml(results, filename=filename)
 
@@ -127,7 +127,7 @@ def run_ml_analysis():
         result = subprocess.run(
             [sys.executable, str(analyzer_script)],
             check=False,
-            cwd=Path.getcwd(),
+            cwd=str(Path.cwd()),
             capture_output=True,
             text=True,
             timeout=60,
@@ -216,7 +216,7 @@ Test Counts:
     args = parser.parse_args()
 
     # Track start time
-    start_time = datetime.now(datetime.UTC)
+    start_time = datetime.now(timezone.utc)
 
     # Build base command
     base_cmd = "python -m pytest"
@@ -312,7 +312,7 @@ Test Counts:
             test_runs.append((test_type, success_result))
 
     # Calculate duration
-    duration = (datetime.now(datetime.UTC) - start_time).total_seconds()
+    duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
     # Export results (unless disabled)
     if not args.no_export:
@@ -321,7 +321,11 @@ Test Counts:
         print("=" * 60)
 
         for test_type, test_success in test_runs:
-            export_test_results(test_type, test_success, duration)
+            export_test_results(
+                test_type=test_type,
+                success=test_success,
+                duration=duration,
+            )
 
     # Run ML analysis (unless disabled)
     if not args.no_export and not args.no_ml:
