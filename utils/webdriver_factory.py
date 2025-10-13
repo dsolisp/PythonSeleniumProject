@@ -35,7 +35,7 @@ class WebDriverFactory:
     def create_chrome_driver(
         *,
         headless: bool = False,
-    window_size: Optional[tuple[int, int]] = None,
+        window_size: Optional[tuple[int, int]] = None,
     ) -> webdriver.Chrome:
         """Create Chrome driver with anti-detection configuration."""
         options = ChromeOptions()
@@ -97,7 +97,7 @@ class WebDriverFactory:
     def create_firefox_driver(
         *,
         headless: bool = False,
-    window_size: Optional[tuple[int, int]] = None,
+        window_size: Optional[tuple[int, int]] = None,
     ) -> webdriver.Firefox:
         """Create Firefox driver with configuration."""
         options = FirefoxOptions()
@@ -132,7 +132,7 @@ class WebDriverFactory:
     def create_edge_driver(
         *,
         headless: bool = False,
-    window_size: Optional[tuple[int, int]] = None,
+        window_size: Optional[tuple[int, int]] = None,
     ) -> webdriver.Edge:
         """Create Edge driver with configuration."""
         options = EdgeOptions()

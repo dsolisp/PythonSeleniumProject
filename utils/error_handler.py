@@ -35,6 +35,7 @@ def _is_pytest_running():
 @dataclass
 class ErrorContext:
     """Context information for error handling."""
+
     error_type: str
     error_message: str
     timestamp: datetime
@@ -49,6 +50,7 @@ class ErrorContext:
 
 class ErrorSeverity(Enum):
     """Error severity levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -57,6 +59,7 @@ class ErrorSeverity(Enum):
 
 class RecoveryStrategy(Enum):
     """Recovery strategy types."""
+
     RETRY = "retry"
     REFRESH = "refresh"
     NAVIGATE = "navigate"
@@ -71,6 +74,7 @@ class RecoveryStrategy(Enum):
 @dataclass
 class RecoveryAction:
     """Recovery action definition."""
+
     strategy: RecoveryStrategy
     max_attempts: int
     wait_time: float
@@ -79,7 +83,6 @@ class RecoveryAction:
 
 
 class ErrorClassifier:
-
     """
     Intelligent error classification system.
     Categorizes errors and suggests appropriate recovery strategies.
@@ -159,7 +162,7 @@ class ErrorClassifier:
     def classify_error(
         self,
         error: Exception,
-    _context: Optional[ErrorContext] = None,
+        _context: Optional[ErrorContext] = None,
     ) -> dict[str, Any]:
         """
         Classify error and return detailed information.
@@ -231,7 +234,6 @@ class ErrorClassifier:
 
 
 class RecoveryManager:
-
     def _refresh_recovery(
         self,
         driver,
@@ -251,6 +253,7 @@ class RecoveryManager:
             self.logger.exception("Refresh recovery failed")
             return False
         return True
+
     """
     Intelligent recovery manager that executes recovery strategies.
     """
@@ -454,6 +457,7 @@ class SmartErrorHandler:
             "cpu_percent": cpu_percent,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+
     """
     Main error handling coordinator that combines classification and recovery.
     """
@@ -497,7 +501,7 @@ class SmartErrorHandler:
         error: Exception,
         driver,
         test_name: str,
-    custom_recovery: Optional[RecoveryAction] = None,
+        custom_recovery: Optional[RecoveryAction] = None,
     ) -> bool:
         """
         Main error handling entry point.
@@ -607,7 +611,7 @@ class SmartErrorHandler:
         *args,
         max_attempts: int = 3,
         wait_strategy: str = "exponential",
-    retry_exceptions: Optional[tuple] = None,
+        retry_exceptions: Optional[tuple] = None,
         **kwargs,
     ) -> Any:
         """

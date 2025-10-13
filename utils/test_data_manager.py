@@ -156,7 +156,7 @@ class DataManager:
     def save_test_results_yaml(
         self,
         results: dict[str, Any],
-    filename: Optional[str] = None,
+        filename: Optional[str] = None,
     ) -> str:
         """
         Save test results in YAML format for human-readable reports.
@@ -198,7 +198,7 @@ class DataManager:
 
     def get_user_accounts(
         self,
-    role: Optional[str] = None,
+        role: Optional[str] = None,
         environment: str = "default",
     ) -> list[dict[str, Any]]:
         """
@@ -221,7 +221,7 @@ class DataManager:
 
     def get_api_endpoints(
         self,
-    method: Optional[str] = None,
+        method: Optional[str] = None,
         environment: str = "default",
     ) -> list[dict[str, Any]]:
         """
@@ -247,8 +247,8 @@ class DataManager:
     def get_browser_configurations(
         *,
         self,
-    browser: Optional[str] = None,
-    mobile: Optional[bool] = None,
+        browser: Optional[str] = None,
+        mobile: Optional[bool] = None,
         environment: str = "default",
     ) -> list[dict[str, Any]]:
         """
@@ -403,7 +403,8 @@ class DataManager:
         for file_path in results_dir.rglob("*.json"):
             try:
                 file_date = datetime.fromtimestamp(
-                    file_path.stat().st_mtime, tz=timezone.utc,
+                    file_path.stat().st_mtime,
+                    tz=timezone.utc,
                 )
             except (OSError, ValueError):
                 continue

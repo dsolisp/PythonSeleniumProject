@@ -122,10 +122,7 @@ class MLTestAnalyzer:
                         or 0
                     )
                     test_ts = (
-                        run_ts
-                        or test.get("created")
-                        or data.get("created")
-                        or None
+                        run_ts or test.get("created") or data.get("created") or None
                     )
                     # Normalize timestamp to string or datetime
                     try:

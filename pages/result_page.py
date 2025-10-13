@@ -1,5 +1,3 @@
-
-
 from typing import Optional
 
 from selenium.common.exceptions import (

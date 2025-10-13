@@ -331,7 +331,6 @@ class BasePage:
             else:
                 actual_text = text
 
-
             element = self.wait_for_element(locator, timeout)
             if element:
                 # Clear existing value using several fallbacks;
@@ -656,7 +655,9 @@ class BasePage:
     # === DATABASE METHODS (if database connection provided) ===
 
     def execute_query(
-        self, query: str, parameters: Optional[tuple] = None,
+        self,
+        query: str,
+        parameters: Optional[tuple] = None,
     ) -> list[dict]:
         """
         Execute database query if database connection available.

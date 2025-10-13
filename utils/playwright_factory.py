@@ -3,7 +3,6 @@ Playwright factory for modern browser automation.
 Provides async browser automation capabilities alongside existing Selenium support.
 """
 
-
 from typing import Any, Optional
 
 from playwright.async_api import (
@@ -226,7 +225,9 @@ class PlaywrightPage:
         return self.page.url
 
     async def wait_for_element(
-        self, selector: str, timeout: Optional[int] = None,
+        self,
+        selector: str,
+        timeout: Optional[int] = None,
     ) -> Any:
         """Wait for element to be visible."""
         timeout_ms = (timeout or settings.TIMEOUT) * SECONDS_TO_MILLISECONDS

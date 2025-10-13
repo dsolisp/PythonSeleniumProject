@@ -430,7 +430,8 @@ def performance_test(threshold_ms: Optional[float] = None, name: Optional[str] =
                 # Allow strict failure to be opt-in via environment variable.
                 fail_on_threshold = (
                     os.getenv(
-                        "PERFORMANCE_FAIL_ON_THRESHOLD", "false",
+                        "PERFORMANCE_FAIL_ON_THRESHOLD",
+                        "false",
                     ).lower()
                     == "true"
                 )

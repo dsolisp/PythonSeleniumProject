@@ -52,6 +52,7 @@ class TestTestDataManager:
         # Load and verify
         loaded_data = self.data_manager.load_test_data("test_data")
         assert_that(loaded_data, equal_to(test_data))
+
     def test_load_test_data_caching(self):
         """Test that data is cached after first load."""
         test_data = {"cached": True}
@@ -79,6 +80,7 @@ class TestTestDataManager:
         assert_that(len(scenarios), equal_to(2))
         assert_that(scenarios[0]["name"], equal_to("test1"))
         assert_that(scenarios[1]["search_term"], equal_to("selenium"))
+
     def test_get_user_accounts_filtered_by_role(self):
         """Test getting user accounts filtered by role."""
         test_data = {
@@ -171,6 +173,7 @@ class TestAdvancedTestReporter:
 
     # ...existing code...
     """Test starting a test suite."""
+
     # ...existing code...
     def test_add_test_result(self):
         """Test adding test results to suite."""
@@ -247,7 +250,7 @@ class TestAdvancedTestReporter:
         """Test HTML report generation."""
         self.reporter.start_test_suite("HTML_Test", "local", "chrome")
 
-    # ...existing code...
+        # ...existing code...
         result = Result(
             test_name="test_html",
             status="PASSED",
@@ -270,6 +273,7 @@ class TestAdvancedTestReporter:
         assert_that(html_content, contains_string("<!DOCTYPE html>"))
         assert_that(html_content, contains_string("Test Execution Report"))
         assert_that(html_content, contains_string("HTML_Test"))
+
     def test_get_failure_patterns(self):
         """Test failure pattern analysis."""
         self.reporter.start_test_suite("Failure_Test", "local", "chrome")
@@ -432,6 +436,7 @@ class TestRecoveryManager:
         # Mock failing validation: always returns False
         def always_false():
             return False
+
         success_validation = Mock(side_effect=always_false)
         recovery_action = RecoveryAction(
             strategy=RecoveryStrategy.RETRY,

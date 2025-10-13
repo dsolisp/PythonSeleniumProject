@@ -184,7 +184,7 @@ def execute_query_safe(
     conn: sqlite3.Connection,
     query: str,
     params: Optional[tuple] = None,
-    ) -> Optional[sqlite3.Cursor]:
+) -> Optional[sqlite3.Cursor]:
     """
     Safely execute a query with exception handling that returns None on failure.
 
@@ -271,7 +271,7 @@ def execute_and_fetch_one(
     conn: sqlite3.Connection,
     query: str,
     params: Optional[tuple] = None,
-    ) -> Optional[sqlite3.Row]:
+) -> Optional[sqlite3.Row]:
     """
     Execute query and fetch single result in one operation.
 
@@ -319,7 +319,7 @@ def insert_data(
     conn: sqlite3.Connection,
     table: str,
     data: dict[str, Any],
-    ) -> Optional[int]:
+) -> Optional[int]:
     """
     Insert data into a table with dynamic column mapping.
 

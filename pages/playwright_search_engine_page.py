@@ -36,7 +36,8 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                 print("CAPTCHA detected on open_search_engine")
                 return False
             await self.page.wait_for_selector(
-                self.locators.SEARCH_INPUT, timeout=20000,
+                self.locators.SEARCH_INPUT,
+                timeout=20000,
             )
         except (TimeoutError, PlaywrightError) as e:
             print(f"Failed to open search engine: {e}")

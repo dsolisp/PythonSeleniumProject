@@ -199,6 +199,7 @@ select = [
 
 # Ignore some rules that are too strict or conflict with project style
 ignore = [
+    "COM812",  # trailing-comma: conflicts with Ruff formatter
     "E203",  # whitespace before ':' (conflicts with black)
     "T20",   # flake8-print: print found (allow in test/debug code)
     "S101",  # flake8-bandit: assert used (allow in tests)

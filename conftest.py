@@ -40,9 +40,12 @@ def test_config(request) -> dict[str, Any]:
 
 @pytest.fixture
 def driver(
-    request, test_config,
+    request,
+    test_config,
 ) -> Generator[
-    tuple[webdriver.Chrome, object], None, None,
+    tuple[webdriver.Chrome, object],
+    None,
+    None,
 ]:
     """
     Main driver fixture providing WebDriver and database connection.

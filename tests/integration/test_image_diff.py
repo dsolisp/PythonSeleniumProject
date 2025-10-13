@@ -1,4 +1,3 @@
-
 import contextlib
 import os
 from pathlib import Path
@@ -20,7 +19,7 @@ from utils import diff_handler
 def test_visual_comparison_applitools(driver):
     """Applitools visual regression test using project driver and page objects."""
     pytest.skip(
-        "Skipping Applitools test: API key not configured or test disabled by user " \
+        "Skipping Applitools test: API key not configured or test disabled by user "
         "request.",
     )
 
@@ -45,6 +44,7 @@ def test_visual_comparison_applitools(driver):
         eyes.close()
     finally:
         eyes.abort_if_not_closed()
+
 
 """
 Visual regression tests with image comparison capabilities.
