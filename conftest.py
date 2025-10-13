@@ -99,6 +99,44 @@ def pytest_configure(config):
         "api: API tests",
         "database: Database tests",
         "framework: Framework functionality tests",
+        "visual: Visual regression tests",
+        "playwright: Playwright-based tests",
     ]
     for marker in markers:
         config.addinivalue_line("markers", marker)
+
+
+# === PLAYWRIGHT CONFIGURATION ===
+
+@pytest.fixture(scope="session")
+def browser_context_args(browser_context_args, test_config):
+    """Configure Playwright browser context for visual testing."""
+    return {
+        **browser_context_args,
+        "viewport": {"width": 1280, "height": 720},
+        "device_scale_factor": 1,
+        "ignore_https_errors": True,
+        "record_video_dir": str(settings.SCREENSHOTS_DIR / "videos") if hasattr(settings, 'RECORD_VIDEOS') and settings.RECORD_VIDEOS else None,
+    }
+
+
+@pytest.fixture(scope="function")
+def page_with_visual_setup(page):
+    """
+    Enhanced page fixture with visual testing setup.
+    Sets up the page for visual regression testing.
+    """
+    # Set default timeout for visual operations
+    page.set_default_timeout(30000)  # 30 seconds
+
+    # Ensure consistent viewport for visual testing
+    page.set_viewport_size({"width": 1280, "height": 720})
+
+    yield page
+
+    # Cleanup after test
+    try:
+        # Close any modal dialogs that might be open
+        page.evaluate("() => { try { window.close(); } catch(e) {} }")
+    except Exception:
+        pass  # Ignore cleanup errors
