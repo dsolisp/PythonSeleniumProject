@@ -20,7 +20,8 @@ from utils import diff_handler
 def test_visual_comparison_applitools(driver):
     """Applitools visual regression test using project driver and page objects."""
     pytest.skip(
-        "Skipping Applitools test: API key not configured or test disabled by user request."
+        "Skipping Applitools test: API key not configured or test disabled by user " \
+        "request.",
     )
 
     # --- original test body preserved below ---
