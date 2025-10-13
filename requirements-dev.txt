@@ -1,1 +1,0 @@
-This file is deprecated. All dependencies are now in requirements.txt. Please use requirements.txt only.

@@ -108,6 +108,8 @@ pytest -m database tests/
 
 | Feature | Tutorial | Description |
 |---------|----------|-------------|
+| **Local Development** | [🛠️ Local Dev Guide](documentation/LOCAL_DEV_GUIDE.md) | Development tools & local setup |
+| **Pytest Configuration** | [🧪 Pytest Guide](documentation/PYTEST_README.md) | Testing framework setup & options |
 | **Analytics** | [📊 Analytics Guide](documentation/ANALYTICS_AND_REPORTING.md) | Pandas analytics & dashboards |
 | **ML Intelligence** | [🤖 ML Guide](documentation/ML_INTEGRATION.md) | AI-powered test optimization |
 | **API Testing** | [🔗 API Guide](documentation/API_TESTING.md) | REST automation with Allure |

@@ -545,11 +545,10 @@ jobs:
         fi
     
     - name: Notify Slack
-      if: env.SLACK_WEBHOOK_URL != ''
+      if: ${{ env.SLACK_WEBHOOK_URL != '' }}
       uses: 8398a7/action-slack@v3
       with:
         status: ${{ steps.status.outputs.status }}
-        color: ${{ steps.status.outputs.color }}
         text: |
           QA Automation Pipeline ${{ steps.status.outputs.status }}
           Branch: ${{ github.ref }}
@@ -558,9 +557,21 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     
+    - name: Check Teams webhook
+      id: teams-webhook
+      run: |
+        # Check if Teams webhook secret is available
+        if [ "${{ secrets.TEAMS_WEBHOOK_URL }}" != "" ]; then
+          echo "configured=true" >> $GITHUB_OUTPUT
+        else
+          echo "configured=false" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
     - name: Notify Microsoft Teams
-      if: env.TEAMS_WEBHOOK_URL != ''
+      if: ${{ steps.teams-webhook.outputs.configured == 'true' }}
       uses: skitionek/notify-microsoft-teams@master
+      continue-on-error: true
       with:
         webhook_url: ${{ secrets.TEAMS_WEBHOOK_URL }}
         needs: ${{ toJson(needs) }}
