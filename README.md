@@ -56,15 +56,19 @@ python run_full_workflow.py  # Complete pipeline: tests + analytics + ML
 
 ### Manual Execution
 ```bash
-# Run specific test categories
-pytest tests/api/ -v          # API tests
-pytest tests/web/ -v          # Web UI tests  
-pytest tests/unit/ -v         # Unit tests
+# Clean development runs (minimal output)
+pytest tests/
+pytest tests/web/test_playwright_search_engine.py::test_playwright_search_basic
+
+# Full reporting for CI/CD (detailed output)
+pytest -c pytest-ci.ini tests/ --cov-report=html
 
 # With Allure reporting
-pytest tests/ --alluredir=reports/allure-results
+pytest -c pytest-ci.ini tests/ --alluredir=reports/allure-results
 allure serve reports/allure-results
 ```
+
+**Note**: Default pytest runs are now clean and minimal. Use `pytest-ci.ini` for detailed reporting with coverage, HTML reports, etc.
 
 ## 📚 Documentation
 

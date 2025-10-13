@@ -2,6 +2,7 @@
 Pytest configuration and fixtures for test automation.
 """
 
+import contextlib
 import os
 import time
 from collections.abc import Generator
@@ -109,18 +110,22 @@ def pytest_configure(config):
 # === PLAYWRIGHT CONFIGURATION ===
 
 @pytest.fixture(scope="session")
-def browser_context_args(browser_context_args, test_config):
+def browser_context_args(browser_context_args):
     """Configure Playwright browser context for visual testing."""
     return {
         **browser_context_args,
         "viewport": {"width": 1280, "height": 720},
         "device_scale_factor": 1,
         "ignore_https_errors": True,
-        "record_video_dir": str(settings.SCREENSHOTS_DIR / "videos") if hasattr(settings, 'RECORD_VIDEOS') and settings.RECORD_VIDEOS else None,
+        "record_video_dir": (
+            str(settings.SCREENSHOTS_DIR / "videos")
+            if hasattr(settings, "RECORD_VIDEOS") and settings.RECORD_VIDEOS
+            else None
+        ),
     }
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def page_with_visual_setup(page):
     """
     Enhanced page fixture with visual testing setup.
@@ -135,8 +140,6 @@ def page_with_visual_setup(page):
     yield page
 
     # Cleanup after test
-    try:
+    with contextlib.suppress(Exception):
         # Close any modal dialogs that might be open
         page.evaluate("() => { try { window.close(); } catch(e) {} }")
-    except Exception:
-        pass  # Ignore cleanup errors
