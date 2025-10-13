@@ -6,6 +6,8 @@ Complete documentation for the Python Selenium Test Automation Framework.
 
 ### 🚀 Getting Started
 - **[README.md](../README.md)** - Quick start guide and overview
+- **[Local Development Guide](LOCAL_DEV_GUIDE.md)** - Development tools and local setup
+- **[Pytest Configuration Guide](PYTEST_README.md)** - Testing framework setup and options
 - **[Installation & Setup](#installation)** - Environment setup and dependencies
 
 ### 🧪 Testing Capabilities
