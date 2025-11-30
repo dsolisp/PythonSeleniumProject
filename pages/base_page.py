@@ -27,6 +27,9 @@ from utils.error_handler import SmartErrorHandler
 from utils.sql_connection import execute_query, fetch_all
 from utils.test_data_manager import DataManager
 
+# Constants
+MAX_INTERACTION_HISTORY = 100  # Maximum number of interactions to keep in history
+
 
 class BasePage:
     """
@@ -520,5 +523,7 @@ class BasePage:
                 "url": self.driver.current_url,
             }
         )
-        if len(self.interaction_history) > 100:
-            self.interaction_history = self.interaction_history[-100:]
+        if len(self.interaction_history) > MAX_INTERACTION_HISTORY:
+            self.interaction_history = self.interaction_history[
+                -MAX_INTERACTION_HISTORY:
+            ]

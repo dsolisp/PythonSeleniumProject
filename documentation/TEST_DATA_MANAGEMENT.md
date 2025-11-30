@@ -273,20 +273,18 @@ def pytest_runtest_makereport(item, call):
             })
 ```
 
-## 🔗 Integration with ML Analyzer
+## 🔗 Integration with Test Analytics
 
-Test results exported via DataManager are automatically consumed by ML Analyzer:
+Test results exported via DataManager are automatically consumed by Test Analytics:
 
 ```python
 # Export results during test execution
 manager = DataManager()
 manager.save_test_results_json(results)
 
-# ML Analyzer picks them up automatically
-from utils.ml_test_analyzer import MLTestAnalyzer
-analyzer = MLTestAnalyzer()  # Reads from data/results/
-analyzer.load_historical_data()
-analyzer.detect_flaky_tests()
+# Test Analytics Engine picks them up automatically
+# Run: python utils/test_analytics.py
+# Or use the full workflow: python run_full_workflow.py
 ```
 
 ## 📊 Supported Formats
@@ -353,7 +351,7 @@ historical_data = manager.load_historical_data('2024_Q1')
 
 ## 📚 Related Documentation
 
-- [ML Integration](ML_INTEGRATION.md) - How ML Analyzer uses exported data
+- [Test Analytics](TEST_ANALYTICS.md) - How Test Analytics uses exported data
 - [Analytics & Reporting](ANALYTICS_AND_REPORTING.md) - Analyzing test results
 - [API Testing](API_TESTING.md) - Data-driven API tests
 
@@ -376,4 +374,4 @@ historical_data = manager.load_historical_data('2024_Q1')
 
 ---
 
-**Value Proposition**: Flexible, multi-format data management enabling true data-driven testing with environment-specific configurations and seamless ML integration.
+**Value Proposition**: Flexible, multi-format data management enabling true data-driven testing with environment-specific configurations and seamless analytics integration.

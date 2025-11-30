@@ -2,208 +2,97 @@
 
 ## Overview
 
-The framework provides comprehensive analytics and reporting capabilities powered by **pandas**, **numpy**, and **Jinja2**. These tools transform raw test execution data into actionable insights.
+The framework provides comprehensive analytics and reporting capabilities using **pytest plugins** and the **Test Analytics Engine**. These tools transform raw test execution data into actionable insights.
 
 ## 🎯 When to Use
 
-- **After test execution**: Generate detailed execution reports
-- **Performance analysis**: Identify slow tests and bottlenecks
+- **After test execution**: Generate detailed HTML/JSON reports
+- **Performance analysis**: Identify slow and flaky tests
 - **Trend tracking**: Monitor test suite health over time
-- **Data export**: Share results with external tools (Excel, BI tools)
-- **Executive reporting**: Create dashboard-style reports for stakeholders
+- **Data export**: Share results with external tools (CSV, JSON)
+- **CI/CD integration**: Automatic reporting in pipelines
 
-> **Tip:** Run `python run_full_workflow.py` to automatically trigger all analytics, reporting, and exports.
+> **Tip:** Run `python run_full_workflow.py` to automatically trigger tests, analytics, and report generation.
 
 ## 🔧 Key Components
 
-### 1. AdvancedTestReporter (`utils/test_reporter.py`)
+### 1. pytest-html Reports
 
-**Purpose**: Comprehensive test result analysis and report generation
+**Purpose**: Beautiful HTML reports with test details
+
+```bash
+# Generate HTML report
+pytest tests/ --html=reports/html/report.html --self-contained-html
+```
+
+### 2. pytest-json-report
+
+**Purpose**: JSON output for CI/CD integration
+
+```bash
+# Generate JSON report
+pytest tests/ --json-report --json-report-file=reports/json/results.json
+```
+
+### 3. Test Analytics Engine (`utils/test_analytics.py`)
+
+**Purpose**: Statistical analysis of test execution data
 
 **Features**:
-- DataFrame-based analytics with pandas
-- Statistical analysis (mean, median, outlier detection)
-- HTML dashboard generation with Jinja2
-- CSV export for external analysis
-- Performance trend tracking
+- Flaky test detection
+- Slow test identification
+- Reliability scoring
+- Pandas-based analysis
 
-**Usage Example**:
-```python
-from utils.test_reporter import AdvancedTestReporter, Result
-from datetime import datetime
+**Usage**:
+```bash
+# Run analytics after tests
+python utils/test_analytics.py
 
-# Initialize reporter
-reporter = AdvancedTestReporter()
-reporter.start_test_suite('production_tests', 'prod', 'chrome')
-
-# Add test results
-result = Result(
-    test_name='test_login',
-    status='PASSED',
-    duration=1.2,
-    timestamp=datetime.now(),
-    environment='prod',
-    browser='chrome'
-)
-reporter.add_test_result(result)
-
-# Generate analytics
-analytics = reporter.generate_dataframe_analytics()
-print(f"Success rate: {analytics['success_rate']:.1f}%")
-
-# Export to CSV
-csv_file = reporter.export_to_csv()
-print(f"Results exported to: {csv_file}")
-```
-
-### 2. DataFrame Analytics
-
-**Statistical analysis with pandas**:
-- Average, median, min, max duration
-- Standard deviation and outlier detection
-- Success/failure rates by environment
-- Performance trends over time
-
-**Example Analysis**:
-```python
-import pandas as pd
-import numpy as np
-
-# Analyze by environment
-env_stats = df.groupby('environment').agg({
-    'duration': ['mean', 'std', 'count'],
-    'status': lambda x: (x == 'PASSED').mean() * 100
-})
-
-# Identify outliers (Z-score > 2)
-df['z_score'] = np.abs((df['duration'] - df['duration'].mean()) / df['duration'].std())
-outliers = df[df['z_score'] > 2]
-```
-
-### 3. HTML Dashboard Generation
-
-**Template-based Reporting with Jinja2**:
-
-```python
-from jinja2 import Template
-
-# Custom dashboard template
-template = Template('''
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ suite_name }} - Test Report</title>
-    <style>
-        .metric { background: #f0f8ff; padding: 20px; margin: 10px; }
-        .passed { color: #28a745; }
-        .failed { color: #dc3545; }
-    </style>
-</head>
-<body>
-    <h1>{{ suite_name }}</h1>
-    <div class="metric">
-        <h3>Summary</h3>
-        <p>Environment: {{ environment }}</p>
-        <p>Total Tests: {{ total_tests }}</p>
-        <p>Success Rate: {{ success_rate }}%</p>
-    </div>
-    <table>
-        <tr><th>Test</th><th>Status</th><th>Duration</th></tr>
-        {% for test in results %}
-        <tr>
-            <td>{{ test.test_name }}</td>
-            <td class="{{ test.status.lower() }}">{{ test.status }}</td>
-            <td>{{ test.duration }}s</td>
-        </tr>
-        {% endfor %}
-    </table>
-</body>
-</html>
-''')
-
-# Render report
-html = template.render(
-    suite_name='Production Tests',
-    environment='prod',
-    total_tests=50,
-    success_rate=94.0,
-    results=test_results
-)
+# Output:
+# ⚠️  Flaky Tests (3):
+#    • test_network: 75% pass rate
+# 🐢 Slow Tests (5):
+#    • test_api_users: 1.20s
+# 🏆 Test Reliability (Top 5 risks):
+#    • test_checkout: 65% pass [⚠️ FLAKY]
 ```
 
 ## 📊 Report Types
 
-### 1. JSON Reports
+### 1. HTML Reports (pytest-html)
+**Use case**: Human-readable reports for stakeholders
+
+```bash
+pytest tests/ --html=reports/report.html --self-contained-html
+```
+
+### 2. JSON Reports (pytest-json-report)
 **Use case**: CI/CD integration, programmatic processing
-```python
-reporter.generate_json_report('reports/json/test_results.json')
+
+```bash
+pytest tests/ --json-report --json-report-file=reports/results.json
 ```
 
-### 2. CSV Reports
+### 3. CSV Analytics Export
 **Use case**: Excel analysis, data visualization tools
-```python
-reporter.export_to_csv('reports/analytics/test_data.csv')
+
+The full workflow automatically exports to `reports/analytics_summary.csv`:
+```bash
+python run_full_workflow.py
 ```
 
-### 3. HTML Dashboards
-```python
-reporter.generate_html_dashboard('reports/html/dashboard.html')
-```
+## 📈 Integration with CI/CD
 
-## 🔬 Advanced Analytics
-
-### Performance Outlier Detection
-
-```python
-# Z-score formula: (x - mean) / std_dev
-# Tests with |Z| > 2 are considered outliers
-
-outliers = reporter.detect_performance_outliers(threshold=2.0)
-for test in outliers:
-    print(f"{test['name']}: {test['duration']}s (Z-score: {test['z_score']:.2f})")
-```
-
-### Trend Analysis
-
-Track test performance over multiple executions:
-
-```python
-trends = reporter.analyze_trends(days=30)
-print(f"Average duration trend: {trends['duration_trend']}")
-print(f"Success rate trend: {trends['success_rate_trend']}")
-```
-
-## 🎨 Customization
-
-Create your own Jinja2 templates:
-
-```python
-custom_template = """
-{% for test in failed_tests %}
-<div class="failed-test">
-    <h3>{{ test.test_name }}</h3>
-    <p>Error: {{ test.error_message }}</p>
-</div>
-{% endfor %}
-"""
-
-reporter.generate_custom_report(custom_template, output='custom_report.html')
-```
-
-## 📈 Integration Points
-
-### With CI/CD Pipelines
+### GitHub Actions Example
 
 ```yaml
-# GitHub Actions example
-- name: Generate Test Report
+- name: Run Tests with Reports
   run: |
-    python -c "
-    from utils.test_reporter import AdvancedTestReporter
-    reporter = AdvancedTestReporter()
-    reporter.load_latest_results()
-    reporter.export_to_csv('reports/ci_results.csv')
-    "
+    pytest tests/ --html=reports/report.html --json-report
+
+- name: Run Analytics
+  run: python utils/test_analytics.py
 
 - name: Upload Reports
   uses: actions/upload-artifact@v3
@@ -212,32 +101,18 @@ reporter.generate_custom_report(custom_template, output='custom_report.html')
     path: reports/
 ```
 
-### With External Tools
-
-**Export to Excel**:
-```python
-# CSV can be opened directly in Excel
-reporter.export_to_csv('quarterly_results.csv')
-```
-
-**Power BI / Tableau Integration**:
-```python
-# JSON format works well with BI tools
-reporter.generate_json_report('bi_data.json')
-```
-
 ## 📚 Related Documentation
 
-- [Machine Learning Analysis](ML_INTEGRATION.md) - ML-powered test intelligence
+- [Test Analytics](TEST_ANALYTICS.md) - Flaky detection & reliability scoring
 - [Test Data Management](TEST_DATA_MANAGEMENT.md) - Data-driven testing
 - [Performance Monitoring](PERFORMANCE_MONITORING.md) - Real-time metrics
 
 ## 🔗 File Locations
 
-- **Implementation**: `utils/test_reporter.py`
-- **Templates**: `reports/templates/` (optional)
-- **Output**: `reports/json/`, `reports/html/`, `reports/analytics/`
+- **Analytics Engine**: `utils/test_analytics.py`
+- **Report Output**: `reports/`
+- **Analytics CSV**: `reports/analytics_summary.csv`
 
 ---
 
-**Value Proposition**: Transform raw test results into actionable insights with enterprise-grade analytics powered by pandas, numpy, and Jinja2.
+**Value Proposition**: Transform raw test results into actionable insights with pytest reporting plugins and statistical analytics.

@@ -1,10 +1,10 @@
 # Python Selenium Test Automation Framework
 
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
-[![Selenium](https://img.shields.io/badge/Selenium-4.16-green.svg)](https://selenium.dev)
-[![Playwright](https://img.shields.io/badge/Playwright-1.40-blueviolet.svg)](https://playwright.dev)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://python.org)
+[![Selenium](https://img.shields.io/badge/Selenium-4.27-green.svg)](https://selenium.dev)
+[![Playwright](https://img.shields.io/badge/Playwright-1.49-blueviolet.svg)](https://playwright.dev)
 [![Pytest](https://img.shields.io/badge/Pytest-8.x-orange.svg)](https://pytest.org)
-[![Tests](https://img.shields.io/badge/Tests-260+-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-263-brightgreen.svg)](tests/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Enterprise-grade test automation portfolio demonstrating modern QA engineering** 🚀
@@ -22,8 +22,8 @@
 | **Clean Architecture** | Page Object Model, modular utilities, type hints throughout |
 
 ### Project Metrics
-- **~12,500 lines** of production-quality Python
-- **260+ tests** (211 unit + 50+ integration/web/api/performance)
+- **~10,000 lines** of production-quality Python
+- **263 tests** (205 unit + 58 integration/web/api/performance)
 - **100% type hints** on public APIs
 - **Zero linter warnings** (ruff/mypy/bandit compliant)
 
@@ -79,7 +79,7 @@ PythonSeleniumProject/
 │   ├── LOCAL_DEV_GUIDE.md           # Development tools guide
 │   ├── PYTEST_README.md             # Pytest configuration guide
 │   ├── ANALYTICS_AND_REPORTING.md   # Test analytics & reporting
-│   ├── ML_INTEGRATION.md            # AI-powered test intelligence
+│   ├── TEST_ANALYTICS.md            # Flaky detection & reliability scoring
 │   ├── API_TESTING.md               # REST API automation
 │   ├── PLAYWRIGHT_INTEGRATION.md    # Modern browser automation
 │   ├── TEST_DATA_MANAGEMENT.md      # Data management & export
@@ -97,16 +97,15 @@ PythonSeleniumProject/
 │   ├── search_engine_page.py        # Search engine page objects
 │   ├── playwright_search_engine_page.py  # Playwright-specific pages
 │   └── playwright_base_page.py      # Playwright base page
-├── 📁 utils/                        # 🔧 Core framework utilities (~2,600 lines)
-│   ├── error_handler.py             # Self-healing error recovery (506 lines)
-│   ├── test_reporter.py             # Pandas analytics & HTML reporting (491 lines)
-│   ├── performance_monitor.py       # Real-time performance tracking (453 lines)
-│   ├── webdriver_factory.py         # Selenium driver management (312 lines)
-│   ├── playwright_factory.py        # Playwright browser management (280 lines)
-│   ├── test_data_manager.py         # Multi-format data loading (280 lines)
-│   ├── ml_test_analyzer.py          # Statistical test analysis (243 lines)
-│   ├── sql_connection.py            # SQLite utilities (126 lines)
-│   └── structured_logger.py         # JSON structured logging (110 lines)
+├── 📁 utils/                        # 🔧 Core framework utilities (~2,500 lines)
+│   ├── error_handler.py             # Self-healing error recovery (487 lines)
+│   ├── performance_monitor.py       # Real-time performance tracking (457 lines)
+│   ├── webdriver_factory.py         # Selenium driver management (297 lines)
+│   ├── test_data_manager.py         # Multi-format data loading (285 lines)
+│   ├── playwright_factory.py        # Playwright browser management (282 lines)
+│   ├── test_analytics.py            # Statistical test analysis (281 lines)
+│   ├── structured_logger.py         # JSON structured logging (266 lines)
+│   └── sql_connection.py            # SQLite utilities (165 lines)
 ├── 📁 config/                       # ⚙️ Environment configurations
 │   ├── settings.py                  # Core configuration management
 │   ├── local.yaml                   # Local development settings
@@ -195,10 +194,9 @@ pytest -m database tests/
 | **Local Development** | [🛠️ Local Dev Guide](documentation/LOCAL_DEV_GUIDE.md) | Development tools & local setup |
 | **Pytest Configuration** | [🧪 Pytest Guide](documentation/PYTEST_README.md) | Testing framework setup & options |
 | **Analytics** | [📊 Analytics Guide](documentation/ANALYTICS_AND_REPORTING.md) | Pandas analytics & dashboards |
-| **ML Intelligence** | [🤖 ML Guide](documentation/ML_INTEGRATION.md) | AI-powered test optimization |
+| **Test Analytics** | [📈 Analytics Engine](documentation/TEST_ANALYTICS.md) | Flaky detection & reliability scoring |
 | **API Testing** | [🔗 API Guide](documentation/API_TESTING.md) | REST automation with Allure |
 | **Playwright** | [🎭 Playwright Guide](documentation/PLAYWRIGHT_INTEGRATION.md) | Modern browser automation |
-| **Visual Testing** | [👁️ Visual Guide](documentation/TEST_DATA_MANAGEMENT.md) | Visual regression testing |
 | **Performance** | [⚡ Performance Guide](documentation/PERFORMANCE_MONITORING.md) | Load testing & benchmarking |
 | **Error Recovery** | [🔄 Recovery Guide](documentation/ERROR_RECOVERY_AND_MONITORING.md) | Self-healing & monitoring |
 | **Data Management** | [💾 Data Guide](documentation/TEST_DATA_MANAGEMENT.md) | Test data & configurations |
@@ -217,14 +215,14 @@ pytest -m database tests/
 
 ## 🏆 Framework Stats
 
-- ✅ **260+ Tests** across all categories (unit, integration, performance)
-- ✅ **7 Major Features** fully integrated (web, API, visual, ML, performance)
-- ✅ **6 Library Integrations** (Pandas, ML, monitoring, etc.)
+- ✅ **263 Tests** across all categories (unit, integration, performance)
+- ✅ **7 Major Features** fully integrated (web, API, visual, analytics, performance)
+- ✅ **22 Package Dependencies** (streamlined from 34, all actively used)
 - ✅ **Multiple Test Types** (smoke, regression, visual, security, database)
 - ✅ **Production-Ready** enterprise capabilities
-- ✅ **ML-Powered** intelligence features
+- ✅ **Statistical Analytics** for flaky test detection and reliability scoring
 - ✅ **Parallel Execution** support for faster testing
-- ✅ **Code Quality** integrated (ruff, mypy, bandit, safety)
+- ✅ **Code Quality** integrated (ruff, mypy, bandit)
 
 ## 🚀 CI/CD Integration
 

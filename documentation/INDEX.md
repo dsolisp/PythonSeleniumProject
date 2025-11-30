@@ -36,12 +36,10 @@ Complete documentation for the Python Selenium Test Automation Framework.
 - **[Analytics and Reporting](ANALYTICS_AND_REPORTING.md)** - Test result analysis
   - Pandas DataFrame analytics
   - Statistical analysis and outlier detection
-  - HTML dashboard generation with Jinja2
   - CSV export for external tools
-  
-- **[Machine Learning Integration](ML_INTEGRATION.md)** - AI-powered test intelligence
+
+- **[Test Analytics](TEST_ANALYTICS.md)** - Statistical test intelligence
   - Flaky test detection
-  - Failure prediction with Random Forest
   - Performance anomaly detection
   - Test reliability scoring
 
@@ -93,15 +91,10 @@ Results Export (data/results/)
     
 Analytics Pipeline
     │
-    ├─ Test Reporter (utils/test_reporter.py)
-    │   ├─ Pandas analytics
-    │   ├─ Statistical analysis
-    │   └─ HTML dashboards
-    │
-    └─ ML Analyzer (utils/ml_test_analyzer.py)
+    └─ Test Analytics (utils/test_analytics.py)
         ├─ Flaky test detection
-        ├─ Failure prediction
-        └─ Performance analysis
+        ├─ Slow test identification
+        └─ Reliability scoring
 
 Monitoring & Recovery
     │
@@ -119,10 +112,10 @@ Monitoring & Recovery
 ### Workflow 1: Data-Driven Web Testing
 ```
 1. Define test data → data/test_data.json
-2. Load data → TestDataManager.load_test_data()
+2. Load data → DataManager.load_test_data()
 3. Execute tests → tests/web/
-4. Export results → TestDataManager.save_test_results_json()
-5. Analyze → AdvancedTestReporter.generate_dataframe_analytics()
+4. Export results → DataManager.save_test_results_json()
+5. Analyze → python utils/test_analytics.py
 ```
 
 ### Workflow 2: API Testing with Reporting
@@ -133,13 +126,13 @@ Monitoring & Recovery
 4. View structured logs → Check JSON logs in console
 ```
 
-### Workflow 3: ML-Powered Test Optimization
+### Workflow 3: Test Analytics Optimization
 ```
 1. Run tests regularly → Export to data/results/
-2. Collect historical data → 20-30+ executions
-3. Train ML model → MLTestAnalyzer.train_failure_predictor()
-4. Get predictions → MLTestAnalyzer.predict_test_failures()
-5. Optimize CI/CD → Run high-risk tests first
+2. Collect historical data → 10+ executions
+3. Run analytics → python utils/test_analytics.py
+4. Review flaky tests → Fix unreliable tests first
+5. Monitor trends → Track reliability over time
 ```
 
 ### Workflow 4: Performance Testing
@@ -159,10 +152,10 @@ Monitoring & Recovery
 |------|-----|----------|
 | Test web UI | Selenium or Playwright | [Playwright](PLAYWRIGHT_INTEGRATION.md) |
 | Test REST APIs | API Testing | [API Testing](API_TESTING.md) |
-| Analyze test results | Test Reporter | [Analytics](ANALYTICS_AND_REPORTING.md) |
-| Predict failures | ML Analyzer | [ML Integration](ML_INTEGRATION.md) |
+| Analyze test results | Test Analytics | [Analytics](ANALYTICS_AND_REPORTING.md) |
+| Detect flaky tests | Test Analytics | [Test Analytics](TEST_ANALYTICS.md) |
 | Manage test data | Test Data Manager | [Data Management](TEST_DATA_MANAGEMENT.md) |
-| Handle flaky tests | Error Handler | [Error Recovery](ERROR_RECOVERY_AND_MONITORING.md) |
+| Handle errors | Error Handler | [Error Recovery](ERROR_RECOVERY_AND_MONITORING.md) |
 | Load test APIs | Locust | [Performance](PERFORMANCE_MONITORING.md) |
 | Track performance | Performance Monitor | [Performance](PERFORMANCE_MONITORING.md) |
 
@@ -176,7 +169,7 @@ ENABLE_ALLURE=true pytest tests/api/    # API tests with Allure
 
 # Generate reports
 allure serve reports/allure-results     # View Allure report
-python utils/ml_test_analyzer.py        # ML analysis report
+python utils/test_analytics.py          # Test analytics report
 
 # Performance testing
 pytest tests/performance/ --benchmark-only  # Benchmarks
@@ -191,24 +184,23 @@ python examples/export_test_results_example.py  # Export results
 - **Selenium Documentation**: https://selenium.dev/documentation/
 - **Playwright Documentation**: https://playwright.dev/python/
 - **Pandas Documentation**: https://pandas.pydata.org/docs/
-- **Scikit-learn Documentation**: https://scikit-learn.org/stable/
 - **Locust Documentation**: https://locust.io/
 - **Allure Reports**: https://docs.qameta.io/allure/
 
 ## 💡 Best Practices
 
 1. **Start Simple**: Begin with basic Selenium/Playwright tests
-2. **Add Data**: Use TestDataManager for parameterized tests
-3. **Export Results**: Save execution data for ML analysis
+2. **Add Data**: Use DataManager for parameterized tests
+3. **Export Results**: Save execution data for analytics
 4. **Monitor Performance**: Track metrics from day one
-5. **Analyze Trends**: Run ML Analyzer weekly for insights
-6. **Optimize CI/CD**: Use predictions to prioritize tests
+5. **Analyze Trends**: Run test analytics regularly for insights
+6. **Fix Flaky Tests**: Address unreliable tests first
 
 ## 🆘 Troubleshooting
 
 - **Import errors**: Ensure `pip install -r requirements.txt`
 - **Playwright not found**: Run `playwright install`
-- **ML predictions inaccurate**: Collect more historical data (20+ runs)
+- **Analytics need more data**: Collect 10+ test executions
 - **Allure not generating**: Install Allure CLI: `brew install allure`
 - **Performance issues**: Check system resources with Psutil
 
