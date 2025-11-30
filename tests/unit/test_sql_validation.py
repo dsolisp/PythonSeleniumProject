@@ -10,22 +10,32 @@ from utils.sql_connection import _validate_identifier
 class TestIdentifierValidation:
     """Test _validate_identifier against SQL injection attempts."""
 
-    @pytest.mark.parametrize("valid", [
-        "users", "test_data", "table_123", "_private", "TABLE2024",
-    ])
+    @pytest.mark.parametrize(
+        "valid",
+        [
+            "users",
+            "test_data",
+            "table_123",
+            "_private",
+            "TABLE2024",
+        ],
+    )
     def test_valid_identifiers(self, valid):
         """Valid identifiers should pass validation."""
         assert _validate_identifier(valid) == valid
 
-    @pytest.mark.parametrize("invalid", [
-        "users; DROP TABLE users--",
-        "users' OR '1'='1",
-        "table name",  # space
-        "table-name",  # dash
-        "table.name",  # dot
-        "table;name",  # semicolon
-        "",  # empty
-    ])
+    @pytest.mark.parametrize(
+        "invalid",
+        [
+            "users; DROP TABLE users--",
+            "users' OR '1'='1",
+            "table name",  # space
+            "table-name",  # dash
+            "table.name",  # dot
+            "table;name",  # semicolon
+            "",  # empty
+        ],
+    )
     def test_invalid_identifiers_rejected(self, invalid):
         """SQL injection attempts should raise ValueError."""
         with pytest.raises(ValueError):

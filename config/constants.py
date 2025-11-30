@@ -26,4 +26,3 @@ USER_AGENT_EDGE = (
 
 # Default user agent (Chrome) for general use
 USER_AGENT_DEFAULT = USER_AGENT_CHROME
-

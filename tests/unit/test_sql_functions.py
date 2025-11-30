@@ -46,7 +46,9 @@ class TestIdentifierValidation:
     def test_valid_identifiers(self, valid):
         assert _validate_identifier(valid) == valid
 
-    @pytest.mark.parametrize("invalid", ["users; DROP", "table-name", "user's", "", None])
+    @pytest.mark.parametrize(
+        "invalid", ["users; DROP", "table-name", "user's", "", None]
+    )
     def test_invalid_identifiers(self, invalid):
         with pytest.raises(ValueError):
             _validate_identifier(invalid or "")

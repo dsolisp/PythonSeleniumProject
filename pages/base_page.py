@@ -25,7 +25,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from utils.error_handler import SmartErrorHandler
 from utils.sql_connection import execute_query, fetch_all
-from utils.test_data_manager import TestDataManager
+from utils.test_data_manager import DataManager
 
 
 class BasePage:
@@ -72,7 +72,7 @@ class BasePage:
 
         # Initialize utilities
         self.error_handler = SmartErrorHandler()
-        self.test_data_manager = TestDataManager()
+        self.test_data_manager = DataManager()
 
     # === ELEMENT INTERACTION METHODS ===
 
@@ -405,14 +405,14 @@ class BasePage:
             }
 
     def load_test_scenario(self, scenario_name: str) -> dict[str, Any]:
-        """Load test scenario from TestDataManager."""
+        """Load test scenario from DataManager."""
         for scenario in self.test_data_manager.get_search_scenarios(self.environment):
             if scenario.get("name") == scenario_name:
                 return scenario
         raise ValueError(f"Test scenario '{scenario_name}' not found")
 
     def get_user_credentials(self, role: str = "standard") -> dict[str, Any]:
-        """Get user credentials for role from TestDataManager."""
+        """Get user credentials for role from DataManager."""
         users = self.test_data_manager.get_user_accounts(role, self.environment)
         return users[0] if users else self.test_data_manager.generate_test_user(role)
 

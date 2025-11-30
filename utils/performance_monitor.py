@@ -299,7 +299,9 @@ class WebDriverPerformanceMonitor(PerformanceMonitor):
         # Set default thresholds for web operations using named constants
         self.set_threshold("page_load_time", DEFAULT_PAGE_LOAD_THRESHOLD_MS, "ms")
         self.set_threshold("element_find_time", DEFAULT_ELEMENT_FIND_THRESHOLD_MS, "ms")
-        self.set_threshold("click_operation_time", DEFAULT_CLICK_OPERATION_THRESHOLD_MS, "ms")
+        self.set_threshold(
+            "click_operation_time", DEFAULT_CLICK_OPERATION_THRESHOLD_MS, "ms"
+        )
         self.set_threshold("form_fill_time", DEFAULT_FORM_FILL_THRESHOLD_MS, "ms")
 
     def monitor_page_load(self, driver, url: str) -> float:
@@ -334,7 +336,9 @@ class APIPerformanceMonitor(PerformanceMonitor):
 
         # Set default thresholds for API operations using named constants
         self.set_threshold("api_response_time", DEFAULT_API_RESPONSE_THRESHOLD_MS, "ms")
-        self.set_threshold("api_first_byte_time", DEFAULT_API_FIRST_BYTE_THRESHOLD_MS, "ms")
+        self.set_threshold(
+            "api_first_byte_time", DEFAULT_API_FIRST_BYTE_THRESHOLD_MS, "ms"
+        )
         self.set_threshold("api_total_time", DEFAULT_API_TOTAL_TIME_THRESHOLD_MS, "ms")
 
     def monitor_api_request(

@@ -159,9 +159,9 @@ def run_analytics():
 
 
 def run_ml_analysis():
-    print("[POST] Running ML analysis (flaky test detection, predictions)...")
+    print("[POST] Running test analytics (flaky detection, reliability scores)...")
     result = subprocess.run(
-        [str(VENV_PYTHON), "utils/ml_test_analyzer.py"],
+        [str(VENV_PYTHON), "utils/test_analytics.py"],
         check=False,
         capture_output=True,
         text=True,

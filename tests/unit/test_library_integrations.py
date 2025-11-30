@@ -1,5 +1,4 @@
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 
 import jinja2
@@ -66,7 +65,9 @@ class TestPandasIntegration:
         csv_file = Path(temp_dir) / "test_export.csv"
 
         # Create and export DataFrame
-        df = pd.DataFrame([{"test_name": "test_csv", "status": "passed", "duration": 2.0}])
+        df = pd.DataFrame(
+            [{"test_name": "test_csv", "status": "passed", "duration": 2.0}]
+        )
         df.to_csv(csv_file, index=False)
 
         assert_that(csv_file.exists(), is_(True))
@@ -84,7 +85,9 @@ class TestPandasIntegration:
         # Calculate z-scores
         mean = np.mean(durations)
         std = np.std(durations)
-        z_scores = np.abs((durations - mean) / std) if std > 0 else np.zeros_like(durations)
+        z_scores = (
+            np.abs((durations - mean) / std) if std > 0 else np.zeros_like(durations)
+        )
 
         # Verify statistical calculations
         assert_that(float(mean), greater_than(0))

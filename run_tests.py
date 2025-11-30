@@ -118,10 +118,10 @@ def run_ml_analysis():
             print("   Test data will accumulate over multiple runs")
             return
 
-        # Run the ML analyzer
-        analyzer_script = Path("utils/ml_test_analyzer.py")
+        # Run the test analytics
+        analyzer_script = Path("utils/test_analytics.py")
         if not analyzer_script.exists():
-            print("⚠️  ML analyzer script not found")
+            print("⚠️  Test analytics script not found")
             return
 
         result = subprocess.run(

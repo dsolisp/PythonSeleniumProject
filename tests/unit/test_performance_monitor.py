@@ -12,7 +12,6 @@ from hamcrest import (
     greater_than_or_equal_to,
     has_item,
     has_key,
-    instance_of,
     is_,
     none,
     not_none,

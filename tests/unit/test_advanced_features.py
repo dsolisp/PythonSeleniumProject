@@ -34,8 +34,8 @@ Validates data management, and error handling functionality.
 """
 
 
-class TestTestDataManager:
-    """Unit tests for TestDataManager."""
+class TestDataManagerTests:
+    """Unit tests for DataManager."""
 
     def setup_method(self):
         """Setup test data manager with temporary directory."""
@@ -447,9 +447,7 @@ class TestSmartErrorHandler:
         mock_driver.save_screenshot = mock_save_screenshot
 
         # Use the screenshot_service from error_handler
-        result = self.error_handler.screenshot_service.capture(
-            mock_driver, "test_name"
-        )
+        result = self.error_handler.screenshot_service.capture(mock_driver, "test_name")
 
         assert_that(result, is_(not_none()))
         assert_that(result, contains_string("error_test_name_"))
@@ -460,9 +458,7 @@ class TestSmartErrorHandler:
         mock_driver = Mock()
         mock_driver.save_screenshot.side_effect = Exception("Screenshot failed")
 
-        result = self.error_handler.screenshot_service.capture(
-            mock_driver, "test_name"
-        )
+        result = self.error_handler.screenshot_service.capture(mock_driver, "test_name")
 
         assert_that(result, is_(none()))
 

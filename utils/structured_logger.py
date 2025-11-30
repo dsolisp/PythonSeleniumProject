@@ -124,14 +124,44 @@ class StructuredLogger:
             **ctx,
         )
 
-    def performance_metric(self, metric_name: str, value: float, unit: str = "ms", **ctx):
-        self.info("Performance metric recorded", event_type="performance_metric", metric_name=metric_name, value=value, unit=unit, **ctx)
+    def performance_metric(
+        self, metric_name: str, value: float, unit: str = "ms", **ctx
+    ):
+        self.info(
+            "Performance metric recorded",
+            event_type="performance_metric",
+            metric_name=metric_name,
+            value=value,
+            unit=unit,
+            **ctx,
+        )
 
     def browser_action(self, action: str, element: Optional[str] = None, **ctx):
-        self.info("Browser action", event_type="browser_action", action=action, element=element, **ctx)
+        self.info(
+            "Browser action",
+            event_type="browser_action",
+            action=action,
+            element=element,
+            **ctx,
+        )
 
-    def api_request(self, method: str, url: str, status_code: Optional[int] = None, response_time: Optional[float] = None, **ctx):
-        self.info("API request", event_type="api_request", method=method, url=url, status_code=status_code, response_time_ms=response_time, **ctx)
+    def api_request(
+        self,
+        method: str,
+        url: str,
+        status_code: Optional[int] = None,
+        response_time: Optional[float] = None,
+        **ctx,
+    ):
+        self.info(
+            "API request",
+            event_type="api_request",
+            method=method,
+            url=url,
+            status_code=status_code,
+            response_time_ms=response_time,
+            **ctx,
+        )
 
 
 class ExecutionLogger:
@@ -146,18 +176,28 @@ class ExecutionLogger:
     def start_test(self, **ctx):
         self.start_time = datetime.now(timezone.utc)
         self.step_count = 0
-        self.logger.test_start(self.test_name, start_time=self.start_time.isoformat(), **ctx)
+        self.logger.test_start(
+            self.test_name, start_time=self.start_time.isoformat(), **ctx
+        )
 
     def end_test(self, result: str, **ctx):
-        duration = (datetime.now(timezone.utc) - self.start_time).total_seconds() if self.start_time else None
-        self.logger.test_end(self.test_name, result, duration, total_steps=self.step_count, **ctx)
+        duration = (
+            (datetime.now(timezone.utc) - self.start_time).total_seconds()
+            if self.start_time
+            else None
+        )
+        self.logger.test_end(
+            self.test_name, result, duration, total_steps=self.step_count, **ctx
+        )
 
     def log_step(self, step_name: str, action: str, **ctx):
         self.step_count += 1
         self.logger.test_step(step_name, action, step_number=self.step_count, **ctx)
 
     def log_assertion(self, *, assertion: str, result: bool, **ctx):
-        self.logger.assertion_result(assertion=assertion, result=result, test_name=self.test_name, **ctx)
+        self.logger.assertion_result(
+            assertion=assertion, result=result, test_name=self.test_name, **ctx
+        )
 
     def api_request(
         self,

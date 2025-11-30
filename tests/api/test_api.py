@@ -131,8 +131,12 @@ class TestUnifiedAPI:
 
             # Record metric in performance monitor (tracks thresholds automatically)
             self.perf_monitor.record_metric(
-                "api_response_time", response_time, "ms",
-                method="GET", url="/posts", status_code=response.status_code
+                "api_response_time",
+                response_time,
+                "ms",
+                method="GET",
+                url="/posts",
+                status_code=response.status_code,
             )
 
             self._log_api_response(response, "GET Posts")

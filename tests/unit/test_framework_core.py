@@ -77,6 +77,7 @@ class TestDependencies:
         """Verify image processing dependencies (numpy) are available."""
         try:
             import numpy as np  # noqa: PLC0415
+
             assert_that(np.array([1, 2, 3]).sum(), equal_to(6))
         except ImportError:
             pytest.skip("numpy not available - image processing features limited")
@@ -97,7 +98,9 @@ class TestLocatorsStructure:
         assert_that(len(search_box), equal_to(2))
         assert_that(
             search_box[0],
-            is_in([By.ID, By.NAME, By.CLASS_NAME, By.TAG_NAME, By.XPATH, By.CSS_SELECTOR]),
+            is_in(
+                [By.ID, By.NAME, By.CLASS_NAME, By.TAG_NAME, By.XPATH, By.CSS_SELECTOR]
+            ),
         )
         assert_that(search_box[1], instance_of(str))
         assert_that(len(search_box[1]), greater_than(0))
@@ -137,4 +140,3 @@ class TestPageObjectStructure:
         assert_that(result_page, is_(not_none()))
         assert_that(search_page, has_property("driver"))
         assert_that(result_page, has_property("driver"))
-

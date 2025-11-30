@@ -126,7 +126,9 @@ def test_playwright_search_basic(playwright_session: PlaywrightSession):
     # Verify search was performed (DuckDuckGo uses ?q= parameter)
     current_url = search_page.get_url()
     assert_that(
-        any(indicator in current_url.lower() for indicator in ["?q=", "/search", "&q="]),
+        any(
+            indicator in current_url.lower() for indicator in ["?q=", "/search", "&q="]
+        ),
         is_(True),
         f"Should be on search results page: {current_url}",
     )
@@ -229,7 +231,9 @@ def test_playwright_advanced_search(playwright_session: PlaywrightSession):
     # Verify advanced search (DuckDuckGo uses ?q= parameter)
     current_url = search_page.get_url()
     assert_that(
-        any(indicator in current_url.lower() for indicator in ["?q=", "/search", "&q="]),
+        any(
+            indicator in current_url.lower() for indicator in ["?q=", "/search", "&q="]
+        ),
         is_(True),
         f"Should be on search results page: {current_url}",
     )
@@ -343,9 +347,8 @@ def test_playwright_network_interception(playwright_session: PlaywrightSession):
     )
 
     # Determine search engine URL with fallback strategy
-    search_engine_url = (
-        getattr(settings, "SEARCH_ENGINE_URL", None)
-        or getattr(search_page, "SEARCH_ENGINE_URL", None)
+    search_engine_url = getattr(settings, "SEARCH_ENGINE_URL", None) or getattr(
+        search_page, "SEARCH_ENGINE_URL", None
     )
 
     if not search_engine_url:

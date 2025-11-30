@@ -283,7 +283,3 @@ class DataManager:
         if environment == "default":
             return self.data_dir / f"{filename}{ext}"
         return self.data_dir / environment / f"{filename}{ext}"
-
-
-# Alias for backward compatibility
-TestDataManager = DataManager

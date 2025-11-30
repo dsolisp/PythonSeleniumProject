@@ -73,19 +73,25 @@ def connection_context(db_file: str):
         conn.close()
 
 
-def execute_query(conn: sqlite3.Connection, query: str, params: Optional[tuple] = None) -> sqlite3.Cursor:
+def execute_query(
+    conn: sqlite3.Connection, query: str, params: Optional[tuple] = None
+) -> sqlite3.Cursor:
     """Execute a parameterized query."""
     cursor = conn.cursor()
     cursor.execute(query, params or ())
     return cursor
 
 
-def fetch_one(conn: sqlite3.Connection, query: str, params: Optional[tuple] = None) -> Optional[sqlite3.Row]:
+def fetch_one(
+    conn: sqlite3.Connection, query: str, params: Optional[tuple] = None
+) -> Optional[sqlite3.Row]:
     """Execute query and fetch single result."""
     return execute_query(conn, query, params).fetchone()
 
 
-def fetch_all(conn: sqlite3.Connection, query: str, params: Optional[tuple] = None) -> list[sqlite3.Row]:
+def fetch_all(
+    conn: sqlite3.Connection, query: str, params: Optional[tuple] = None
+) -> list[sqlite3.Row]:
     """Execute query and fetch all results."""
     return execute_query(conn, query, params).fetchall()
 
@@ -105,8 +111,13 @@ def insert(conn: sqlite3.Connection, table: str, data: dict[str, Any]) -> Option
         return None
 
 
-def update(conn: sqlite3.Connection, table: str, data: dict[str, Any],
-           where: str, where_params: Optional[tuple] = None) -> int:
+def update(
+    conn: sqlite3.Connection,
+    table: str,
+    data: dict[str, Any],
+    where: str,
+    where_params: Optional[tuple] = None,
+) -> int:
     """Update rows matching WHERE clause. Returns affected row count."""
     try:
         table = _validate_identifier(table, "table")
@@ -123,7 +134,12 @@ def update(conn: sqlite3.Connection, table: str, data: dict[str, Any],
         return 0
 
 
-def delete(conn: sqlite3.Connection, table: str, where: str, where_params: Optional[tuple] = None) -> int:
+def delete(
+    conn: sqlite3.Connection,
+    table: str,
+    where: str,
+    where_params: Optional[tuple] = None,
+) -> int:
     """Delete rows matching WHERE clause. Returns deleted row count."""
     try:
         table = _validate_identifier(table, "table")
@@ -147,6 +163,3 @@ def get_table_info(conn: sqlite3.Connection, table: str) -> list[sqlite3.Row]:
     """Get table schema (columns, types, etc.)."""
     table = _validate_identifier(table, "table")
     return fetch_all(conn, f"PRAGMA table_info({table})")  # noqa: S608
-
-
-
