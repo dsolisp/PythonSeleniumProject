@@ -345,7 +345,6 @@ analyzer.train_failure_predictor()
 - **Implementation**: `utils/ml_test_analyzer.py`
 - **Input Data**: `data/results/**/*.json`
 - **Reports**: `reports/ml_analysis_*.txt`
-- **Documentation**: `docs/ML_ANALYZER_GUIDE.md` (detailed guide)
 
 ---
 

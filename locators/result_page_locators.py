@@ -39,7 +39,8 @@ class ResultPageLocators:
     NO_RESULTS_MESSAGE = (By.CSS_SELECTOR, ".no-results")  # No results message
 
     # Alternative result selectors for broader compatibility
-    SEARCH_RESULTS = (By.ID, "react-layout")  # Main results container
+    # SEARCH_RESULTS is an alias for RESULTS_CONTAINER for backward compatibility
+    SEARCH_RESULTS = RESULTS_CONTAINER
     ALL_H3_ELEMENTS = (By.XPATH, "//h2")  # All H2 heading elements
     RESULT_ELEMENTS_DATA_VED = (
         By.CSS_SELECTOR,

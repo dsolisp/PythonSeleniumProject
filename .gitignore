@@ -22,3 +22,6 @@ custom_logs/
 .coverage
 /venv-enhanced
 /screenshots
+/.github
+data/.DS_Store
+.DS_Store

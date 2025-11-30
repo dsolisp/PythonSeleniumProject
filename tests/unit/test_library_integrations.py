@@ -140,11 +140,11 @@ class TestPandasIntegration:
 
         # Add results with varied durations for statistical analysis
         durations = [1.0, 2.0, 3.0, 10.0, 1.5]  # 10.0 should be an outlier
-        for i, _duration in enumerate(durations):
+        for i, duration in enumerate(durations):
             result = Result(
                 f"test_{i}",
                 "passed",
-                _duration,
+                duration,
                 datetime.now(timezone.utc),
                 "test",
                 "chrome",

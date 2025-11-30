@@ -6,7 +6,7 @@ This is a minimal, maintainable example using the recommended plugin for Python.
 import time
 
 import pytest
-from hamcrest import assert_that, is_, not_none
+from hamcrest import assert_that, is_, is_not, none
 
 from pages.playwright_search_engine_page import PlaywrightSearchEnginePage
 
@@ -33,15 +33,16 @@ def test_search_page_visual_regression(assert_snapshot, page, search_term):
         is_(True),
     )
 
-    # Ensure search results page is fully loaded before taking screenshot
-    search_page.wait_for_search_completion()
-    time.sleep(2)  # Increased wait for dynamic content to settle
+    # Wait for page to stabilize - use load state instead of specific selectors
+    # since search engine DOM can vary
+    page.wait_for_load_state("networkidle", timeout=15000)
+    time.sleep(2)  # Wait for dynamic content to settle
 
     # Take screenshot of the search input element using page object method
     input_screenshot = search_page.take_element_screenshot(
         search_page.locators.SEARCH_INPUT,
     )
-    assert_that(input_screenshot, is_(not_none))
+    assert_that(input_screenshot, is_not(none()))
     assert_snapshot(
         input_screenshot,
         name=f"search_input_after_{search_term}.png",
@@ -67,7 +68,7 @@ def test_search_input_visual_regression(assert_snapshot, page):
     input_screenshot = search_page.take_element_screenshot(
         search_page.locators.SEARCH_INPUT,
     )
-    assert_that(input_screenshot, is_(not_none))
+    assert_that(input_screenshot, is_not(none()))
     assert_snapshot(
         input_screenshot,
         name="search_input.png",

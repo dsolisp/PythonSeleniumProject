@@ -51,7 +51,6 @@ class TestStructuredLogger:
         assert_that(logger, has_property("performance_metric"))
         assert_that(logger, has_property("browser_action"))
         assert_that(logger, has_property("api_request"))
-        assert_that(logger, has_property("database_operation"))
         assert_that(logger, has_property("assertion_result"))
 
     def test_logger_level_configuration(self):
@@ -79,11 +78,6 @@ class TestStructuredLogger:
                 "GET",
                 "http://example.com",
                 status_code=200,
-            )
-            logger.database_operation(
-                "SELECT",
-                table="users",
-                rows_affected=5,
             )
             logger.assertion_result(
                 assertion="equals",

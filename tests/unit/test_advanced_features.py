@@ -546,13 +546,12 @@ class TestSmartErrorHandler:
         """Test that initialization creates screenshots directory."""
         assert_that(Path(self.temp_dir).exists(), is_(True))
 
-    @patch("utils.error_handler.SmartErrorHandler._capture_error_screenshot")
-    def test_handle_error_with_recovery(self, mock_screenshot):
+    def test_handle_error_with_recovery(self):
         """Test error handling with successful recovery."""
         mock_driver = Mock()
         mock_driver.current_url = "https://example.com"
         mock_driver.get_log.return_value = []
-        mock_screenshot.return_value = "/path/to/screenshot.png"
+        mock_driver.save_screenshot.return_value = True
 
         # Mock successful recovery
         with patch.object(
@@ -568,13 +567,12 @@ class TestSmartErrorHandler:
             assert_that(result, is_(True))
             mock_recovery.assert_called_once()
 
-    @patch("utils.error_handler.SmartErrorHandler._capture_error_screenshot")
-    def test_handle_error_with_failed_recovery(self, mock_screenshot):
+    def test_handle_error_with_failed_recovery(self):
         """Test error handling with failed recovery."""
         mock_driver = Mock()
         mock_driver.current_url = "https://example.com"
         mock_driver.get_log.return_value = []
-        mock_screenshot.return_value = "/path/to/screenshot.png"
+        mock_driver.save_screenshot.return_value = True
 
         # Mock failed recovery
         with patch.object(
@@ -590,17 +588,9 @@ class TestSmartErrorHandler:
             assert_that(result, is_(False))
             mock_recovery.assert_called_once()
 
-    def test_capture_error_screenshot_success(self):
-        """Test successful screenshot capture."""
+    def test_screenshot_service_capture_success(self):
+        """Test successful screenshot capture via ScreenshotService."""
         mock_driver = Mock()
-
-        # Setup mock to simulate successful screenshot
-        screenshot_path = str(Path(self.temp_dir) / "test_screenshot.png")
-        mock_driver.save_screenshot.return_value = True
-
-        # Create a dummy image file to simulate screenshot
-        with Path(screenshot_path).open("w") as f:
-            f.write("fake image data")
 
         # Mock the save_screenshot to create the file
         def mock_save_screenshot(path):
@@ -610,18 +600,23 @@ class TestSmartErrorHandler:
 
         mock_driver.save_screenshot = mock_save_screenshot
 
-        result = self.error_handler._capture_error_screenshot(mock_driver, "test_name")  # noqa: SLF001
+        # Use the screenshot_service from error_handler
+        result = self.error_handler.screenshot_service.capture(
+            mock_driver, "test_name"
+        )
 
         assert_that(result, is_(not_none()))
         assert_that(result, contains_string("error_test_name_"))
         assert_that(result, ends_with(".png"))
 
-    def test_capture_error_screenshot_failure(self):
-        """Test screenshot capture failure."""
+    def test_screenshot_service_capture_failure(self):
+        """Test screenshot capture failure via ScreenshotService."""
         mock_driver = Mock()
         mock_driver.save_screenshot.side_effect = Exception("Screenshot failed")
 
-        result = self.error_handler._capture_error_screenshot(mock_driver, "test_name")  # noqa: SLF001
+        result = self.error_handler.screenshot_service.capture(
+            mock_driver, "test_name"
+        )
 
         assert_that(result, is_(none()))
 

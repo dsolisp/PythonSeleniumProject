@@ -372,3 +372,19 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             return False
         else:
             return True
+
+    def take_element_screenshot(
+        self,
+        selector: str,
+        filename: Optional[str] = None,
+    ) -> bytes:
+        """Take a screenshot of a specific element.
+
+        Args:
+            selector: CSS selector for the element
+            filename: Optional filename to save screenshot
+
+        Returns:
+            bytes: Screenshot data as bytes
+        """
+        return self.screenshot_actions.take_element_screenshot(selector, filename)

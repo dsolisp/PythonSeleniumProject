@@ -12,7 +12,7 @@ Integrated QA Automation Workflow Script
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from utils.test_reporter import AdvancedTestReporter
@@ -69,14 +69,30 @@ def clean_results():
 
 
 def validate_environment():
+    """Validate required packages are installed."""
     print("[PRE] Validating environment...")
-    # Check for required packages
-    try:
-        pass
-    except ImportError as e:
-        print(f"[ERROR] Missing package: {e.name}. Please install requirements.txt.")
+    required_packages = [
+        "selenium",
+        "pytest",
+        "pandas",
+        "numpy",
+        "structlog",
+        "hamcrest",
+        "tenacity",
+        "psutil",
+    ]
+    missing = []
+    for package in required_packages:
+        try:
+            __import__(package)
+        except ImportError:
+            missing.append(package)
+
+    if missing:
+        print(f"[ERROR] Missing packages: {', '.join(missing)}")
+        print("Please install requirements.txt: pip install -r requirements.txt")
         sys.exit(1)
-    print("[PRE] All required packages found.")
+    print(f"[PRE] All {len(required_packages)} required packages found.")
 
 
 # --- TEST EXECUTION ---
@@ -84,7 +100,7 @@ def run_pytest(test_path, label):
     print(f"[TEST] Running {label} tests: {test_path}")
     # Ensure results dir exists and create a timestamped json-report
     # directly in data/results
-    timestamp = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     json_file = RESULTS_DIR / f"test_results_{label}_{timestamp}.json"
     result = subprocess.run(
         [

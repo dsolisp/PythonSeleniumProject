@@ -1,661 +1,242 @@
 """
-ML-Powered Test Intelligence Analyzer
+Test Analytics Engine - Statistical Analysis for Test Results
 
-Analyzes historical test results to:
-- Predict test failures
-- Detect flaky tests
-- Identify performance anomalies
-- Optimize test execution order
+Analyzes historical test results using statistical methods to:
+- Detect flaky tests (inconsistent pass/fail patterns)
+- Identify performance anomalies (slow tests, outliers)
+- Calculate test reliability scores
+- Prioritize test execution based on risk
+
+No ML dependencies - uses pandas/numpy for efficient statistical analysis.
 """
 
-# --- PATCH: Ensure project root is in sys.path for script execution ---
-import sys
+import json
+import logging
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
-project_root = Path(__file__).parent.parent.resolve()
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+import pandas as pd
 
-import json  # noqa: E402
-from datetime import datetime, timezone  # noqa: E402
-from pathlib import Path  # noqa: E402
-from typing import Any  # noqa: E402
-
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
-from sklearn.ensemble import RandomForestClassifier  # noqa: E402
-from sklearn.model_selection import train_test_split  # noqa: E402
-from sklearn.preprocessing import LabelEncoder  # noqa: E402
-
-from utils.structured_logger import get_logger  # noqa: E402
-
-# If you need to suppress sklearn UndefinedMetricWarning, use a context manager
-# Example:
-# with warnings.catch_warnings():
-#     warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
-#     ... # code that may trigger the warning
-# Initialize logger
-logger = get_logger("MLTestAnalyzer")
+logger = logging.getLogger(__name__)
 
 
-class MLTestAnalyzer:
-    """Analyzes test results using machine learning techniques."""
+@dataclass
+class TestStats:
+    """Statistics for a single test."""
+    name: str
+    total_runs: int
+    passed: int
+    failed: int
+    pass_rate: float
+    avg_duration: float
+    std_duration: float
+    is_flaky: bool
+    risk_score: float  # 0-1, higher = more risky
+
+
+class TestAnalyzer:
+    """Analyzes test results using statistical methods."""
 
     def __init__(self, results_dir: str = "data/results"):
-        """
-        Initialize the analyzer.
-
-        Args:
-            results_dir: Path to test results directory
-        """
         self.results_dir = Path(results_dir)
-        self.df = None
-        self.model = None
-        self.label_encoders = {}
+        self.df: pd.DataFrame | None = None
 
-    def load_historical_data(self) -> pd.DataFrame:
-        """
-        Load all historical test results from JSON files.
-
-        Returns:
-            DataFrame with test execution history
-        """
-        print("📂 Loading historical test results...")
-
+    def load_results(self) -> pd.DataFrame:
+        """Load test results from JSON files into DataFrame."""
         results = []
-        json_files = list(self.results_dir.rglob("*.json"))
-
-        if not json_files:
-            print("⚠️  No test result files found in data/results/")
-            return pd.DataFrame()
-
-        for json_file in json_files:
+        for json_file in self.results_dir.rglob("*.json"):
             try:
-                with Path.open(json_file) as f:
-                    data = json.load(f)
+                data = json.loads(json_file.read_text())
+                results.extend(self._parse_results(data))
             except (json.JSONDecodeError, KeyError) as e:
-                print(f"\u26a0\ufe0f  Skipping {json_file.name}: {e}")
-                continue
-            # Extract test details if available
-            # 1) Our framework's custom format: top-level 'results' -> 'tests'
-            if (
-                "results" in data
-                and isinstance(data["results"], dict)
-                and "tests" in data["results"]
-            ):
-                results_data = data["results"]
-                for test in results_data["tests"]:
-                    test_record = {
-                        "test_name": test.get("name", "unknown"),
-                        "status": test.get("status", "unknown"),
-                        "duration": test.get("duration", 0),
-                        "environment": data.get("environment", "unknown"),
-                        "timestamp": data.get("timestamp", "unknown"),
-                        "browser": results_data.get("browser", "unknown"),
-                        "headless": results_data.get("headless", False),
-                    }
-                    results.append(test_record)
-            # 2) pytest-json-report format: top-level 'tests' array
-            elif "tests" in data and isinstance(data["tests"], list):
-                # Try to obtain a run-level timestamp if present
-                run_ts = None
-                if "created" in data:
-                    try:
-                        run_ts = datetime.fromtimestamp(
-                            float(data["created"]),
-                            timezone.utc,
-                        )
-                    except (ValueError, TypeError, OSError):
-                        run_ts = None
-
-                for test in data["tests"]:
-                    # pytest entries vary; prefer nodeid and call.duration
-                    nodeid = test.get("nodeid") or test.get("name") or "unknown"
-                    outcome = (
-                        test.get("outcome")
-                        or (test.get("call") or {}).get("outcome")
-                        or "unknown"
-                    )
-                    duration = (
-                        (test.get("call") or {}).get("duration")
-                        or test.get("duration")
-                        or 0
-                    )
-                    test_ts = (
-                        run_ts or test.get("created") or data.get("created") or None
-                    )
-                    # Normalize timestamp to string or datetime
-                    try:
-                        if isinstance(test_ts, (int, float)):
-                            test_ts = datetime.fromtimestamp(
-                                float(test_ts),
-                                timezone.utc,
-                            )
-                    except (ValueError, TypeError, OSError):
-                        pass
-
-                    test_record = {
-                        "test_name": nodeid,
-                        "status": outcome,
-                        "duration": duration,
-                        "environment": data.get("environment", "unknown"),
-                        "timestamp": test_ts,
-                        "browser": (
-                            data.get("metadata", {}).get("Browser", "unknown")
-                            if isinstance(data.get("metadata"), dict)
-                            else data.get("browser", "unknown"),
-                        ),
-                        "headless": data.get("headless", False),
-                    }
-                    results.append(test_record)
-            else:
-                # Unsupported/unknown JSON structure - skip with a debug message
-                msg = (
-                    f"\u26a0\ufe0f  Skipping unsupported result file format: "
-                    f"{json_file}"
-                )
-                print(msg)
+                logger.warning(f"Skipping {json_file.name}: {e}")
 
         if not results:
-            print("⚠️  No valid test data found in JSON files")
+            logger.warning("No test results found")
             return pd.DataFrame()
 
         self.df = pd.DataFrame(results)
-
-        # Normalize columns to avoid unhashable types (dict/list) which break
-        # operations like nunique(); also coerce timestamps and durations.
-        for col in ["environment", "browser", "status", "test_name"]:
-            if col in self.df.columns:
-                self.df[col] = self.df[col].apply(
-                    lambda x: (
-                        json.dumps(x, sort_keys=True)
-                        if isinstance(x, (dict, list))
-                        else (str(x) if pd.notnull(x) else "unknown")
-                    ),
-                )
-
-        if "timestamp" in self.df.columns:
-            # Convert various timestamp representations to pandas datetime
-            self.df["timestamp"] = pd.to_datetime(self.df["timestamp"], errors="coerce")
-
-        # Ensure duration is numeric
-        if "duration" in self.df.columns:
-            self.df["duration"] = pd.to_numeric(
-                self.df["duration"],
-                errors="coerce",
-            ).fillna(0)
-
-        print(f"✅ Loaded {len(self.df)} test records from {len(json_files)} files")
-
+        self.df["timestamp"] = pd.to_datetime(self.df["timestamp"], errors="coerce")
+        self.df["duration"] = pd.to_numeric(self.df["duration"], errors="coerce").fillna(0)
+        logger.info(f"Loaded {len(self.df)} test records")
         return self.df
 
+    def _parse_results(self, data: dict) -> list[dict]:
+        """Parse JSON data into test records (supports multiple formats)."""
+        records = []
+        # Format 1: Custom framework format
+        if "results" in data and "tests" in data.get("results", {}):
+            for test in data["results"]["tests"]:
+                records.append({
+                    "test_name": test.get("name", "unknown"),
+                    "status": test.get("status", "unknown"),
+                    "duration": test.get("duration", 0),
+                    "timestamp": data.get("timestamp"),
+                    "environment": data.get("environment", "unknown"),
+                })
+        # Format 2: pytest-json-report format
+        elif "tests" in data:
+            for test in data["tests"]:
+                records.append({
+                    "test_name": test.get("nodeid", test.get("name", "unknown")),
+                    "status": test.get("outcome", "unknown"),
+                    "duration": test.get("duration", 0),
+                    "timestamp": data.get("created"),
+                    "environment": data.get("environment", "unknown"),
+                })
+        return records
+
     def detect_flaky_tests(self, min_runs: int = 3) -> pd.DataFrame:
-        """
-        Identify tests that fail inconsistently (flaky tests).
-
-        Args:
-            min_runs: Minimum number of runs to consider
-
-        Returns:
-            DataFrame with flaky test analysis
-        """
-        print("\n🔍 Detecting flaky tests...")
-
+        """Find tests with inconsistent pass/fail rates (0 < rate < 1)."""
         if self.df is None or self.df.empty:
-            print("⚠️  No data loaded. Run load_historical_data() first.")
             return pd.DataFrame()
 
-        # Group by test name and calculate pass rate
-        flaky_analysis = (
-            self.df.groupby("test_name")
-            .agg(
-                {
-                    "status": ["count", lambda x: (x == "passed").sum()],
-                    "duration": "mean",
-                },
-            )
-            .reset_index()
-        )
+        stats = self.df.groupby("test_name").agg(
+            total=("status", "count"),
+            passed=("status", lambda x: (x == "passed").sum()),
+            avg_duration=("duration", "mean"),
+        ).reset_index()
 
-        flaky_analysis.columns = [
-            "test_name",
-            "total_runs",
-            "passed_runs",
-            "avg_duration",
-        ]
-        flaky_analysis["pass_rate"] = (
-            flaky_analysis["passed_runs"] / flaky_analysis["total_runs"]
-        )
-        flaky_analysis["failed_runs"] = (
-            flaky_analysis["total_runs"] - flaky_analysis["passed_runs"]
-        )
+        stats["pass_rate"] = stats["passed"] / stats["total"]
+        stats["is_flaky"] = (stats["total"] >= min_runs) & (stats["pass_rate"] > 0) & (stats["pass_rate"] < 1)
 
-        # Filter for flaky tests (not 0% or 100% pass rate, min runs)
-        flaky_tests = flaky_analysis[
-            (flaky_analysis["total_runs"] >= min_runs)
-            & (flaky_analysis["pass_rate"] > 0)
-            & (flaky_analysis["pass_rate"] < 1.0)
-        ].sort_values("pass_rate")
+        flaky = stats[stats["is_flaky"]].sort_values("pass_rate")
+        logger.info(f"Found {len(flaky)} flaky tests out of {len(stats)} unique tests")
+        return flaky
 
-        if flaky_tests.empty:
-            print("✅ No flaky tests detected!")
-        else:
-            print(f"⚠️  Found {len(flaky_tests)} flaky tests:")
-            for _, test in flaky_tests.iterrows():
-                print(
-                    f"   • {test['test_name']}: "
-                    f"{test['pass_rate']:.1%} pass rate "
-                    f"({test['passed_runs']}/{test['total_runs']} passed)",
-                )
-
-        return flaky_tests
-
-    def analyze_performance_trends(self) -> dict[str, Any]:
-        """
-        Analyze performance trends and detect anomalies.
-
-        Returns:
-            Dictionary with performance insights
-        """
-        print("\n📊 Analyzing performance trends...")
-
+    def find_slow_tests(self, std_threshold: float = 2.0) -> pd.DataFrame:
+        """Find tests with duration > threshold standard deviations from mean."""
         if self.df is None or self.df.empty:
-            print("⚠️  No data loaded. Run load_historical_data() first.")
-            return {}
-
-        # Overall statistics
-        stats = {
-            "avg_duration": self.df["duration"].mean(),
-            "median_duration": self.df["duration"].median(),
-            "std_duration": self.df["duration"].std(),
-            "min_duration": self.df["duration"].min(),
-            "max_duration": self.df["duration"].max(),
-        }
-
-        # Detect outliers (tests taking unusually long)
-        z_scores = np.abs(
-            (self.df["duration"] - stats["avg_duration"]) / stats["std_duration"],
-        )
-        outliers = self.df[z_scores > 2].copy()
-
-        print("\n📈 Performance Statistics:")
-        print(f"   Average duration: {stats['avg_duration']:.2f}s")
-        print(f"   Median duration:  {stats['median_duration']:.2f}s")
-        print(f"   Std deviation:    {stats['std_duration']:.2f}s")
-        print(
-            f"   Range:            {stats['min_duration']:.2f}s - "
-            f"{stats['max_duration']:.2f}s",
-        )
-
-        if not outliers.empty:
-            print(f"\n⚠️  Found {len(outliers)} performance outliers:")
-            for _, test in outliers.nlargest(5, "duration").iterrows():
-                print(
-                    f"   • {test['test_name']}: {test['duration']:.2f}s "
-                    f"(environment: {test['environment']})",
-                )
-
-        stats["outliers"] = outliers
-        return stats
-
-    def get_test_statistics(self) -> pd.DataFrame:
-        """
-        Get comprehensive statistics for all tests.
-
-        Returns:
-            DataFrame with test statistics
-        """
-        print("\n📋 Generating test statistics...")
-
-        if self.df is None or self.df.empty:
-            print("⚠️  No data loaded. Run load_historical_data() first.")
             return pd.DataFrame()
 
-        stats = (
-            self.df.groupby("test_name")
-            .agg(
-                {
-                    "status": [
-                        "count",
-                        lambda x: (x == "passed").sum(),
-                        lambda x: (x == "failed").sum(),
-                    ],
-                    "duration": ["mean", "min", "max", "std"],
-                },
-            )
-            .reset_index()
-        )
+        mean_dur, std_dur = self.df["duration"].mean(), self.df["duration"].std()
+        threshold = mean_dur + (std_threshold * std_dur)
 
-        stats.columns = [
-            "test_name",
-            "total_runs",
-            "passed",
-            "failed",
-            "avg_duration",
-            "min_duration",
-            "max_duration",
-            "std_duration",
-        ]
+        slow = self.df[self.df["duration"] > threshold].copy()
+        slow["z_score"] = (slow["duration"] - mean_dur) / std_dur
+        return slow.sort_values("duration", ascending=False)
 
-        stats["pass_rate"] = stats["passed"] / stats["total_runs"]
-        stats["reliability_score"] = stats["pass_rate"] * (
-            1 - stats["std_duration"] / stats["avg_duration"].clip(lower=0.01)
-        )
-
-        # Sort by reliability (most reliable first)
-        stats = stats.sort_values("reliability_score", ascending=False)
-
-        print("\n🏆 Most Reliable Tests (Top 5):")
-        for _, test in stats.head(5).iterrows():
-            print(
-                f"   • {test['test_name']}: "
-                f"{test['pass_rate']:.1%} pass rate, "
-                f"{test['avg_duration']:.2f}s avg",
-            )
-
-        if len(stats) > 5:
-            print("\n⚠️  Least Reliable Tests (Bottom 5):")
-            for _, test in stats.tail(5).iterrows():
-                print(
-                    f"   • {test['test_name']}: "
-                    f"{test['pass_rate']:.1%} pass rate, "
-                    f"{test['avg_duration']:.2f}s avg",
-                )
-
-        return stats
-
-    def train_failure_predictor(self) -> tuple[float, Any]:
-        """
-        Train ML model to predict test failures.
-
-        Returns:
-            Tuple of (accuracy, model)
-        """
-        print("\n🤖 Training failure prediction model...")
-
+    def get_reliability_scores(self) -> list[TestStats]:
+        """Calculate reliability score for each test (pass_rate * consistency)."""
         if self.df is None or self.df.empty:
-            print("⚠️  No data loaded. Run load_historical_data() first.")
-            return 0.0, None
-
-        # Prepare features
-        df_ml = self.df.copy()
-
-        # Encode categorical variables
-        for col in ["test_name", "environment", "browser"]:
-            if col in df_ml.columns:
-                le = LabelEncoder()
-                df_ml[f"{col}_encoded"] = le.fit_transform(df_ml[col].astype(str))
-                self.label_encoders[col] = le
-
-        # Features for prediction
-        feature_cols = [col for col in df_ml.columns if col.endswith("_encoded")] + [
-            "duration",
-        ]
-        if "headless" in df_ml.columns:
-            df_ml["headless_int"] = df_ml["headless"].astype(int)
-            feature_cols.append("headless_int")
-
-        X = df_ml[feature_cols]
-        y = (df_ml["status"] == "failed").astype(int)
-
-        # Split data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X,
-            y,
-            test_size=0.2,
-            random_state=42,
-        )
-
-        # Train model
-        self.model = RandomForestClassifier(n_estimators=100, random_state=42)
-        self.model.fit(X_train, y_train)
-
-        # Evaluate
-        accuracy = self.model.score(X_test, y_test)
-
-        print(f"✅ Model trained with {accuracy:.1%} accuracy")
-        print(f"   Training samples: {len(X_train)}")
-        print(f"   Test samples: {len(X_test)}")
-
-        # Feature importance
-        feature_importance = pd.DataFrame(
-            {"feature": feature_cols, "importance": self.model.feature_importances_},
-        ).sort_values("importance", ascending=False)
-
-        print("\n🎯 Most Important Features:")
-        for _, row in feature_importance.head(3).iterrows():
-            print(f"   • {row['feature']}: {row['importance']:.3f}")
-
-        return accuracy, self.model
-
-    def predict_test_failures(
-        self,
-        upcoming_tests: list[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        """
-        Predict which tests are likely to fail.
-
-        Args:
-            upcoming_tests: List of test configurations
-
-        Returns:
-            List of predictions with failure probabilities
-        """
-        if self.model is None:
-            print("⚠️  Model not trained. Run train_failure_predictor() first.")
             return []
 
-        print("\n🔮 Predicting test failures...")
+        stats = self.df.groupby("test_name").agg(
+            total=("status", "count"),
+            passed=("status", lambda x: (x == "passed").sum()),
+            failed=("status", lambda x: (x == "failed").sum()),
+            avg_dur=("duration", "mean"),
+            std_dur=("duration", "std"),
+        ).reset_index().fillna(0)
 
-        predictions = []
+        results = []
+        for _, row in stats.iterrows():
+            pass_rate = row["passed"] / row["total"] if row["total"] > 0 else 0
+            # Risk score: combines failure rate + duration variability
+            duration_variance = row["std_dur"] / max(row["avg_dur"], 0.01)
+            risk_score = min(1.0, (1 - pass_rate) + (duration_variance * 0.2))
 
-        for test in upcoming_tests:
-            # Encode features
-            features = {}
-            for col, encoder in self.label_encoders.items():
-                if col in test:
-                    try:
-                        features[f"{col}_encoded"] = encoder.transform([test[col]])[0]
-                    except ValueError:
-                        features[f"{col}_encoded"] = 0  # Unknown value
+            results.append(TestStats(
+                name=row["test_name"],
+                total_runs=int(row["total"]),
+                passed=int(row["passed"]),
+                failed=int(row["failed"]),
+                pass_rate=round(pass_rate, 3),
+                avg_duration=round(row["avg_dur"], 2),
+                std_duration=round(row["std_dur"], 2),
+                is_flaky=0 < pass_rate < 1 and row["total"] >= 3,
+                risk_score=round(risk_score, 3),
+            ))
+        return sorted(results, key=lambda x: x.risk_score, reverse=True)
 
-            features["duration"] = test.get("duration", self.df["duration"].mean())
-            if "headless" in test:
-                features["headless_int"] = int(test["headless"])
+    def prioritize_tests(self, test_names: list[str]) -> list[dict[str, Any]]:
+        """Prioritize tests by risk score (high risk first for fast feedback)."""
+        scores = {s.name: s for s in self.get_reliability_scores()}
+        prioritized = []
+        for name in test_names:
+            stats = scores.get(name)
+            prioritized.append({
+                "test_name": name,
+                "risk_score": stats.risk_score if stats else 0.5,
+                "recommendation": self._get_recommendation(stats) if stats else "Unknown test",
+            })
+        return sorted(prioritized, key=lambda x: x["risk_score"], reverse=True)
 
-            # Predict
-            X = pd.DataFrame([features])
-            proba = self.model.predict_proba(X)[0]
+    def _get_recommendation(self, stats: TestStats) -> str:
+        if stats.is_flaky:
+            return f"⚠️ Flaky ({stats.pass_rate:.0%} pass rate) - investigate"
+        if stats.risk_score > 0.5:
+            return "🔴 High risk - run first"
+        if stats.risk_score > 0.2:
+            return "🟡 Medium risk - monitor"
+        return "🟢 Low risk - stable"
 
-            # Handle case where model only learned one class (all pass or all fail)
-            if len(proba) == 1:
-                prob = 0.0 if self.model.classes_[0] == 0 else 1.0
-            else:
-                prob = proba[1]  # Probability of failure
+    def generate_report(self) -> dict[str, Any]:
+        """Generate summary report of test health."""
+        if self.df is None:
+            self.load_results()
+        if self.df is None or self.df.empty:
+            return {"error": "No data available"}
 
-            predictions.append(
-                {
-                    "test_name": test.get("test_name", "unknown"),
-                    "failure_probability": prob,
-                    "recommendation": (
-                        "High risk - run first"
-                        if prob > 0.7
-                        else (
-                            "Medium risk - monitor"
-                            if prob > 0.4
-                            else "Low risk - standard execution"
-                        )
-                    ),
-                },
-            )
+        flaky = self.detect_flaky_tests()
+        slow = self.find_slow_tests()
+        scores = self.get_reliability_scores()
 
-        # Sort by failure probability
-        predictions.sort(key=lambda x: x["failure_probability"], reverse=True)
-
-        print("\n📊 Failure Predictions (Top 5 risks):")
-        for pred in predictions[:5]:
-            print(
-                f"   • {pred['test_name']}: "
-                f"{pred['failure_probability']:.1%} failure risk - "
-                f"{pred['recommendation']}",
-            )
-
-        return predictions
-
-    def generate_report(self, output_file: str = "reports/ml_analysis_report.txt"):
-        """
-        Generate comprehensive analysis report.
-
-        Args:
-            output_file: Path to output report file
-        """
-        print("\n📝 Generating comprehensive report...")
-
-        report_lines = []
-        report_lines.append("=" * 70)
-        report_lines.append("ML TEST ANALYSIS REPORT")
-        report_lines.append(
-            f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
-        )
-        report_lines.append("=" * 70)
-        report_lines.append("")
-
-        # Load data
-        df = self.load_historical_data()
-
-        if df.empty:
-            report_lines.append("⚠️  No test data available for analysis")
-        else:
-            # Basic statistics
-            report_lines.append("📊 Dataset Overview:")
-            report_lines.append(f"   Total test executions: {len(df)}")
-            report_lines.append(f"   Unique tests: {df['test_name'].nunique()}")
-            report_lines.append(f"   Environments: {df['environment'].nunique()}")
-            report_lines.append(
-                f"   Date range: {df['timestamp'].min()} to {df['timestamp'].max()}",
-            )
-            report_lines.append("")
-
-            # Flaky tests (use min_runs=2 to be more sensitive with small histories)
-            flaky = self.detect_flaky_tests(min_runs=2)
-            if not flaky.empty:
-                report_lines.append(f"⚠️  Flaky Tests Detected: {len(flaky)}")
-                for _, test in flaky.iterrows():
-                    test_name = test["test_name"]
-                    pass_rate = test["pass_rate"]
-                    report_lines.append(f"   • {test_name}: {pass_rate:.1%} pass rate")
-                report_lines.append("")
-
-            # Recent failures (show last 10 failed executions to make issues obvious)
-            recent_failures = df[df["status"].str.lower() == "failed"].copy()
-            if not recent_failures.empty:
-                recent_failures = recent_failures.sort_values(
-                    "timestamp",
-                    ascending=False,
-                )
-                report_lines.append("❗ Recent Failures (most recent first):")
-                for _, row in recent_failures.head(10).iterrows():
-                    ts = row.get("timestamp")
-                    ts_str = (
-                        ts.strftime("%Y-%m-%d %H:%M:%S")
-                        if hasattr(ts, "strftime")
-                        else str(ts)
-                    )
-                    report_lines.append(
-                        f"   • {row.get('test_name')}: {row.get('status')} at "
-                        f"{ts_str} ({row.get('duration'):.2f}s)",
-                    )
-                report_lines.append("")
-
-            # Performance trends
-            perf = self.analyze_performance_trends()
-            report_lines.append("📈 Performance Summary:")
-            avg_dur = perf["avg_duration"]
-            med_dur = perf["median_duration"]
-            report_lines.append(f"   Average duration: {avg_dur:.2f}s")
-            report_lines.append(f"   Median duration: {med_dur:.2f}s")
-            report_lines.append("")
-
-            # Test statistics
-            stats = self.get_test_statistics()
-            report_lines.append("🏆 Test Reliability Ranking:")
-            for i, (_, test) in enumerate(stats.head(10).iterrows(), start=1):
-                report_lines.append(
-                    f"   {i}. {test['test_name']}: "
-                    f"{test['pass_rate']:.1%} pass rate, "
-                    f"{test['avg_duration']:.2f}s avg",
-                )
-            report_lines.append("")
-
-            # ML predictions
-            accuracy, _ = self.train_failure_predictor()
-            report_lines.append("🤖 ML Model Performance:")
-            report_lines.append(f"   Prediction accuracy: {accuracy:.1%}")
-            report_lines.append("")
-
-        report_lines.append("=" * 70)
-
-        # Write to file
-        output_path = Path(output_file)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with Path.open(output_path, "w") as f:
-            f.write("\n".join(report_lines))
-
-        print(f"✅ Report saved to: {output_path}")
-
-        # Also print to console
-        print("\n" + "\n".join(report_lines))
+        return {
+            "summary": {
+                "total_executions": len(self.df),
+                "unique_tests": self.df["test_name"].nunique(),
+                "overall_pass_rate": round((self.df["status"] == "passed").mean(), 3),
+                "avg_duration": round(self.df["duration"].mean(), 2),
+            },
+            "flaky_tests": [{"name": r["test_name"], "pass_rate": r["pass_rate"]} for _, r in flaky.iterrows()],
+            "slow_tests": [{"name": r["test_name"], "duration": r["duration"]} for _, r in slow.head(5).iterrows()],
+            "high_risk_tests": [{"name": s.name, "risk": s.risk_score} for s in scores[:5] if s.risk_score > 0.3],
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
 
 
 def main():
-    """Main execution function."""
-    print("=" * 70)
-    print("ML-POWERED TEST INTELLIGENCE ANALYZER")
-    print("=" * 70)
+    """CLI entry point for test analysis."""
+    print("=" * 60)
+    print("TEST ANALYTICS ENGINE")
+    print("=" * 60)
 
-    analyzer = MLTestAnalyzer()
-
-    # Load historical data
-    df = analyzer.load_historical_data()
+    analyzer = TestAnalyzer()
+    df = analyzer.load_results()
 
     if df.empty:
-        print("\n⚠️  No test data found!")
-        print("\nTo use this analyzer:")
-        print("1. Run tests with export enabled")
-        print("2. Test results will be saved to data/results/")
-        print("3. Run this analyzer to get insights")
-        print("\nExample:")
-        print("  python examples/export_test_results_example.py")
-        print("  python utils/ml_test_analyzer.py")
+        print("\n⚠️  No test data found in data/results/")
+        print("Run tests with JSON export enabled first.")
         return
 
-    # Run analyses
-    analyzer.detect_flaky_tests()
-    analyzer.analyze_performance_trends()
-    analyzer.get_test_statistics()
+    print(f"\n📊 Loaded {len(df)} test executions")
 
-    # Train ML model
-    analyzer.train_failure_predictor()
+    # Flaky tests
+    flaky = analyzer.detect_flaky_tests()
+    if not flaky.empty:
+        print(f"\n⚠️  Flaky Tests ({len(flaky)}):")
+        for _, t in flaky.head(5).iterrows():
+            print(f"   • {t['test_name']}: {t['pass_rate']:.0%} pass rate")
 
-    # Example prediction
-    upcoming_tests = [
-        {
-            "test_name": df["test_name"].iloc[0],
-            "environment": "staging",
-            "browser": "chrome",
-            "duration": df["duration"].mean(),
-            "headless": False,
-        },
-    ]
-    analyzer.predict_test_failures(upcoming_tests)
+    # Slow tests
+    slow = analyzer.find_slow_tests()
+    if not slow.empty:
+        print(f"\n🐢 Slow Tests ({len(slow)}):")
+        for _, t in slow.head(5).iterrows():
+            print(f"   • {t['test_name']}: {t['duration']:.2f}s")
 
-    # Generate report
-    analyzer.generate_report()
+    # Reliability ranking
+    scores = analyzer.get_reliability_scores()
+    print("\n🏆 Test Reliability (Top 5 risks):")
+    for s in scores[:5]:
+        status = "⚠️ FLAKY" if s.is_flaky else f"Risk: {s.risk_score:.0%}"
+        print(f"   • {s.name}: {s.pass_rate:.0%} pass, {s.avg_duration:.1f}s avg [{status}]")
 
-    print("\n" + "=" * 70)
+    print("\n" + "=" * 60)
     print("✅ Analysis complete!")
-    print("=" * 70)
 
 
 if __name__ == "__main__":

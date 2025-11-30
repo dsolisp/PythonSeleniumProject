@@ -1,4 +1,11 @@
+"""
+Integration tests for page object interactions.
+Tests complete workflows and module interactions.
+All locators are centralized in locator classes following clean architecture.
+"""
+
 import os
+import sqlite3
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -25,20 +32,28 @@ from locators.test_framework_locators import TestFrameworkLocators
 from pages.base_page import BasePage
 from pages.result_page import ResultPage
 from pages.search_engine_page import SearchEnginePage
-from utils.logger import TestLogger
-from utils.sql_connection import (
-    execute_query,
-    get_connection,
-)
+from utils.sql_connection import execute_query, get_connection
+from utils.structured_logger import TestLogger
 from utils.webdriver_factory import WebDriverFactory, get_driver
 
-"""
-Integration tests for page object interactions.
-Tests complete workflows and module interactions.
-All locators are centralized in locator classes following clean architecture.
+# SQL for creating the standard test results table
+TEST_RESULTS_TABLE_SQL = """
+    CREATE TABLE test_results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        test_name TEXT NOT NULL,
+        result TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
 """
 
 
+def create_test_results_table(conn: sqlite3.Connection) -> None:
+    """Create the standard test_results table in the given database connection."""
+    execute_query(conn, TEST_RESULTS_TABLE_SQL)
+
+
+@pytest.mark.integration
+@pytest.mark.browser_chrome
 class TestPageObjectIntegration:
     """Integration tests for page object interactions."""
 
@@ -55,19 +70,8 @@ class TestPageObjectIntegration:
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as temp_db:
             pass
 
-        # Create a simple test table
         conn = get_connection(temp_db.name)
-        execute_query(
-            conn,
-            """
-            CREATE TABLE test_results (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                test_name TEXT NOT NULL,
-                result TEXT NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        """,
-        )
+        create_test_results_table(conn)
 
         yield temp_db.name
 
@@ -259,6 +263,7 @@ class TestPageObjectIntegration:
         assert_that(result_valid or len(result_title), greater_than(0))
 
 
+@pytest.mark.integration
 class TestConfigurationIntegration:
     """Integration tests for configuration and settings."""
 
@@ -284,19 +289,8 @@ class TestConfigurationIntegration:
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as temp_db:
             pass
 
-        # Create a simple test table
         conn = get_connection(temp_db.name)
-        execute_query(
-            conn,
-            """
-            CREATE TABLE test_results (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                test_name TEXT NOT NULL,
-                result TEXT NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        """,
-        )
+        create_test_results_table(conn)
 
         try:
             # Create logger
@@ -326,6 +320,8 @@ class TestConfigurationIntegration:
                 Path(temp_db.name).unlink()
 
 
+@pytest.mark.integration
+@pytest.mark.browser_chrome
 class TestEndToEndWorkflow:
     """End-to-end workflow integration tests."""
 
@@ -335,19 +331,8 @@ class TestEndToEndWorkflow:
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as temp_db:
             pass
 
-        # Create test table
         conn = get_connection(temp_db.name)
-        execute_query(
-            conn,
-            """
-            CREATE TABLE test_results (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                test_name TEXT NOT NULL,
-                result TEXT NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        """,
-        )
+        create_test_results_table(conn)
 
         # Create Chrome driver
         options = ChromeOptions()

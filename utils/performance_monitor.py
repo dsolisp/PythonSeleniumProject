@@ -18,6 +18,16 @@ from utils.structured_logger import get_logger
 # Constants
 SECONDS_TO_MILLISECONDS = 1000
 
+# Default Performance Thresholds (in milliseconds)
+# These represent acceptable maximums for various operations
+DEFAULT_PAGE_LOAD_THRESHOLD_MS = 5000  # 5 seconds
+DEFAULT_ELEMENT_FIND_THRESHOLD_MS = 1000  # 1 second
+DEFAULT_CLICK_OPERATION_THRESHOLD_MS = 500  # 500ms
+DEFAULT_FORM_FILL_THRESHOLD_MS = 2000  # 2 seconds
+DEFAULT_API_RESPONSE_THRESHOLD_MS = 2000  # 2 seconds
+DEFAULT_API_FIRST_BYTE_THRESHOLD_MS = 500  # 500ms
+DEFAULT_API_TOTAL_TIME_THRESHOLD_MS = 3000  # 3 seconds
+
 
 def _format_locator(by: Any, value: str) -> str:
     """
@@ -45,7 +55,7 @@ class PerformanceMetric:
     value: float
     unit: str
     timestamp: datetime
-    context: dict[str, Any] = None
+    context: Optional[dict[str, Any]] = None
 
 
 class PerformanceMonitor:
@@ -268,6 +278,17 @@ class PerformanceMonitor:
 
         return summary
 
+    def get_performance_report(self) -> dict[str, Any]:
+        """Get performance report with average values - alias for compatibility.
+
+        Returns:
+            Dictionary with total_metrics and average_value keys.
+        """
+        summary = self.get_metrics_summary()
+        all_values = [m.value for m in self.metrics]
+        summary["average_value"] = statistics.mean(all_values) if all_values else 0
+        return summary
+
 
 class WebDriverPerformanceMonitor(PerformanceMonitor):
     """Specialized performance monitor for WebDriver operations."""
@@ -275,11 +296,11 @@ class WebDriverPerformanceMonitor(PerformanceMonitor):
     def __init__(self):
         super().__init__("WebDriver")
 
-        # Set default thresholds for web operations
-        self.set_threshold("page_load_time", 5000, "ms")  # 5 seconds
-        self.set_threshold("element_find_time", 1000, "ms")  # 1 second
-        self.set_threshold("click_operation_time", 500, "ms")  # 500ms
-        self.set_threshold("form_fill_time", 2000, "ms")  # 2 seconds
+        # Set default thresholds for web operations using named constants
+        self.set_threshold("page_load_time", DEFAULT_PAGE_LOAD_THRESHOLD_MS, "ms")
+        self.set_threshold("element_find_time", DEFAULT_ELEMENT_FIND_THRESHOLD_MS, "ms")
+        self.set_threshold("click_operation_time", DEFAULT_CLICK_OPERATION_THRESHOLD_MS, "ms")
+        self.set_threshold("form_fill_time", DEFAULT_FORM_FILL_THRESHOLD_MS, "ms")
 
     def monitor_page_load(self, driver, url: str) -> float:
         """Monitor page load performance."""
@@ -311,10 +332,10 @@ class APIPerformanceMonitor(PerformanceMonitor):
     def __init__(self):
         super().__init__("API")
 
-        # Set default thresholds for API operations
-        self.set_threshold("api_response_time", 2000, "ms")  # 2 seconds
-        self.set_threshold("api_first_byte_time", 500, "ms")  # 500ms
-        self.set_threshold("api_total_time", 3000, "ms")  # 3 seconds
+        # Set default thresholds for API operations using named constants
+        self.set_threshold("api_response_time", DEFAULT_API_RESPONSE_THRESHOLD_MS, "ms")
+        self.set_threshold("api_first_byte_time", DEFAULT_API_FIRST_BYTE_THRESHOLD_MS, "ms")
+        self.set_threshold("api_total_time", DEFAULT_API_TOTAL_TIME_THRESHOLD_MS, "ms")
 
     def monitor_api_request(
         self,

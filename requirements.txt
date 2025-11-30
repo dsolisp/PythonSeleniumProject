@@ -33,7 +33,6 @@
 # Code Quality Auto-fixers
 numpy
 pandas
-scikit-learn
 structlog
 playwright
 selenium

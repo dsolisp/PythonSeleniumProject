@@ -278,16 +278,15 @@ def test_page_interaction_timing(driver):
 
 
 def get_track_name_from_db(sql_conn):
+    """Get a track name from the database for search testing."""
     try:
         query = "SELECT Name FROM tracks WHERE TrackId = ?"
-        cursor = sql_util.execute_query(sql_conn, query, (1,))
-        result = sql_util.fetch_one(cursor)
+        result = sql_util.fetch_one(sql_conn, query, (1,))
 
         if result and len(result) > 0:
             return result[0]
         print("No track found in database")
+        return None
     except (sqlite3.Error, ValueError, TypeError) as e:
         print(f"Error querying database: {e}")
-        return None
-    else:
         return None

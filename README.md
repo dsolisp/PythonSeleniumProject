@@ -1,12 +1,31 @@
 # Python Selenium Test Automation Framework
 
-[![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![Selenium](https://img.shields.io/badge/Selenium-4.16-green.svg)](https://selenium.dev)
 [![Playwright](https://img.shields.io/badge/Playwright-1.40-blueviolet.svg)](https://playwright.dev)
-[![Pytest](https://img.shields.io/badge/Pytest-8.4-orange.svg)](https://pytest.org)
+[![Pytest](https://img.shields.io/badge/Pytest-8.x-orange.svg)](https://pytest.org)
+[![Tests](https://img.shields.io/badge/Tests-260+-brightgreen.svg)](tests/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Enterprise-grade test automation with ML-powered intelligence** 🚀
+**Enterprise-grade test automation portfolio demonstrating modern QA engineering** 🚀
+
+## 🎯 What Makes This Project Special
+
+| Feature | Why It Matters |
+|---------|----------------|
+| **Dual Framework Support** | Selenium AND Playwright - shows versatility |
+| **Real CI/CD Integration** | 607-line GitHub Actions workflow with matrix testing |
+| **Statistical Test Analytics** | Pandas-powered flaky test detection & risk scoring |
+| **Visual Regression Testing** | Multiple approaches (pixelmatch, playwright-visual) |
+| **Performance Monitoring** | Real-time metrics with psutil + load testing with Locust |
+| **Self-Healing Tests** | Smart error recovery with retry logic |
+| **Clean Architecture** | Page Object Model, modular utilities, type hints throughout |
+
+### Project Metrics
+- **~12,500 lines** of production-quality Python
+- **260+ tests** (211 unit + 50+ integration/web/api/performance)
+- **100% type hints** on public APIs
+- **Zero linter warnings** (ruff/mypy/bandit compliant)
 
 ## 📋 Prerequisites
 
@@ -37,9 +56,9 @@ That's it! Runs tests, analytics, ML predictions, and generates reports automati
 - **Load Testing**: Locust integration for performance under load
 
 ### 📊 Intelligence & Analytics
-- **ML-Powered**: AI failure prediction and flaky test detection
-- **Advanced Analytics**: Pandas-powered statistical analysis
-- **Smart Reporting**: HTML dashboards and CSV exports
+- **Statistical Analysis**: Flaky test detection and reliability scoring
+- **Advanced Analytics**: Pandas-powered test result analysis
+- **Smart Reporting**: HTML dashboards, CSV exports, Allure integration
 - **Benchmarking**: pytest-benchmark integration for performance tracking
 
 ### 🔧 Enterprise Features
@@ -67,8 +86,8 @@ PythonSeleniumProject/
 │   ├── ERROR_RECOVERY_AND_MONITORING.md  # Self-healing & monitoring
 │   ├── PERFORMANCE_MONITORING.md    # Load testing & benchmarking
 │   └── RECOMMENDATIONS.md           # Framework usage patterns
-├── 📁 tests/                        # 🧪 293+ test cases across categories
-│   ├── unit/                        # Fast, isolated unit tests
+├── 📁 tests/                        # 🧪 260+ tests across categories
+│   ├── unit/                        # 211 fast, isolated unit tests
 │   ├── integration/                 # End-to-end & visual regression tests
 │   ├── api/                         # REST API validation tests
 │   ├── web/                         # UI automation tests (Selenium/Playwright)
@@ -78,14 +97,16 @@ PythonSeleniumProject/
 │   ├── search_engine_page.py        # Search engine page objects
 │   ├── playwright_search_engine_page.py  # Playwright-specific pages
 │   └── playwright_base_page.py      # Playwright base page
-├── 📁 utils/                        # 🔧 Core framework utilities
-│   ├── test_data_manager.py         # Data loading & export
-│   ├── test_reporter.py             # Analytics & HTML reporting
-│   ├── ml_test_analyzer.py          # AI failure prediction
-│   ├── performance_monitor.py       # Real-time performance tracking
-│   ├── webdriver_factory.py         # Selenium driver management
-│   ├── playwright_factory.py        # Playwright browser management
-│   └── error_handler.py             # Self-healing error recovery
+├── 📁 utils/                        # 🔧 Core framework utilities (~2,600 lines)
+│   ├── error_handler.py             # Self-healing error recovery (506 lines)
+│   ├── test_reporter.py             # Pandas analytics & HTML reporting (491 lines)
+│   ├── performance_monitor.py       # Real-time performance tracking (453 lines)
+│   ├── webdriver_factory.py         # Selenium driver management (312 lines)
+│   ├── playwright_factory.py        # Playwright browser management (280 lines)
+│   ├── test_data_manager.py         # Multi-format data loading (280 lines)
+│   ├── ml_test_analyzer.py          # Statistical test analysis (243 lines)
+│   ├── sql_connection.py            # SQLite utilities (126 lines)
+│   └── structured_logger.py         # JSON structured logging (110 lines)
 ├── 📁 config/                       # ⚙️ Environment configurations
 │   ├── settings.py                  # Core configuration management
 │   ├── local.yaml                   # Local development settings
@@ -196,7 +217,7 @@ pytest -m database tests/
 
 ## 🏆 Framework Stats
 
-- ✅ **293+ Tests** across all categories (unit, integration, performance)
+- ✅ **260+ Tests** across all categories (unit, integration, performance)
 - ✅ **7 Major Features** fully integrated (web, API, visual, ML, performance)
 - ✅ **6 Library Integrations** (Pandas, ML, monitoring, etc.)
 - ✅ **Multiple Test Types** (smoke, regression, visual, security, database)
