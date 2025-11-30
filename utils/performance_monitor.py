@@ -379,26 +379,6 @@ class APIPerformanceMonitor(PerformanceMonitor):
         }
 
 
-def benchmark_decorator(iterations: int = 100, name: Optional[str] = None):
-    """Pytest benchmark decorator for performance testing."""
-
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            # Check if running under pytest-benchmark
-            if callable(kwargs.get("benchmark")):
-                # Use pytest-benchmark if available in kwargs
-                benchmark = kwargs.pop("benchmark")
-                return benchmark(func, *args, **kwargs)
-            # Fallback to manual benchmarking
-            monitor = PerformanceMonitor(name or func.__name__)
-            return monitor.benchmark_function(func, iterations, *args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
 def performance_test(threshold_ms: Optional[float] = None, name: Optional[str] = None):
     """Decorator for performance testing with threshold validation."""
 
@@ -468,7 +448,6 @@ def performance_test(threshold_ms: Optional[float] = None, name: Optional[str] =
     return decorator
 
 
-# Global performance monitor instances
+# Pre-configured monitor instances for common use cases
 web_performance = WebDriverPerformanceMonitor()
 api_performance = APIPerformanceMonitor()
-general_performance = PerformanceMonitor("General")

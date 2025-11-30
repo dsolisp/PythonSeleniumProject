@@ -24,9 +24,9 @@ def test_simple_search_engine(driver):
     base_page = BasePage(driver)
     search_term = settings.DEFAULT_SEARCH_TERM
 
-    search_page.open_search_engine()
+    search_page.open()
     search_page.enter_search_term(search_term)
-    search_page.submit_search_with_enter()
+    search_page.submit_search(use_enter=True)
 
     result_page.wait_for_results_page()
 
@@ -54,13 +54,13 @@ def test_database_search(driver):
     result_page = ResultPage(driver)
     base_page = BasePage(driver)
 
-    search_page.open_search_engine()
+    search_page.open()
 
     name = get_track_name_from_db(driver[1])
     assert_that(name, is_not(none()))
 
     search_page.enter_search_term(name)
-    search_page.submit_search_with_enter()
+    search_page.submit_search(use_enter=True)
 
     result_page.wait_for_results_page()
 
@@ -89,9 +89,9 @@ def test_search_with_action_chains(driver):
     base_page = BasePage(driver)
     search_term = settings.DEFAULT_SEARCH_TERM
 
-    search_page.open_search_engine()
+    search_page.open()
 
-    search_page.click_search_input_advanced()
+    search_page.click_search_input()
     search_page.type_with_action_chains(search_term)
 
     # Verify text was entered
@@ -104,7 +104,7 @@ def test_search_with_action_chains(driver):
     else:
         print("❌ No search suggestions appeared")
 
-    search_page.submit_search_with_enter()
+    search_page.submit_search(use_enter=True)
 
     result_page.wait_for_results_page_complete()
 
@@ -141,7 +141,7 @@ def test_database_search_with_performance_monitoring(driver):
     base_page = BasePage(driver)
 
     start_time = time.time()
-    search_page.open_search_engine()
+    search_page.open()
     page_open_time = time.time() - start_time
 
     start_time = time.time()
@@ -152,7 +152,7 @@ def test_database_search_with_performance_monitoring(driver):
 
     start_time = time.time()
     search_page.enter_search_term(search_term)
-    search_page.submit_search_with_enter()
+    search_page.submit_search(use_enter=True)
     search_execution_time = time.time() - start_time
 
     result_page.wait_for_results_page()
@@ -198,7 +198,7 @@ def test_framework_api_functionality():
 @pytest.mark.advanced
 def test_element_health_monitoring(driver):
     search_page = SearchEnginePage(driver)
-    search_page.open_search_engine()
+    search_page.open()
 
     element_health = search_page.get_search_input_health()
 
@@ -226,7 +226,7 @@ def test_element_health_monitoring(driver):
 @pytest.mark.advanced
 def test_webdriver_wait_conditions(driver):
     search_page = SearchEnginePage(driver)
-    search_page.open_search_engine()
+    search_page.open()
 
     is_clickable = search_page.wait_for_search_input_clickable()
     assert_that(is_clickable, equal_to(True))  # noqa: FBT003

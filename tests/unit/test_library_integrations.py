@@ -30,7 +30,6 @@ from tenacity import Retrying, stop_after_attempt, wait_exponential, wait_fixed
 
 from utils.error_handler import SmartErrorHandler
 from utils.test_data_manager import DataManager
-from utils.test_reporter import AdvancedTestReporter, Result
 
 """
 Unit tests for library integrations (pandas, yaml, psutil, tenacity, jinja2, numpy).
@@ -39,129 +38,61 @@ Validates that all new library features are working correctly.
 
 
 class TestPandasIntegration:
-    """Test pandas integration in test reporter."""
-
-    def setup_method(self):
-        """Setup test environment."""
-        self.temp_dir = tempfile.mkdtemp()
+    """Test pandas basic functionality."""
 
     def test_pandas_dataframe_creation(self):
-        """Test that pandas DataFrames are created correctly."""
-        reporter = AdvancedTestReporter(self.temp_dir)
-        reporter.start_test_suite("pandas_test", "test", "chrome")
-
-        # Add test results
-        results = [
-            Result(
-                "test1",
-                "passed",
-                2.5,
-                datetime.now(timezone.utc),
-                "test",
-                "chrome",
-            ),
-            Result(
-                "test2",
-                "failed",
-                1.8,
-                datetime.now(timezone.utc),
-                "test",
-                "chrome",
-            ),
-            Result(
-                "test3",
-                "passed",
-                3.0,
-                datetime.now(timezone.utc),
-                "test",
-                "chrome",
-            ),
+        """Test that pandas DataFrames can be created."""
+        # Create a simple DataFrame directly
+        data = [
+            {"test_name": "test1", "status": "passed", "duration": 2.5},
+            {"test_name": "test2", "status": "failed", "duration": 1.8},
+            {"test_name": "test3", "status": "passed", "duration": 3.0},
         ]
-
-        for result in results:
-            reporter.add_test_result(result)
-
-        # Test DataFrame generation
-        analytics = reporter.generate_dataframe_analytics()
-        assert_that(analytics, is_(not_none()))
-        assert_that(len(analytics), equal_to(3))
+        df = pd.DataFrame(data)
 
         # Verify DataFrame structure
-        df = pd.DataFrame(analytics)
-        expected_columns = [
-            "test_name",
-            "status",
-            "duration",
-            "timestamp",
-            "browser",
-            "environment",
-        ]
-        for col in expected_columns:
-            assert_that(df.columns, has_item(col))
+        assert_that(len(df), equal_to(3))
+        assert_that(df.columns, has_item("test_name"))
+        assert_that(df.columns, has_item("status"))
+        assert_that(df.columns, has_item("duration"))
 
         # Test statistical analysis
         assert_that(df["duration"].mean(), greater_than(0))
         assert_that(df["duration"].std(), greater_than_or_equal_to(0))
-        assert_that(df.columns, has_item("is_outlier"))
-        assert_that(df.columns, has_item("duration_zscore"))
 
     def test_csv_export_functionality(self):
         """Test CSV export using pandas."""
-        reporter = AdvancedTestReporter(self.temp_dir)
-        reporter.start_test_suite("csv_test", "test", "chrome")
+        temp_dir = tempfile.mkdtemp()
+        csv_file = Path(temp_dir) / "test_export.csv"
 
-        # Add test result
-        result = Result(
-            "test_csv",
-            "passed",
-            2.0,
-            datetime.now(timezone.utc),
-            "test",
-            "chrome",
-        )
-        reporter.add_test_result(result)
+        # Create and export DataFrame
+        df = pd.DataFrame([{"test_name": "test_csv", "status": "passed", "duration": 2.0}])
+        df.to_csv(csv_file, index=False)
 
-        # Export to CSV
-        csv_file = reporter.export_to_csv()
-        assert_that(csv_file, is_(not_none()))
-        assert_that(Path(csv_file).exists(), is_(True))
-        assert_that(csv_file, ends_with(".csv"))
+        assert_that(csv_file.exists(), is_(True))
 
         # Verify CSV content
-        df = pd.read_csv(csv_file)
-        assert_that(len(df), equal_to(1))
-        assert_that(df.columns, has_item("test_name"))
-        assert_that(df.iloc[0]["test_name"], equal_to("test_csv"))
+        df_loaded = pd.read_csv(csv_file)
+        assert_that(len(df_loaded), equal_to(1))
+        assert_that(df_loaded.iloc[0]["test_name"], equal_to("test_csv"))
 
     def test_numpy_statistical_operations(self):
         """Test numpy integration for statistical calculations."""
-        reporter = AdvancedTestReporter(self.temp_dir)
-        reporter.start_test_suite("numpy_test", "test", "chrome")
+        # Test data with an outlier
+        durations = np.array([1.0, 2.0, 3.0, 10.0, 1.5])
 
-        # Add results with varied durations for statistical analysis
-        durations = [1.0, 2.0, 3.0, 10.0, 1.5]  # 10.0 should be an outlier
-        for i, duration in enumerate(durations):
-            result = Result(
-                f"test_{i}",
-                "passed",
-                duration,
-                datetime.now(timezone.utc),
-                "test",
-                "chrome",
-            )
-            reporter.add_test_result(result)
+        # Calculate z-scores
+        mean = np.mean(durations)
+        std = np.std(durations)
+        z_scores = np.abs((durations - mean) / std) if std > 0 else np.zeros_like(durations)
 
-        # Generate analytics
-        analytics = reporter.generate_dataframe_analytics()
-        df = pd.DataFrame(analytics)
+        # Verify statistical calculations
+        assert_that(float(mean), greater_than(0))
+        assert_that(float(std), greater_than(0))
 
-        # Verify z-score calculation
-        assert_that(df.columns, has_item("duration_zscore"))
-
-        # The outlier (10.0) should have a high z-score
-        outliers = df[df["is_outlier"]]
-        if len(outliers) > 0:
-            assert_that(outliers.iloc[0]["duration"], equal_to(10.0))
+        # The outlier (10.0) should have the highest z-score
+        max_z_idx = np.argmax(z_scores)
+        assert_that(float(durations[max_z_idx]), equal_to(10.0))
 
 
 class TestYAMLIntegration:
@@ -286,7 +217,7 @@ class TestTenacityIntegration:
         handler = SmartErrorHandler()
 
         # Check that handler has retry capabilities
-        assert_that(handler, has_property("execute_with_tenacity_retry"))
+        assert_that(handler, has_property("execute_with_retry"))
 
     def test_retry_execution_simulation(self):
         """Test retry execution with tenacity."""
@@ -477,18 +408,14 @@ class TestLibraryIntegrationSmokeTest:
         # Test that components can be instantiated
         temp_dir = tempfile.mkdtemp()
 
-        reporter = AdvancedTestReporter(temp_dir)
         data_manager = DataManager(temp_dir)
         error_handler = SmartErrorHandler()
 
         # Test basic functionality
-        assert_that(reporter, is_(not_none()))
         assert_that(data_manager, is_(not_none()))
         assert_that(error_handler, is_(not_none()))
 
         # Test that they have library-enabled methods
-        assert_that(reporter, has_property("generate_dataframe_analytics"))
-        assert_that(reporter, has_property("export_to_csv"))
         assert_that(data_manager, has_property("load_yaml_config"))
         assert_that(data_manager, has_property("save_test_results_yaml"))
         assert_that(error_handler, has_property("monitor_memory_usage"))

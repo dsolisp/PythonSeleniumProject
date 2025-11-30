@@ -27,11 +27,10 @@ from utils.error_handler import (
     SmartErrorHandler,
 )
 from utils.test_data_manager import DataManager
-from utils.test_reporter import AdvancedTestReporter, Result
 
 """
 Unit tests for framework components with advanced capabilities.
-Validates data management, reporting, and error handling functionality.
+Validates data management, and error handling functionality.
 """
 
 
@@ -155,159 +154,6 @@ class TestTestDataManager:
         # Verify old file is gone, recent file remains
         assert_that(old_file.exists(), is_(False))
         assert_that(recent_file.exists(), is_(True))
-
-
-class TestAdvancedTestReporter:
-    """Unit tests for AdvancedTestReporter."""
-
-    def setup_method(self):
-        """Setup test reporter with temporary directory."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.reporter = AdvancedTestReporter(self.temp_dir)
-
-    def test_init_creates_directories(self):
-        """Test that initialization creates report directories."""
-        expected_dirs = ["json", "html", "trends", "analytics"]
-        for dir_name in expected_dirs:
-            assert_that((Path(self.temp_dir) / dir_name).exists(), is_(True))
-
-    # ...existing code...
-    """Test starting a test suite."""
-
-    # ...existing code...
-    def test_add_test_result(self):
-        """Test adding test results to suite."""
-        self.reporter.start_test_suite("Test_Suite", "local", "chrome")
-
-        # Add passed test
-        passed_result = Result(
-            test_name="test_pass",
-            status="PASSED",
-            duration=2.5,
-            timestamp=datetime.now(timezone.utc),
-            environment="local",
-            browser="chrome",
-        )
-        self.reporter.add_test_result(passed_result)
-
-        # Add passed test
-        passed_result = Result(
-            test_name="test_pass",
-            status="PASSED",
-            duration=2.5,
-            timestamp=datetime.now(timezone.utc),
-            environment="local",
-            browser="chrome",
-        )
-        self.reporter.add_test_result(passed_result)
-
-        # Add failed test
-        failed_result = Result(
-            test_name="test_fail",
-            status="FAILED",
-            duration=1.8,
-            timestamp=datetime.now(timezone.utc),
-            environment="local",
-            browser="chrome",
-            error_message="Test assertion failed",
-        )
-        self.reporter.add_test_result(failed_result)
-
-        # Verify suite statistics
-        suite = self.reporter.current_suite
-        assert_that(suite.total_tests, equal_to(3))
-        assert_that(suite.passed, equal_to(2))
-        assert_that(suite.failed, equal_to(1))
-        assert_that(suite.total_duration, equal_to(6.8))
-
-        # Add a test result
-        result = Result(
-            test_name="test_json",
-            status="PASSED",
-            duration=1.5,
-            timestamp=datetime.now(timezone.utc),
-            environment="local",
-            browser="chrome",
-        )
-        self.reporter.add_test_result(result)
-
-        # Generate report
-        report_path = self.reporter.generate_json_report("test_report.json")
-
-        # Verify file exists and contains expected data
-        assert_that(Path(report_path).exists(), is_(True))
-
-        with Path(report_path).open() as f:
-            report_data = json.load(f)
-
-        assert_that(report_data, has_key("suite_summary"))
-        assert_that(report_data, has_key("metrics"))
-        assert_that(report_data, has_key("test_results"))
-        assert_that(report_data["suite_summary"]["suite_name"], equal_to("Test_Suite"))
-        assert_that(len(report_data["test_results"]), equal_to(4))
-
-    def test_generate_html_report(self):
-        """Test HTML report generation."""
-        self.reporter.start_test_suite("HTML_Test", "local", "chrome")
-
-        # ...existing code...
-        result = Result(
-            test_name="test_html",
-            status="PASSED",
-            duration=2.0,
-            timestamp=datetime.now(timezone.utc),
-            environment="local",
-            browser="chrome",
-        )
-        self.reporter.add_test_result(result)
-
-        # Generate report
-        report_path = self.reporter.generate_html_report("test_report.html")
-
-        # Verify file exists and contains HTML content
-        assert_that(Path(report_path).exists(), is_(True))
-
-        with Path(report_path).open() as f:
-            html_content = f.read()
-
-        assert_that(html_content, contains_string("<!DOCTYPE html>"))
-        assert_that(html_content, contains_string("Test Execution Report"))
-        assert_that(html_content, contains_string("HTML_Test"))
-
-    def test_get_failure_patterns(self):
-        """Test failure pattern analysis."""
-        self.reporter.start_test_suite("Failure_Test", "local", "chrome")
-
-        # Add failed tests with different error patterns
-        timeout_result = Result(
-            test_name="test_timeout",
-            status="FAILED",
-            duration=30.0,
-            timestamp=datetime.now(timezone.utc),
-            environment="local",
-            browser="chrome",
-            error_message="TimeoutException: Element not found within timeout",
-        )
-
-        element_result = Result(
-            test_name="test_element",
-            status="FAILED",
-            duration=5.0,
-            timestamp=datetime.now(timezone.utc),
-            environment="local",
-            browser="chrome",
-            error_message="NoSuchElementException: Unable to locate element",
-        )
-
-        self.reporter.add_test_result(timeout_result)
-        self.reporter.add_test_result(element_result)
-
-        # Analyze failure patterns
-        patterns = self.reporter.get_failure_patterns()
-
-        assert_that(patterns["total_failures"], equal_to(2))
-        assert_that(patterns, has_key("error_patterns"))
-        assert_that(patterns, has_key("most_failing_tests"))
 
 
 class TestErrorClassifier:

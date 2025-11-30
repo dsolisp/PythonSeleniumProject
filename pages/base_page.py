@@ -10,7 +10,7 @@ import statistics
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional, Protocol, runtime_checkable
+from typing import Any, Optional
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -23,49 +23,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from utils.error_handler import SmartErrorHandler
 from utils.sql_connection import execute_query, fetch_all
-
-# === REPOSITORY INTERFACE (DIP) ===
-
-
-@runtime_checkable
-class DataRepository(Protocol):
-    """
-    Protocol defining database operations interface.
-    Follows Dependency Inversion Principle - depend on abstractions.
-    """
-
-    def execute(self, query: str, params: Optional[tuple] = None) -> None:
-        """Execute a query without returning results."""
-        ...
-
-    def fetch_all(self, query: str, params: Optional[tuple] = None) -> list[Any]:
-        """Execute a query and return all results."""
-        ...
-
-
-class SqliteRepository:
-    """SQLite implementation of DataRepository."""
-
-    def __init__(self, connection):
-        self._conn = connection
-
-    def execute(self, query: str, params: Optional[tuple] = None) -> None:
-        execute_query(self._conn, query, params)
-
-    def fetch_all(self, query: str, params: Optional[tuple] = None) -> list[Any]:
-        return fetch_all(self._conn, query)
-
-# Optional advanced features - graceful degradation pattern
-try:
-    from utils.error_handler import SmartErrorHandler
-    from utils.test_data_manager import TestDataManager
-    from utils.test_reporter import AdvancedTestReporter
-
-    ADVANCED_FEATURES = True
-except ImportError:
-    ADVANCED_FEATURES = False
-    SmartErrorHandler = TestDataManager = AdvancedTestReporter = None
+from utils.test_data_manager import TestDataManager
 
 
 class BasePage:
@@ -87,7 +47,7 @@ class BasePage:
 
         Args:
             driver: WebDriver instance or (driver, database) tuple
-            database: Optional database connection or DataRepository instance
+            database: Optional database connection
             timeout: Default wait timeout in seconds
             test_name: Name of the test for reporting
             environment: Environment name (test, staging, prod)
@@ -95,42 +55,24 @@ class BasePage:
         # Handle tuple format for backwards compatibility
         if isinstance(driver, tuple):
             self.driver = driver[0]
-            raw_db = driver[1] if len(driver) > 1 else database
+            self.database = driver[1] if len(driver) > 1 else database
         else:
             self.driver = driver
-            raw_db = database
-
-        # Wrap raw database connection in repository (DIP)
-        if raw_db is not None and not isinstance(raw_db, DataRepository):
-            self._repository: Optional[DataRepository] = SqliteRepository(raw_db)
-        else:
-            self._repository = raw_db
-
-        # Keep database attribute for backward compatibility
-        self.database = raw_db
+            self.database = database
 
         self.timeout = timeout
         self.wait = WebDriverWait(self.driver, timeout)
         self.test_name = test_name or "unknown_test"
         self.environment = environment
 
-        # Initialize tracking (always available, advanced features enhance them)
+        # Initialize tracking
         self.performance_metrics: dict[str, list[float]] = {}
         self.interaction_history: list[dict[str, Any]] = []
         self._action_start_time: Optional[float] = None
 
-        # Initialize advanced features if available
-        if ADVANCED_FEATURES:
-            self.error_handler = SmartErrorHandler()
-            self.test_data_manager = TestDataManager()
-            self.test_reporter = AdvancedTestReporter()
-        else:
-            self.error_handler = self.test_data_manager = self.test_reporter = None
-
-    @property
-    def repository(self) -> Optional[DataRepository]:
-        """Get the data repository for database operations."""
-        return self._repository
+        # Initialize utilities
+        self.error_handler = SmartErrorHandler()
+        self.test_data_manager = TestDataManager()
 
     # === ELEMENT INTERACTION METHODS ===
 
@@ -150,10 +92,8 @@ class BasePage:
             return element
         except (TimeoutException, NoSuchElementException) as e:
             self._track_end("find_element", locator, "FAILED", str(e))
-            # Attempt recovery if available
-            if self.error_handler and self.error_handler.handle_error(
-                e, self.driver, self.test_name
-            ):
+            # Attempt recovery
+            if self.error_handler.handle_error(e, self.driver, self.test_name):
                 return self.find_element(locator, timeout)
             return None
 
@@ -218,9 +158,7 @@ class BasePage:
 
         except (WebDriverException, TimeoutException) as e:
             self._track_end("click", locator, "FAILED", str(e))
-            if self.error_handler and self.error_handler.handle_error(
-                e, self.driver, self.test_name
-            ):
+            if self.error_handler.handle_error(e, self.driver, self.test_name):
                 return self.click(
                     locator,
                     timeout=timeout,
@@ -414,7 +352,7 @@ class BasePage:
                 return fetch_all(self.database, query, parameters)
             else:
                 # For INSERT/UPDATE/DELETE, execute and commit
-                cursor = execute_query(self.database, query, parameters)
+                execute_query(self.database, query, parameters)
                 self.database.commit()
                 return []
         except Exception:
@@ -426,7 +364,7 @@ class BasePage:
     # (it was never used). Use wait_for_element() instead.
 
     def is_element_healthy(self, locator: tuple[str, str]) -> dict[str, Any]:
-        """Comprehensive element health check - demonstrates diagnostic pattern."""
+        """Check element health: exists, visible, enabled, has size, clickable."""
         try:
             el = self.driver.find_element(*locator)
             checks = {
@@ -468,8 +406,6 @@ class BasePage:
 
     def load_test_scenario(self, scenario_name: str) -> dict[str, Any]:
         """Load test scenario from TestDataManager."""
-        if not self.test_data_manager:
-            return {}
         for scenario in self.test_data_manager.get_search_scenarios(self.environment):
             if scenario.get("name") == scenario_name:
                 return scenario
@@ -477,13 +413,11 @@ class BasePage:
 
     def get_user_credentials(self, role: str = "standard") -> dict[str, Any]:
         """Get user credentials for role from TestDataManager."""
-        if not self.test_data_manager:
-            return {}
         users = self.test_data_manager.get_user_accounts(role, self.environment)
         return users[0] if users else self.test_data_manager.generate_test_user(role)
 
     def get_performance_report(self) -> dict[str, Any]:
-        """Generate performance metrics report - demonstrates analytics pattern."""
+        """Generate summary of recorded performance metrics with statistics."""
         if not self.performance_metrics:
             return {"message": "No metrics recorded"}
 
@@ -533,7 +467,7 @@ class BasePage:
         }
 
     def take_screenshot_with_context(self, name: Optional[str] = None) -> str:
-        """Take screenshot with JSON context - demonstrates rich debugging."""
+        """Take screenshot and save a companion JSON file with page context."""
         ts = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
         filename = name or f"{self.test_name}_{ts}"
         path = f"screenshots/{filename}.png"

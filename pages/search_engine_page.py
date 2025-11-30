@@ -19,7 +19,7 @@ from pages.base_page import BasePage
 
 
 def timed(func):
-    """Decorator to time method execution - demonstrates decorator pattern."""
+    """Decorator that returns (result, execution_time) tuple."""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -56,15 +56,6 @@ class SearchEnginePage(BasePage):
         except TimeoutException:
             return False
 
-    # Aliases for backwards compatibility
-    def open_search_engine(self) -> bool:
-        """Alias for open()."""
-        return self.open()
-
-    def navigate_to_search_engine(self) -> bool:
-        """Navigate to search engine homepage."""
-        return self.navigate_to(settings.BASE_URL)
-
     def search(
         self, search_term: str, *, navigate_first: bool = False, use_enter: bool = True
     ) -> bool:
@@ -84,10 +75,6 @@ class SearchEnginePage(BasePage):
 
         return self.submit_search(use_enter=use_enter)
 
-    # Backwards compatible alias
-    def search_for(self, search_term: str, *, use_enter: bool = True) -> bool:
-        return self.search(search_term, navigate_first=True, use_enter=use_enter)
-
     def submit_search(self, *, use_enter: bool = True) -> bool:
         """Submit the search form."""
         if use_enter:
@@ -97,10 +84,6 @@ class SearchEnginePage(BasePage):
                 return True
             return False
         return self.click(self._locators.SEARCH_BUTTON)
-
-    def submit_search_with_enter(self) -> bool:
-        """Alias: Submit search using Enter key."""
-        return self.submit_search(use_enter=True)
 
     # === Search Input Operations ===
 
@@ -130,7 +113,7 @@ class SearchEnginePage(BasePage):
         return element.get_attribute("value") or "" if element else ""
 
     def type_with_action_chains(self, text: str) -> bool:
-        """Type text using ActionChains - demonstrates advanced Selenium features."""
+        """Type text using ActionChains for more reliable input."""
         try:
             element = self.find_element(self._locators.SEARCH_BOX)
             if element:
@@ -142,14 +125,9 @@ class SearchEnginePage(BasePage):
             pass
         return False
 
-    # Consolidated click methods
     def click_search_input(self) -> bool:
         """Click on search input element."""
         return self.click(self._locators.SEARCH_BOX)
-
-    def click_search_input_advanced(self) -> bool:
-        """Alias for click_search_input - same implementation."""
-        return self.click_search_input()
 
     # === Results Handling ===
 
@@ -225,7 +203,7 @@ class SearchEnginePage(BasePage):
     # === Element Health & Diagnostics ===
 
     def get_search_input_health(self) -> dict[str, Any]:
-        """Get health information about search input - demonstrates element diagnostics."""
+        """Return health status of the search input element."""
         element = self.find_element(self._locators.SEARCH_BOX)
         if not element:
             return {
@@ -281,7 +259,7 @@ class SearchEnginePage(BasePage):
     # === Workflow Methods ===
 
     def perform_search_workflow(self, search_term: str) -> dict[str, Any]:
-        """Complete search workflow - demonstrates orchestration pattern."""
+        """Execute full search workflow and return results summary."""
         result = {
             "search_term": search_term,
             "success": False,

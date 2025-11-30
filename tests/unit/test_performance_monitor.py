@@ -24,7 +24,6 @@ from utils.performance_monitor import (
     PerformanceMetric,
     PerformanceMonitor,
     WebDriverPerformanceMonitor,
-    benchmark_decorator,
     performance_test,
 )
 
@@ -377,36 +376,6 @@ class TestAPIPerformanceMonitor:
 
 class TestDecorators:
     """Test performance testing decorators."""
-
-    def test_benchmark_decorator_with_pytest_benchmark(self):
-        """Test benchmark decorator when pytest.benchmark is available."""
-        # Mock benchmark function
-        mock_benchmark = Mock(return_value="benchmark_result")
-
-        @benchmark_decorator(iterations=5, name="test_benchmark")
-        def test_function():
-            return "test_result"
-
-        result = test_function(benchmark=mock_benchmark)
-
-        assert_that(result, equal_to("benchmark_result"))
-        mock_benchmark.assert_called_once()
-
-    def test_benchmark_decorator_fallback(self):
-        """Test benchmark decorator fallback when pytest.benchmark not available."""
-
-        @benchmark_decorator(iterations=3, name="fallback_test")
-        def test_function():
-            time.sleep(0.001)  # 1ms
-            return "completed"
-
-        result = test_function()
-
-        # Should return benchmark statistics
-        assert_that(result, instance_of(dict))
-        assert_that(result, has_key("mean"))
-        assert_that(result, has_key("iterations"))
-        assert_that(result["iterations"], equal_to(3))
 
     def test_performance_test_decorator_within_threshold(self):
         """Test performance test decorator with execution within threshold."""

@@ -9,13 +9,14 @@ Integrated QA Automation Workflow Script
 - Prints clear output/report locations
 """
 
+import json
 import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from utils.test_reporter import AdvancedTestReporter
+import pandas as pd
 
 # --- VIRTUAL ENVIRONMENT DETECTION ---
 VENV_DIR = Path(__file__).parent / "venv-enhanced"
@@ -138,14 +139,21 @@ def export_results():
 def run_analytics():
     print("[POST] Running analytics (pandas reporting)...")
     try:
-        reporter = AdvancedTestReporter()
-        # Load all results in data/results/
+        # Load all results from JSON files in data/results/
+        all_results = []
         for f in RESULTS_DIR.glob("*.json"):
-            reporter.load_json_report(f)
-        reporter.generate_dataframe_analytics()
-        csv_path = REPORTS_DIR / "analytics_summary.csv"
-        reporter.export_to_csv(csv_path)
-        print(f"[POST] Analytics CSV: {csv_path}")
+            with open(f) as fp:
+                data = json.load(fp)
+                tests = data.get("tests", data.get("test_results", []))
+                all_results.extend(tests)
+
+        if all_results:
+            df = pd.DataFrame(all_results)
+            csv_path = REPORTS_DIR / "analytics_summary.csv"
+            df.to_csv(csv_path, index=False)
+            print(f"[POST] Analytics CSV: {csv_path}")
+        else:
+            print("[POST] No test results found to analyze.")
     except (OSError, ValueError, RuntimeError) as e:
         print(f"[ERROR] Analytics failed: {e}")
 

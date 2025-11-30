@@ -1,12 +1,10 @@
 """
-Smart Error Handler - Demonstrates intelligent error classification and recovery patterns.
-Showcases: tenacity retry, error classification, recovery strategies, decorator patterns.
+Error handling utilities with retry and recovery support.
 """
 
 import functools
 import logging
 import re
-import sys
 import time
 import traceback
 from collections.abc import Callable
@@ -14,7 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional, Protocol
+from typing import Any, Optional
 
 import psutil
 from selenium.common.exceptions import (
@@ -22,7 +20,6 @@ from selenium.common.exceptions import (
     NoSuchElementException,
     StaleElementReferenceException,
     TimeoutException,
-    WebDriverException,
 )
 from selenium.webdriver.support.ui import WebDriverWait
 from tenacity import (
@@ -31,11 +28,6 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
-
-
-def _is_pytest_running() -> bool:
-    return any("pytest" in arg for arg in sys.argv)
-
 
 # === DATA CLASSES ===
 
@@ -129,7 +121,7 @@ class SystemMonitor:
 
 
 class ErrorClassifier:
-    """Intelligent error classification - demonstrates pattern matching for error handling."""
+    """Classifies Selenium errors by type and severity to determine recovery strategy."""
 
     # Error patterns with classification metadata
     PATTERNS = {
@@ -228,36 +220,18 @@ class ErrorClassifier:
         }
 
 
-# === DRIVER CREATION PROTOCOL (OCP) ===
-
-
-class DriverCreator(Protocol):
-    """Protocol for driver creation - allows extension without modification."""
-
-    def create_driver(self) -> Any:
-        """Create a new driver instance."""
-        ...
-
-
 # === RECOVERY MANAGER ===
 
 
 class RecoveryManager:
-    """Executes recovery strategies - demonstrates strategy pattern."""
+    """Executes recovery strategies for error handling."""
 
     def __init__(
         self,
-        driver_factory: Optional[DriverCreator] = None,
+        driver_factory: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
     ):
-        """
-        Initialize RecoveryManager.
-
-        Args:
-            driver_factory: Any object implementing DriverCreator protocol.
-                            Follows OCP - new driver types don't require changes.
-            logger: Optional logger instance.
-        """
+        """Initialize RecoveryManager."""
         self.driver_factory = driver_factory
         self.logger = logger or logging.getLogger(__name__)
         self.recovery_history: list[dict[str, Any]] = []
@@ -383,11 +357,8 @@ class RecoveryManager:
         }
 
 
-# === SMART ERROR HANDLER ===
-
-
 class SmartErrorHandler:
-    """Main error handling coordinator - demonstrates intelligent error recovery."""
+    """Coordinates error handling with classification and recovery strategies."""
 
     # Default recovery configurations
     RECOVERY_CONFIGS = {
@@ -414,7 +385,7 @@ class SmartErrorHandler:
         self.recovery_configs = dict(self.RECOVERY_CONFIGS)  # Instance copy
 
     def monitor_memory_usage(self) -> dict[str, Any]:
-        """Return process memory/CPU usage - delegates to SystemMonitor."""
+        """Return process memory/CPU usage."""
         return self.system_monitor.get_memory_usage()
 
     def handle_error(
@@ -464,16 +435,15 @@ class SmartErrorHandler:
             browser_logs=logs,
         )
 
-    def execute_with_tenacity_retry(
+    def execute_with_retry(
         self,
         operation: Callable,
         *args,
         max_attempts: int = 3,
-        wait_strategy: str = "exponential",
         retry_exceptions: Optional[tuple] = None,
         **kwargs,
     ) -> Any:
-        """Execute with tenacity retry - demonstrates robust retry patterns."""
+        """Execute operation with tenacity retry on common Selenium exceptions."""
         if not retry_exceptions:
             retry_exceptions = (
                 TimeoutException,
@@ -481,9 +451,7 @@ class SmartErrorHandler:
                 ElementNotInteractableException,
                 NoSuchElementException,
             )
-        wait = wait_exponential(
-            multiplier=1, min=1, max=10 if wait_strategy == "exponential" else 3
-        )
+        wait = wait_exponential(multiplier=1, min=1, max=10)
         for attempt in Retrying(
             stop=stop_after_attempt(max_attempts),
             wait=wait,
@@ -494,13 +462,10 @@ class SmartErrorHandler:
         return None
 
 
-# === DECORATORS ===
-
-
 def smart_retry(
     max_attempts: int = 3, wait_time: float = 2.0, exceptions: tuple = (Exception,)
 ):
-    """Decorator for automatic retry - demonstrates decorator pattern for error handling."""
+    """Decorator for automatic retry with configurable attempts and wait time."""
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
@@ -520,36 +485,3 @@ def smart_retry(
         return wrapper
 
     return decorator
-
-
-def with_error_recovery(
-    error_handler: SmartErrorHandler,
-    recovery_strategy: Optional[RecoveryStrategy] = None,
-):
-    """Decorator for automatic error recovery with strategy selection."""
-
-    def decorator(func: Callable) -> Callable:
-        @functools.wraps(func)
-        def wrapper(self, *args, **kwargs):
-            try:
-                return func(self, *args, **kwargs)
-            except (WebDriverException, TimeoutException) as e:
-                recovery = (
-                    error_handler.recovery_configs.get(recovery_strategy)
-                    if recovery_strategy
-                    else None
-                )
-                if error_handler.handle_error(
-                    e, self.driver, getattr(self, "_test_name", func.__name__), recovery
-                ):
-                    return func(self, *args, **kwargs)
-                raise
-
-        return wrapper
-
-    return decorator
-
-
-# Global singleton instance for convenient access.
-# For testing or custom configuration, create new instances directly.
-smart_error_handler = SmartErrorHandler()
