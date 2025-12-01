@@ -1,37 +1,22 @@
 # Test Data Management
 
-## Unified Workflow
-
-> **Recommended:** Use the integrated workflow script for all test data export and management. Test data export and result archiving are now automatically triggered by running:
-
-```bash
-python run_full_workflow.py
-```
-
-# Test Data Management
-
 ## Overview
 
 Comprehensive data management system supporting **JSON**, **YAML**, and **CSV** formats for flexible, environment-specific test data handling.
 
-## 🎯 When to Use
+> **Tip:** Run `python run_full_workflow.py` to automatically export test results and manage data archiving.
 
-- **After running the workflow script**: Test results are exported and managed automatically
-- **Data-driven testing**: Parameterized tests with external data (see exported results)
-- **Environment management**: Different data per environment (see results in `data/results/`)
-- **Configuration management**: Complex, hierarchical test configurations (see YAML/JSON in `data/configs/`)
-- **Test result export**: Results are saved for analysis and ML (see `data/results/`)
-- **Dynamic data generation**: Still available for advanced scenarios
+## 🎯 When to Use
 
 - **Data-driven testing**: Parameterized tests with external data
 - **Environment management**: Different data per environment (local/dev/qa/prod)
 - **Configuration management**: Complex, hierarchical test configurations
-- **Test result export**: Save execution results for analysis
+- **Test result export**: Save execution results for analysis and ML
 - **Dynamic data generation**: Create test users, scenarios on-demand
 
 ## 🔧 Key Components
 
-### 4. Export Test Results (Automated)
+### 1. DataManager (`utils/test_data_manager.py`)
 
 **Purpose**: Unified interface for all test data operations
 
@@ -90,7 +75,7 @@ expected_result = data['scenarios']['basic_search']['expected_results'][0]
         },
         "admin": {
             "username": "admin_user",
-        Test results exported by the workflow script are automatically consumed by the ML Analyzer—no manual steps required.
+            "password": "admin_pass"
         }
     },
     "scenarios": {
@@ -288,20 +273,18 @@ def pytest_runtest_makereport(item, call):
             })
 ```
 
-## 🔗 Integration with ML Analyzer
+## 🔗 Integration with Test Analytics
 
-Test results exported via DataManager are automatically consumed by ML Analyzer:
+Test results exported via DataManager are automatically consumed by Test Analytics:
 
 ```python
 # Export results during test execution
 manager = DataManager()
 manager.save_test_results_json(results)
 
-# ML Analyzer picks them up automatically
-from utils.ml_test_analyzer import MLTestAnalyzer
-analyzer = MLTestAnalyzer()  # Reads from data/results/
-analyzer.load_historical_data()
-analyzer.detect_flaky_tests()
+# Test Analytics Engine picks them up automatically
+# Run: python utils/test_analytics.py
+# Or use the full workflow: python run_full_workflow.py
 ```
 
 ## 📊 Supported Formats
@@ -368,7 +351,7 @@ historical_data = manager.load_historical_data('2024_Q1')
 
 ## 📚 Related Documentation
 
-- [ML Integration](ML_INTEGRATION.md) - How ML Analyzer uses exported data
+- [Test Analytics](TEST_ANALYTICS.md) - How Test Analytics uses exported data
 - [Analytics & Reporting](ANALYTICS_AND_REPORTING.md) - Analyzing test results
 - [API Testing](API_TESTING.md) - Data-driven API tests
 
@@ -391,4 +374,4 @@ historical_data = manager.load_historical_data('2024_Q1')
 
 ---
 
-**Value Proposition**: Flexible, multi-format data management enabling true data-driven testing with environment-specific configurations and seamless ML integration.
+**Value Proposition**: Flexible, multi-format data management enabling true data-driven testing with environment-specific configurations and seamless analytics integration.

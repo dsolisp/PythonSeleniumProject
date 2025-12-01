@@ -18,15 +18,34 @@ from utils.webdriver_factory import WebDriverFactory
 class TestRegressionProtection:
     """Tests to prevent regressions in core framework functionality."""
 
-    # TODO: fix this test true is true
     def test_core_modules_importable(self):
         """Test that all core modules can be imported without errors."""
-        try:
-            pass
+        # Import at module level would not test dynamic importing
+        # These imports test that modules are loadable at runtime
+        import importlib  # noqa: PLC0415
 
-            assert_that(True, is_(True)), "All core modules imported successfully"  # noqa: FBT003
-        except ImportError as e:
-            pytest.fail(f"Core module import failed: {e}")
+        modules_to_test = [
+            "config.settings",
+            "locators.search_engine_locators",
+            "locators.result_page_locators",
+            "pages.base_page",
+            "pages.search_engine_page",
+            "utils.webdriver_factory",
+            "utils.sql_connection",
+            "utils.structured_logger",
+        ]
+
+        for module_name in modules_to_test:
+            try:
+                importlib.import_module(module_name)
+            except ImportError as e:
+                pytest.fail(f"Core module import failed for {module_name}: {e}")
+
+        assert_that(
+            True,  # noqa: FBT003
+            is_(True),
+            "All core modules imported successfully",
+        )
 
     def test_webdriver_factory_exists(self):
         """Test that WebDriverFactory class exists and has required methods."""

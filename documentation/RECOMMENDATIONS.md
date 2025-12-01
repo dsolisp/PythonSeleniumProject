@@ -3,7 +3,7 @@
 ## Central Dashboard
 - Use Jinja2 to generate a single HTML dashboard that aggregates:
   - Analytics (CSV/HTML)
-  - ML insights (flaky tests, predictions)
+  - Test analytics insights (flaky tests, reliability scores)
   - Test run summaries
 - Link to all individual reports and outputs from one place.
 
@@ -11,7 +11,7 @@
 - Integrate optional notifications (email, Slack, etc.) for:
   - Test failures
   - Performance regressions
-  - ML-detected flaky tests or high-risk predictions
+  - Detected flaky tests
 - Trigger notifications from the workflow script or as a post-processing step.
 
 ## Test Filtering Support
@@ -42,7 +42,7 @@
 ## General Best Practices
 - Use the workflow script for all test runs to ensure full integration.
 - Keep documentation and usage instructions up to date as features evolve.
-- Regularly review analytics and ML outputs to guide test suite improvements.
+- Regularly review analytics outputs to guide test suite improvements.
 
 ---
 

@@ -22,3 +22,22 @@ custom_logs/
 .coverage
 /venv-enhanced
 /screenshots
+/.github
+data/.DS_Store
+.DS_Store
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# JAVA PROJECT
+# ═══════════════════════════════════════════════════════════════════════════════
+JavaSeleniumProject/target/
+JavaSeleniumProject/.idea/
+JavaSeleniumProject/*.iml
+JavaSeleniumProject/.classpath
+JavaSeleniumProject/.project
+JavaSeleniumProject/.settings/
+JavaSeleniumProject/bin/
+JavaSeleniumProject/build/
+JavaSeleniumProject/.gradle/
+JavaSeleniumProject/reports/
+JavaSeleniumProject/allure-results/
+/JavaSeleniumProject

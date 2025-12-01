@@ -1,6 +1,11 @@
 """
 Unified API testing module with conditional Allure reporting.
 Controlled by settings.ENABLE_ALLURE flag.
+
+Integrates:
+- PerformanceMonitor for API response time tracking
+- Structured logging for JSON test output
+- Allure reporting for rich HTML reports
 """
 
 import json
@@ -22,6 +27,7 @@ from hamcrest import (
 )
 
 from config.settings import settings
+from utils.performance_monitor import APIPerformanceMonitor
 from utils.structured_logger import get_test_logger
 
 
@@ -49,8 +55,22 @@ class TestUnifiedAPI:
             },
         )
 
+        # Initialize API performance monitor for response time tracking
+        self.perf_monitor = APIPerformanceMonitor()
+
     def teardown_method(self):
-        """Cleanup after test."""
+        """Cleanup after test and log performance summary."""
+        # Log performance summary from monitor
+        if hasattr(self, "perf_monitor") and self.perf_monitor.metrics:
+            summary = self.perf_monitor.get_performance_report()
+            if settings.ENABLE_ALLURE:
+                allure.attach(
+                    f"Total API calls: {summary['total_metrics']}\n"
+                    f"Average response time: {summary.get('average_value', 0):.2f}ms",
+                    name="API Performance Summary",
+                    attachment_type=allure.attachment_type.TEXT,
+                )
+
         if hasattr(self, "session"):
             self.session.close()
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
@@ -59,8 +79,15 @@ class TestUnifiedAPI:
         if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
             self.test_logger.end_test("COMPLETED")
 
-    def _log_api_response(self, response: requests.Response, operation: str) -> None:
-        """Log API response with optional Allure attachment."""
+    def _log_api_response(
+        self, response: requests.Response, operation_name: str
+    ) -> None:
+        """Log API response with optional Allure attachment.
+
+        Args:
+            response: The HTTP response object from requests
+            operation_name: Descriptive name for the API operation (e.g., "Get Posts")
+        """
         if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):
             self.test_logger.api_request(
                 method=response.request.method,
@@ -78,7 +105,7 @@ class TestUnifiedAPI:
                 f"Headers: {dict(response.headers)}\n"
                 f"Body: {response.text[:500]}"
                 f"{'...' if len(response.text) > 500 else ''}",
-                name=f"{operation} - API Response Details",
+                name=f"{operation_name} - API Response Details",
                 attachment_type=allure.attachment_type.TEXT,
             )
 
@@ -97,9 +124,20 @@ class TestUnifiedAPI:
         """Test GET /posts endpoint."""
 
         with allure.step("Send GET request to /posts endpoint"):
+            # Use APIPerformanceMonitor for consistent timing and threshold checking
             start_time = time.time()
             response = self.session.get(f"{self.base_url}/posts")
             response_time = (time.time() - start_time) * 1000
+
+            # Record metric in performance monitor (tracks thresholds automatically)
+            self.perf_monitor.record_metric(
+                "api_response_time",
+                response_time,
+                "ms",
+                method="GET",
+                url="/posts",
+                status_code=response.status_code,
+            )
 
             self._log_api_response(response, "GET Posts")
             if settings.ENABLE_ALLURE and hasattr(self, "test_logger"):

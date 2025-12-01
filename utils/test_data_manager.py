@@ -1,12 +1,11 @@
 """
-Test Data Manager for comprehensive data-driven testing.
-Supports multiple data formats and environments for robust test automation.
+Test Data Manager - Multi-format data loading and generation.
+Supports JSON/YAML/CSV loading with environment-based configs.
 """
 
 import csv
 import json
 import random
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional, Union
@@ -14,163 +13,110 @@ from typing import Any, Optional, Union
 import yaml
 
 
-@dataclass
-class DataSet:
-    """Represents a complete test data set with metadata."""
+def _load_json(path: Path) -> dict[str, Any]:
+    """Load data from JSON file."""
+    with open(path) as f:
+        return json.load(f)
 
-    name: str
-    data: dict[str, Any]
-    created_at: datetime
-    environment: str
-    tags: list[str]
+
+def _load_yaml(path: Path) -> dict[str, Any]:
+    """Load data from YAML file."""
+    with open(path) as f:
+        return yaml.safe_load(f) or {}
+
+
+def _load_csv(path: Path) -> dict[str, Any]:
+    """Load data from CSV file as list of dicts."""
+    with open(path, newline="") as f:
+        return {"data": list(csv.DictReader(f))}
+
+
+def _load_file(path: Path) -> dict[str, Any]:
+    """Auto-detect format and load file."""
+    suffix = path.suffix.lower()
+    if suffix == ".json":
+        return _load_json(path)
+    if suffix in (".yaml", ".yml"):
+        return _load_yaml(path)
+    if suffix == ".csv":
+        return _load_csv(path)
+    raise ValueError(f"Unsupported file format: {suffix}")
+
+
+# Test data generation constants
+_FIRST_NAMES = ["John", "Jane", "Bob", "Alice", "Charlie", "Diana"]
+_LAST_NAMES = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Davis"]
+_DOMAINS = ["test.com", "example.org", "demo.net", "qa.io"]
 
 
 class DataManager:
-    """
-    Comprehensive test data manager supporting multiple formats and environments.
-
-    Features:
-    - JSON, CSV, YAML data source support
-    - Environment-specific data sets
-    - Dynamic data generation
-    - Data validation and cleanup
-    - Test data versioning
-    """
+    """Multi-format test data manager with environment support."""
 
     def __init__(self, data_directory: Optional[Union[str, Path]] = None):
-        """Initialize test data manager."""
         self.data_dir = (
             Path(data_directory)
             if data_directory
             else Path(__file__).parent.parent / "data"
         )
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self._cache = {}
-        self._generators = self._setup_generators()
+        self._cache: dict[str, Any] = {}
 
     def load_test_data(
-        self,
-        filename: str,
-        environment: str = "default",
+        self, filename: str, environment: str = "default"
     ) -> dict[str, Any]:
-        """
-        Load test data from file with environment support.
+        """Load test data from JSON/YAML/CSV with environment support and caching."""
+        key = f"{filename}_{environment}"
+        if key in self._cache:
+            return self._cache[key]
 
-        Args:
-            filename: Name of the data file (without extension)
-            environment: Environment-specific data (default, dev, qa, prod)
-
-        Returns:
-            Dictionary containing test data
-        """
-        cache_key = f"{filename}_{environment}"
-
-        if cache_key in self._cache:
-            return self._cache[cache_key]
-
-        # Try different file formats
         for ext in [".json", ".yaml", ".yml", ".csv"]:
-            file_path = self._get_env_file_path(filename, environment, ext)
-            if file_path.exists():
-                data = self._load_file(file_path)
-                self._cache[cache_key] = data
+            path = self._get_env_path(filename, environment, ext)
+            if path.exists():
+                data = _load_file(path)
+                self._cache[key] = data
                 return data
 
         # Fallback to default environment
         if environment != "default":
             return self.load_test_data(filename, "default")
-
-        # Return empty dict if no file found instead of raising error
         return {}
 
     def load_yaml_config(
-        self,
-        config_name: str,
-        environment: str = "default",
+        self, config_name: str, environment: str = "default"
     ) -> dict[str, Any]:
-        """
-        Load YAML configuration files for complex test setups.
-        Demonstrates meaningful YAML integration for configuration management.
+        """Load YAML config, creating default if missing."""
+        path = self.data_dir / "configs" / f"{config_name}_{environment}.yml"
+        path.parent.mkdir(exist_ok=True)
 
-        Args:
-            config_name: Name of the config file (without extension)
-            environment: Environment-specific config to load
-
-        Returns:
-            Dictionary containing configuration data
-        """
-        config_file = f"{config_name}_{environment}.yml"
-        config_path = self.data_dir / "configs" / config_file
-
-        # Create configs directory if it doesn't exist
-        config_path.parent.mkdir(exist_ok=True)
-
-        if not config_path.exists():
-            # Create default config if it doesn't exist
-            default_config = {
+        if not path.exists():
+            # Create default config
+            default = {
                 "test_environment": {
                     "name": environment,
                     "base_url": f"https://{environment}.example.com",
                     "timeout": 10,
                     "retry_attempts": 3,
                 },
-                "test_data": {
-                    "user_pools": [
-                        {"role": "admin", "count": 2},
-                        {"role": "standard", "count": 5},
-                        {"role": "readonly", "count": 3},
-                    ],
-                    "test_scenarios": [
-                        {
-                            "name": "login_flow",
-                            "priority": "high",
-                            "data_set": "admin_users",
-                        },
-                        {
-                            "name": "search_functionality",
-                            "priority": "medium",
-                            "data_set": "search_queries",
-                        },
-                        {
-                            "name": "user_management",
-                            "priority": "high",
-                            "data_set": "user_accounts",
-                        },
-                    ],
-                },
                 "browser_config": {
                     "default_browser": "chrome",
                     "headless": True,
                     "window_size": [1920, 1080],
-                    "wait_timeout": 10,
                 },
             }
+            with open(path, "w") as f:
+                yaml.dump(default, f, default_flow_style=False, indent=2)
 
-            with Path.open(config_path, "w") as f:
-                yaml.dump(default_config, f, default_flow_style=False, indent=2)
-
-        # Load and return the YAML config
-        with config_path.open() as f:
+        with open(path) as f:
             return yaml.safe_load(f)
 
     def save_test_results_yaml(
-        self,
-        results: dict[str, Any],
-        filename: Optional[str] = None,
+        self, results: dict[str, Any], filename: Optional[str] = None
     ) -> str:
-        """
-        Save test results in YAML format for human-readable reports.
-        Demonstrates YAML output functionality.
-        """
-        if filename is None:
-            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-            filename = f"test_results_{timestamp}.yml"
-
-        filepath = self.data_dir / "results" / filename
-        filepath.parent.mkdir(exist_ok=True)
-
-        # Format results for YAML output
-        yaml_results = {
+        """Save test results in YAML format."""
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        path = self.data_dir / "results" / (filename or f"results_{ts}.yml")
+        path.parent.mkdir(exist_ok=True)
+        data = {
             "test_execution": {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "total_tests": results.get("total_tests", 0),
@@ -182,182 +128,107 @@ class DataManager:
             "performance_metrics": results.get("performance_metrics", {}),
             "environment_info": results.get("environment_info", {}),
         }
+        with open(path, "w") as f:
+            yaml.dump(data, f, default_flow_style=False, indent=2)
+        return str(path)
 
-        with filepath.open("w") as f:
-            yaml.dump(yaml_results, f, default_flow_style=False, indent=2)
-
-        return str(filepath)
+    # === DATA ACCESSORS ===
 
     def get_search_scenarios(
-        self,
-        environment: str = "default",
+        self, environment: str = "default"
     ) -> list[dict[str, Any]]:
         """Get search test scenarios."""
-        data = self.load_test_data("test_data", environment)
-        return data.get("search_scenarios", [])
+        return self.load_test_data("test_data", environment).get("search_scenarios", [])
 
     def get_user_accounts(
-        self,
-        role: Optional[str] = None,
-        environment: str = "default",
+        self, role: Optional[str] = None, environment: str = "default"
     ) -> list[dict[str, Any]]:
-        """
-        Get user account data, optionally filtered by role.
-
-        Args:
-            role: Filter by user role (admin, standard, readonly)
-            environment: Environment to load data from
-
-        Returns:
-            List of user account dictionaries
-        """
-        data = self.load_test_data("test_data", environment)
-        accounts = data.get("user_accounts", [])
-
-        if role:
-            accounts = [acc for acc in accounts if acc.get("role") == role]
-
-        return accounts
+        """Get user accounts, optionally filtered by role."""
+        accounts = self.load_test_data("test_data", environment).get(
+            "user_accounts", []
+        )
+        return [a for a in accounts if a.get("role") == role] if role else accounts
 
     def get_api_endpoints(
-        self,
-        method: Optional[str] = None,
-        environment: str = "default",
+        self, method: Optional[str] = None, environment: str = "default"
     ) -> list[dict[str, Any]]:
-        """
-        Get API endpoint configurations.
-
-        Args:
-            method: Filter by HTTP method (GET, POST, PUT, DELETE)
-            environment: Environment to load data from
-
-        Returns:
-            List of API endpoint configurations
-        """
-        data = self.load_test_data("test_data", environment)
-        endpoints = data.get("api_endpoints", [])
-
-        if method:
-            endpoints = [
-                ep for ep in endpoints if ep.get("method", "").upper() == method.upper()
-            ]
-
-        return endpoints
+        """Get API endpoints, optionally filtered by HTTP method."""
+        endpoints = self.load_test_data("test_data", environment).get(
+            "api_endpoints", []
+        )
+        return (
+            [e for e in endpoints if e.get("method", "").upper() == method.upper()]
+            if method
+            else endpoints
+        )
 
     def get_browser_configurations(
-        *,
         self,
         browser: Optional[str] = None,
         mobile: Optional[bool] = None,
         environment: str = "default",
     ) -> list[dict[str, Any]]:
-        """
-        Get browser configuration data.
-
-        Args:
-            browser: Filter by browser type (chrome, firefox, edge)
-            mobile: Filter by mobile capability
-            environment: Environment to load data from
-
-        Returns:
-            List of browser configuration dictionaries
-        """
-        data = self.load_test_data("test_data", environment)
-        configs = data.get("browser_configurations", [])
-
+        """Get browser configs with optional filters."""
+        configs = self.load_test_data("test_data", environment).get(
+            "browser_configurations", []
+        )
         if browser:
-            configs = [cfg for cfg in configs if cfg.get("browser") == browser]
+            configs = [c for c in configs if c.get("browser") == browser]
         if mobile is not None:
-            configs = [cfg for cfg in configs if cfg.get("mobile") == mobile]
-
+            configs = [c for c in configs if c.get("mobile") == mobile]
         return configs
 
+    # === DATA GENERATORS ===
+
     def generate_test_user(self, role: str = "standard") -> dict[str, Any]:
-        """
-        Generate dynamic test user data.
-
-        Args:
-            role: User role (admin, standard, readonly)
-
-        Returns:
-            Dictionary with generated user data
-        """
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        user_id = random.randint(1000, 9999)
-
-        base_permissions = {
+        """Generate dynamic test user data."""
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        uid = random.randint(1000, 9999)
+        perms = {
             "admin": ["read", "write", "delete", "admin"],
             "standard": ["read", "write"],
             "readonly": ["read"],
         }
-
         return {
-            "username": f"{role}_user_{user_id}",
-            "password": f"{role}_pass_{timestamp}",
-            "email": f"{role}{user_id}@testdomain.com",
+            "username": f"{role}_user_{uid}",
+            "password": f"{role}_pass_{ts}",
+            "email": f"{role}{uid}@testdomain.com",
             "role": role,
-            "permissions": base_permissions.get(role, ["read"]),
+            "permissions": perms.get(role, ["read"]),
             "created_at": datetime.now(timezone.utc).isoformat(),
             "active": True,
-            "user_id": user_id,
+            "user_id": uid,
         }
 
     def generate_search_data(self, count: int = 5) -> list[dict[str, Any]]:
-        """
-        Generate dynamic search test data.
-
-        Args:
-            count: Number of search scenarios to generate
-
-        Returns:
-            List of generated search scenarios
-        """
-        search_terms = [
-            "Python automation testing",
-            "Selenium WebDriver tutorial",
-            "Playwright vs Selenium",
-            "Test automation best practices",
-            "API testing with Python",
-            "Database testing strategies",
-            "Visual regression testing",
-            "CI/CD pipeline automation",
-            "Performance testing tools",
-            "Mobile automation testing",
+        """Generate dynamic search test scenarios."""
+        terms = [
+            "Python automation",
+            "Selenium WebDriver",
+            "API testing",
+            "CI/CD pipeline",
+            "Performance testing",
+        ]
+        return [
+            {
+                "name": f"generated_search_{i + 1}",
+                "search_term": random.choice(terms),
+                "expected_results_count": random.randint(5, 15),
+                "timeout": random.randint(10, 20),
+                "expected_title_contains": random.choice(terms).split()[0],
+                "generated": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+            for i in range(count)
         ]
 
-        scenarios = []
-        for i in range(count):
-            term = random.choice(search_terms)
-            scenarios.append(
-                {
-                    "name": f"generated_search_{i + 1}",
-                    "search_term": term,
-                    "expected_results_count": random.randint(5, 15),
-                    "expected_title_contains": term.split()[0],
-                    "timeout": random.randint(10, 20),
-                    "generated": True,
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                },
-            )
-
-        return scenarios
+    # === RESULT SAVING ===
 
     def save_test_results(
-        self,
-        _test_name: str,
-        _results: dict[str, Any],
-        environment: str = "default",
+        self, _test_name: str, _results: dict[str, Any], environment: str = "default"
     ) -> None:
-        """
-        Save test execution results for analysis.
-
-        Args:
-            test_name: Name of the test
-            results: Test results dictionary
-            environment: Environment where test was executed
-        """
-        results_dir = self.data_dir / "results" / environment
-        results_dir.mkdir(parents=True, exist_ok=True)
+        """Save test results (creates directory)."""
+        (self.data_dir / "results" / environment).mkdir(parents=True, exist_ok=True)
 
     def save_test_results_json(
         self,
@@ -365,150 +236,50 @@ class DataManager:
         results: list[dict[str, Any]],
         environment: str = "default",
     ) -> str:
-        """
-        Save test results in JSON format.
-        """
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        filename = f"{test_name}_{timestamp}.json"
-        results_dir = self.data_dir / "results"
-        results_dir.mkdir(exist_ok=True)
-        file_path = results_dir / filename
-
-        # Add metadata
-        results_with_metadata = {
+        """Save test results in JSON format with metadata."""
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        path = self.data_dir / "results" / f"{test_name}_{ts}.json"
+        path.parent.mkdir(exist_ok=True)
+        data = {
             "test_name": test_name,
             "environment": environment,
-            "timestamp": timestamp,
+            "timestamp": ts,
             "execution_time": datetime.now(timezone.utc).isoformat(),
             "results": results,
         }
-
-        with file_path.open("w") as f:
-            json.dump(results_with_metadata, f, indent=2, default=str)
-        return str(file_path)
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2, default=str)
+        return str(path)
 
     def cleanup_old_results(self, days_to_keep: int = 30) -> None:
-        """
-        Clean up old test result files.
-
-        Args:
-            days_to_keep: Number of days to keep results (default: 30)
-        """
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
+        """Clean up result files older than specified days."""
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
         results_dir = self.data_dir / "results"
-
         if not results_dir.exists():
             return
-
-        for file_path in results_dir.rglob("*.json"):
+        for path in results_dir.rglob("*.json"):
             try:
-                file_date = datetime.fromtimestamp(
-                    file_path.stat().st_mtime,
-                    tz=timezone.utc,
-                )
+                if (
+                    datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+                    < cutoff
+                ):
+                    path.unlink()
             except (OSError, ValueError):
                 continue
-            if file_date < cutoff_date:
-                try:
-                    file_path.unlink()
-                except (OSError, ValueError):
-                    continue
 
     def validate_data_schema(self, data: dict[str, Any], schema_name: str) -> bool:
-        """
-        Validate test data against predefined schemas.
-
-        Args:
-            data: Data to validate
-            schema_name: Name of the schema to validate against
-
-        Returns:
-            True if data is valid, False otherwise
-        """
+        """Validate data against predefined schemas."""
         schemas = {
-            "search_scenario": {
-                "required": ["name", "search_term"],
-                "optional": [
-                    "expected_results_count",
-                    "timeout",
-                    "expected_title_contains",
-                ],
-            },
-            "user_account": {
-                "required": ["username", "password", "role"],
-                "optional": ["email", "permissions", "active"],
-            },
-            "api_endpoint": {
-                "required": ["name", "url", "method"],
-                "optional": ["expected_status", "expected_count", "headers"],
-            },
+            "search_scenario": ["name", "search_term"],
+            "user_account": ["username", "password", "role"],
+            "api_endpoint": ["name", "url", "method"],
         }
-
-        schema = schemas.get(schema_name)
-        if not schema:
+        if schema_name not in schemas:
             return False
+        return all(f in data for f in schemas[schema_name])
 
-        # Check required fields
-        return all(field in data for field in schema["required"])
-
-    def _get_env_file_path(
-        self,
-        filename: str,
-        environment: str,
-        extension: str,
-    ) -> Path:
+    def _get_env_path(self, filename: str, environment: str, ext: str) -> Path:
         """Get environment-specific file path."""
         if environment == "default":
-            return self.data_dir / f"{filename}{extension}"
-        return self.data_dir / environment / f"{filename}{extension}"
-
-    def _load_file(self, file_path: Path) -> dict[str, Any]:
-        """Load data from file based on extension."""
-        if file_path.suffix.lower() == ".json":
-            with file_path.open() as f:
-                return json.load(f)
-        elif file_path.suffix.lower() in [".yaml", ".yml"]:
-            with file_path.open() as f:
-                return yaml.safe_load(f) or {}
-        elif file_path.suffix.lower() == ".csv":
-            return self._load_csv(file_path)
-        else:
-            msg = f"Unsupported file format: {file_path.suffix}"
-            raise ValueError(msg)
-
-    def _load_csv(self, file_path: Path) -> dict[str, list[dict[str, Any]]]:
-        """Load CSV file and convert to dictionary format."""
-        with file_path.open() as f:
-            reader = csv.DictReader(f)
-            data = list(reader)
-
-        # Group by first column if it looks like a category
-        if data and len(data[0]) > 1:
-            first_key = next(iter(data[0].keys()))
-            return {first_key: data}
-        return {"data": data}
-
-    def _setup_generators(self) -> dict[str, Any]:
-        """Setup data generators for dynamic content."""
-        return {
-            "email": lambda: f"user{random.randint(1000, 9999)}@testdomain.com",
-            "phone": lambda: (
-                f"+1-{random.randint(100, 999)}-{random.randint(100, 999)}-"
-                f"{random.randint(1000, 9999)}"
-            ),
-            "url": lambda: f"https://example{random.randint(1, 100)}.com",
-            "user_agent": lambda: random.choice(
-                [
-                    ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"),
-                    (
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                        "AppleWebKit/537.36"
-                    ),
-                    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-                ],
-            ),
-        }
-
-
-# Global test data manager instance
-test_data_manager = DataManager()
+            return self.data_dir / f"{filename}{ext}"
+        return self.data_dir / environment / f"{filename}{ext}"

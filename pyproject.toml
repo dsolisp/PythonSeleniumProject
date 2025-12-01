@@ -200,22 +200,53 @@ select = [
 # Ignore some rules that are too strict or conflict with project style
 ignore = [
     "COM812",  # trailing-comma: conflicts with Ruff formatter
-    "E203",  # whitespace before ':' (conflicts with black)
-    "T20",   # flake8-print: print found (allow in test/debug code)
-    "S101",  # flake8-bandit: assert used (allow in tests)
-    "PD",    # pandas-vet: too strict for this project
-    "NPY",   # numpy: not using numpy extensively
-    "AIR",   # airflow: not using airflow
-    "ERA001",# eradicate: commented-out code (allow for now)
-    "FIX002",# flake8-fixme: XXX comments (allow for now)
-    "TD002", # flake8-todos: TODO format (allow for now)
-    "TD003", # flake8-todos: TODO format (allow for now)
+    "E203",    # whitespace before ':' (conflicts with black)
+    "E501",    # line-too-long: handled by formatter, allow long lines
+    "T20",     # flake8-print: print found (allow in test/debug code)
+    "S101",    # flake8-bandit: assert used (allow in tests)
+    "PD",      # pandas-vet: too strict for this project
+    "NPY",     # numpy: not using numpy extensively
+    "AIR",     # airflow: not using airflow
+    "ERA001",  # eradicate: commented-out code (allow for now)
+    "FIX002",  # flake8-fixme: XXX comments (allow for now)
+    "TD002",   # flake8-todos: TODO format (allow for now)
+    "TD003",   # flake8-todos: TODO format (allow for now)
     "PLR0913", # pylint: too many arguments (allow for complex functions)
     "PLR0912", # pylint: too many branches (allow for complex logic)
     "PLR0915", # pylint: too many statements (allow for complex functions)
     "PLR2004", # pylint: magic value comparison (allow for now)
-    "C901",  # mccabe: too complex (allow for complex algorithms)
+    "C901",    # mccabe: too complex (allow for complex algorithms)
     "PLR0911", # pylint: too many return statements (allow for complex logic)
+    "TRY300",  # try-consider-else: allow return in try block
+    "FBT001",  # boolean-positional-arg: allow boolean args
+    "FBT002",  # boolean-default-value-positional-arg: allow boolean defaults
+    "SLF001",  # private-member-access: allow in tests
+    "ARG001",  # unused-function-argument: allow for callbacks/overrides
+    "ARG002",  # unused-method-argument: allow for callbacks/overrides
+    "TRY003",  # raise-vanilla-args: allow raising with string args
+    "B008",    # function-call-in-default-argument: allow for factory patterns
+    "BLE001",  # blind-except: allow in error handling code
+    "PT011",   # pytest-raises-too-broad: allow broad raises
+    "PT012",   # pytest-raises-with-multiple-statements: allow for clarity
+    "RET505",  # superfluous-else-return: allow for clarity
+    "RET506",  # superfluous-else-raise: allow for clarity
+    "RET507",  # superfluous-else-continue: allow for clarity
+    "RET508",  # superfluous-else-break: allow for clarity
+    "SIM108",  # if-else-block-instead-of-if-exp: allow for clarity
+    "SIM114",  # if-with-same-arms: allow for clarity
+    "UP007",   # typing-union: allow Union for Python 3.9 compat
+    "PTH123",  # pathlib-open: allow open() for simplicity
+    "RUF012",  # mutable-class-default: allow for class-level defaults
+    "RUF100",  # unused-noqa: auto-fix removes these
+    "SIM105",  # suppressable-exception: allow try-except-pass pattern
+    "A001",    # builtin-variable-shadowing: allow shadowing builtins
+    "A002",    # builtin-argument-shadowing: allow shadowing in args
+    "INP001",  # implicit-namespace-package: allow missing __init__.py
+    "G004",    # logging-f-string: allow f-strings in logging
+    "TID252",  # relative-imports: allow relative imports
+    "PERF401", # manual-list-comprehension: allow for clarity
+    "PERF402", # manual-list-copy: allow for clarity
+    "PERF203", # try-except-in-loop: allow for error handling in loops
 ]
 
 [tool.ruff.lint.per-file-ignores]

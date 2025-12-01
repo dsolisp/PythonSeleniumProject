@@ -1,69 +1,56 @@
-# Python Selenium Test Automation Framework Requirements
-# Core dependencies for web automation, testing, and analytics
+# Python Selenium Test Automation Portfolio - Requirements
+# Demonstrates: Selenium, Playwright, Visual Testing, Analytics, Load Testing
 
-# Core Automation Framework
+# ═══════════════════════════════════════════════════════════════════════════════
+# BROWSER AUTOMATION
+# ═══════════════════════════════════════════════════════════════════════════════
+selenium>=4.15.0                # Selenium WebDriver automation
+webdriver-manager>=4.0.0        # Automatic driver management for Chrome/Firefox/Edge
+playwright>=1.40.0              # Modern browser automation (dual-browser demo)
 
-# Modern Web Automation
+# ═══════════════════════════════════════════════════════════════════════════════
+# TEST FRAMEWORK & ASSERTIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+pytest>=7.4.0                   # Test framework
+pytest-html>=4.1.0              # HTML test reports
+pytest-cov>=4.1.0               # Coverage reporting
+pytest-benchmark>=4.0.0         # Performance benchmarking
+pytest-json-report>=1.5.0       # JSON reports (used by ml_test_analyzer)
+pytest-rerunfailures>=13.0      # Flaky test retry
+pytest-xdist>=3.5.0             # Parallel test execution
+PyHamcrest>=2.1.0               # Expressive assertions
 
-# Test Framework & Reporting
+# ═══════════════════════════════════════════════════════════════════════════════
+# VISUAL TESTING
+# ═══════════════════════════════════════════════════════════════════════════════
+Pillow>=10.0.0                  # Image processing
+pixelmatch>=0.3.0               # Pixel-level image comparison
 
-# Advanced Reporting & Analytics (pandas integration)
+# ═══════════════════════════════════════════════════════════════════════════════
+# DATA & ANALYTICS (test_analytics.py)
+# ═══════════════════════════════════════════════════════════════════════════════
+numpy>=1.24.0                   # Numerical computing
+pandas>=2.0.0                   # Data analysis & test result processing
 
-# Data Management & Analytics (pandas integration)
+# ═══════════════════════════════════════════════════════════════════════════════
+# UTILITIES
+# ═══════════════════════════════════════════════════════════════════════════════
+requests>=2.31.0                # HTTP client for API testing
+PyYAML>=6.0.1                   # YAML config/data loading
+python-dotenv>=1.0.0            # Environment configuration
+structlog>=23.2.0               # Structured JSON logging
+psutil>=5.9.0                   # System/performance monitoring
+tenacity>=8.2.0                 # Retry logic with backoff
 
-# Performance Monitoring (psutil integration)
+# ═══════════════════════════════════════════════════════════════════════════════
+# LOAD TESTING
+# ═══════════════════════════════════════════════════════════════════════════════
+locust>=2.20.0                  # Load testing framework
 
-# Performance & Load Testing ⚡ NEW
-
-# Robust Error Handling (tenacity integration)
-
-# Template Engine for Reports
-
-# Assertion Libraries
-
-# Visual Testing & Image Comparison
-
-# Configuration & Environment Management
-
-# Database Support
-# sqlite3 (built-in)              # SQLite database support
-
-# Development Tools (optional for local development)
-
-# Code Quality Auto-fixers
-numpy
-pandas
-scikit-learn
-structlog
-playwright
-selenium
-webdriver-manager
-requests
-psutil
-tenacity
-PyYAML
-Pillow
-pixelmatch
-python-dotenv
-pytest
-pytest-xdist
-pytest-html
-pytest-cov
-# pytest-asyncio  # Not needed with pytest-playwright
-pytest-benchmark
-pytest-json-report
-pytest-rerunfailures
-pre-commit
-mkdocs
-mkdocs-material
-allure-pytest
-memory-profiler
-PyHamcrest
-# Development Tools (optional for local development)
-ruff
-mypy
-bandit
-safety
-locust
-click
-colorama
+# ═══════════════════════════════════════════════════════════════════════════════
+# DEVELOPMENT & CI TOOLS (used via CLI in scripts/run_ci_checks.sh)
+# ═══════════════════════════════════════════════════════════════════════════════
+ruff>=0.1.0                     # Fast linter & formatter
+mypy>=1.7.0                     # Static type checking
+bandit>=1.7.0                   # Security vulnerability scanner
+pre-commit>=3.6.0               # Git hooks for code quality

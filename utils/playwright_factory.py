@@ -15,6 +15,7 @@ from playwright.sync_api import (
     Error as PlaywrightError,
 )
 
+from config.constants import USER_AGENT_CHROME
 from config.settings import settings
 
 # Constants
@@ -50,7 +51,15 @@ class PlaywrightFactory:
         if headless is None:
             headless = settings.HEADLESS
 
-        self.playwright = sync_playwright().start()
+        # Validate browser type BEFORE starting playwright
+        browser_type_lower = browser_type.lower()
+        if browser_type_lower not in ("chromium", "firefox", "webkit"):
+            message = f"Unsupported browser type: {browser_type}"
+            raise ValueError(message)
+
+        # Reuse existing playwright instance if available
+        if self.playwright is None:
+            self.playwright = sync_playwright().start()
 
         browser_options = {
             "headless": headless,
@@ -58,15 +67,12 @@ class PlaywrightFactory:
             **kwargs,
         }
 
-        if browser_type.lower() == "chromium":
+        if browser_type_lower == "chromium":
             self.browser = self.playwright.chromium.launch(**browser_options)
-        elif browser_type.lower() == "firefox":
+        elif browser_type_lower == "firefox":
             self.browser = self.playwright.firefox.launch(**browser_options)
-        elif browser_type.lower() == "webkit":
+        elif browser_type_lower == "webkit":
             self.browser = self.playwright.webkit.launch(**browser_options)
-        else:
-            message = f"Unsupported browser type: {browser_type}"
-            raise ValueError(message)
 
         return self.browser
 
@@ -91,11 +97,7 @@ class PlaywrightFactory:
         # Set realistic user agent and headers to avoid bot detection
         context_options = {
             "viewport": {"width": 1920, "height": 1080},
-            "user_agent": (
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/119.0.0.0 Safari/537.36"
-            ),
+            "user_agent": USER_AGENT_CHROME,
             "extra_http_headers": {
                 "Accept": (
                     "text/html,application/xhtml+xml,application/xml;q=0.9,"

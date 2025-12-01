@@ -23,6 +23,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
+from config.constants import USER_AGENT_CHROME, USER_AGENT_EDGE, USER_AGENT_FIREFOX
+
 logger = logging.getLogger(__name__)
 
 
@@ -63,13 +65,7 @@ class WebDriverFactory:
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", value=False)
 
-        # User agent to appear more like a real browser
-        user_agent = (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/119.0.0.0 Safari/537.36"
-        )
-        options.add_argument(f"--user-agent={user_agent}")
+        options.add_argument(f"--user-agent={USER_AGENT_CHROME}")
 
         if headless:
             options.add_argument("--headless=new")  # Use new headless mode
@@ -106,12 +102,7 @@ class WebDriverFactory:
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
 
-        # User agent to appear more like a real browser
-        user_agent = (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7; rv:119.0) "
-            "Gecko/20100101 Firefox/119.0"
-        )
-        options.set_preference("general.useragent.override", user_agent)
+        options.set_preference("general.useragent.override", USER_AGENT_FIREFOX)
 
         if headless:
             options.add_argument("--headless")
@@ -144,13 +135,7 @@ class WebDriverFactory:
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", value=False)
 
-        # User agent to appear more like a real browser
-        user_agent = (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0"
-        )
-        options.add_argument(f"--user-agent={user_agent}")
+        options.add_argument(f"--user-agent={USER_AGENT_EDGE}")
 
         if headless:
             options.add_argument("--headless=new")
@@ -192,7 +177,8 @@ class WebDriverFactory:
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
-        return webdriver.Chrome(options=options)
+        service = ChromeService(ChromeDriverManager().install())
+        return webdriver.Chrome(service=service, options=options)
 
 
 class DatabaseFactory:

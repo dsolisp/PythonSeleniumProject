@@ -9,13 +9,14 @@ Integrated QA Automation Workflow Script
 - Prints clear output/report locations
 """
 
+import json
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
-from utils.test_reporter import AdvancedTestReporter
+import pandas as pd
 
 # --- VIRTUAL ENVIRONMENT DETECTION ---
 VENV_DIR = Path(__file__).parent / "venv-enhanced"
@@ -69,14 +70,30 @@ def clean_results():
 
 
 def validate_environment():
+    """Validate required packages are installed."""
     print("[PRE] Validating environment...")
-    # Check for required packages
-    try:
-        pass
-    except ImportError as e:
-        print(f"[ERROR] Missing package: {e.name}. Please install requirements.txt.")
+    required_packages = [
+        "selenium",
+        "pytest",
+        "pandas",
+        "numpy",
+        "structlog",
+        "hamcrest",
+        "tenacity",
+        "psutil",
+    ]
+    missing = []
+    for package in required_packages:
+        try:
+            __import__(package)
+        except ImportError:
+            missing.append(package)
+
+    if missing:
+        print(f"[ERROR] Missing packages: {', '.join(missing)}")
+        print("Please install requirements.txt: pip install -r requirements.txt")
         sys.exit(1)
-    print("[PRE] All required packages found.")
+    print(f"[PRE] All {len(required_packages)} required packages found.")
 
 
 # --- TEST EXECUTION ---
@@ -84,7 +101,7 @@ def run_pytest(test_path, label):
     print(f"[TEST] Running {label} tests: {test_path}")
     # Ensure results dir exists and create a timestamped json-report
     # directly in data/results
-    timestamp = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     json_file = RESULTS_DIR / f"test_results_{label}_{timestamp}.json"
     result = subprocess.run(
         [
@@ -122,22 +139,29 @@ def export_results():
 def run_analytics():
     print("[POST] Running analytics (pandas reporting)...")
     try:
-        reporter = AdvancedTestReporter()
-        # Load all results in data/results/
+        # Load all results from JSON files in data/results/
+        all_results = []
         for f in RESULTS_DIR.glob("*.json"):
-            reporter.load_json_report(f)
-        reporter.generate_dataframe_analytics()
-        csv_path = REPORTS_DIR / "analytics_summary.csv"
-        reporter.export_to_csv(csv_path)
-        print(f"[POST] Analytics CSV: {csv_path}")
+            with open(f) as fp:
+                data = json.load(fp)
+                tests = data.get("tests", data.get("test_results", []))
+                all_results.extend(tests)
+
+        if all_results:
+            df = pd.DataFrame(all_results)
+            csv_path = REPORTS_DIR / "analytics_summary.csv"
+            df.to_csv(csv_path, index=False)
+            print(f"[POST] Analytics CSV: {csv_path}")
+        else:
+            print("[POST] No test results found to analyze.")
     except (OSError, ValueError, RuntimeError) as e:
         print(f"[ERROR] Analytics failed: {e}")
 
 
 def run_ml_analysis():
-    print("[POST] Running ML analysis (flaky test detection, predictions)...")
+    print("[POST] Running test analytics (flaky detection, reliability scores)...")
     result = subprocess.run(
-        [str(VENV_PYTHON), "utils/ml_test_analyzer.py"],
+        [str(VENV_PYTHON), "utils/test_analytics.py"],
         check=False,
         capture_output=True,
         text=True,
