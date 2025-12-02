@@ -1,5 +1,5 @@
 """
-Search engine page implementation using the Page Object Model pattern.
+Bing search engine page implementation using the Page Object Model pattern.
 Demonstrates clean POM architecture with consolidated methods.
 """
 
@@ -32,7 +32,7 @@ def timed(func):
 
 class SearchEnginePage(BasePage):
     """
-    Search engine page object demonstrating clean POM architecture.
+    Bing search engine page object demonstrating clean POM architecture.
     Consolidated from 355 lines to ~150 lines while keeping all functionality.
     """
 
