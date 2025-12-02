@@ -84,7 +84,7 @@ class TestLighthouseAccessibility:
 
         score_data = calculate_accessibility_score(results)
 
-        print(f"\n=== Lighthouse-Style Accessibility Audit ===")
+        print("\n=== Lighthouse-Style Accessibility Audit ===")
         print(f"Bing Homepage Score: {score_data.score}%")
         print(f"Passes: {score_data.passes}, Violations: {score_data.violations}")
         print(
@@ -105,7 +105,7 @@ class TestLighthouseAccessibility:
 
         score_data = calculate_accessibility_score(results)
 
-        print(f"\n=== SauceDemo Lighthouse-Style Accessibility ===")
+        print("\n=== SauceDemo Lighthouse-Style Accessibility ===")
         print(f"Login Page Score: {score_data.score}%")
         print(f"Passes: {score_data.passes}, Violations: {score_data.violations}")
 
@@ -132,7 +132,7 @@ class TestLighthouseAccessibility:
             if "image" in v.get("id", "") or "alt" in v.get("id", "")
         ]
 
-        print(f"\n=== Detailed Accessibility Report ===")
+        print("\n=== Detailed Accessibility Report ===")
         print(f"Overall Score: {score_data.score}%")
         print(f"ARIA issues: {len(aria_violations)}")
         print(f"Color contrast issues: {len(color_violations)}")
@@ -152,14 +152,13 @@ class TestLighthouseAccessibility:
 
         score_data = calculate_accessibility_score(results)
 
-        print(f"\n=== Critical Violations Check ===")
+        print("\n=== Critical Violations Check ===")
         print(
             f"Critical: {score_data.critical_violations}, "
             f"Serious: {score_data.serious_violations}"
         )
 
         # Allow up to 5 critical violations (external sites may have issues beyond our control)
-        assert (
-            score_data.critical_violations <= 5
-        ), f"Found {score_data.critical_violations} critical violations (max allowed: 5)"
-
+        assert score_data.critical_violations <= 5, (
+            f"Found {score_data.critical_violations} critical violations (max allowed: 5)"
+        )

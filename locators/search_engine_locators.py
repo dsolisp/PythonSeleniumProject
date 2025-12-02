@@ -12,7 +12,10 @@ class SearchEngineLocators:
     # Search elements
     SEARCH_BOX = (By.NAME, "q")  # Main search input box (Bing uses 'q')
     SEARCH_BUTTON = (By.ID, "search_icon")  # Bing search button
-    SEARCH_BUTTON_ALT = (By.CSS_SELECTOR, "label[for='sb_form_go']")  # Alt search button
+    SEARCH_BUTTON_ALT = (
+        By.CSS_SELECTOR,
+        "label[for='sb_form_go']",
+    )  # Alt search button
 
     # Search suggestions
     SUGGESTIONS_CONTAINER = (

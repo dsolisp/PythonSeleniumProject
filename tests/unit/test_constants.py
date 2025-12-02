@@ -3,7 +3,6 @@ Unit tests for constants validation.
 Equivalent to C#'s ConstantsTests.cs - ensures framework constants are correctly defined.
 """
 
-import pytest
 from hamcrest import (
     assert_that,
     contains_string,
@@ -125,4 +124,3 @@ class TestWindowSizes:
         # Default to 1080 if not explicitly set
         height = getattr(settings, "WINDOW_HEIGHT", 1080)
         assert_that(height, greater_than(0))
-

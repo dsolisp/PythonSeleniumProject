@@ -1,6 +1,6 @@
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select, WebDriverWait
 
 from locators.sauce_locators import SauceLocators
 from pages.base_page import BasePage
@@ -109,7 +109,9 @@ class SaucePage(BasePage):
         )
         checkout_button.click()
 
-    def fill_checkout_info(self, first_name="Test", last_name="User", postal_code="12345"):
+    def fill_checkout_info(
+        self, first_name="Test", last_name="User", postal_code="12345"
+    ):
         """Fill checkout information form."""
         wait = WebDriverWait(self.driver, 10)
 
@@ -149,14 +151,11 @@ class SaucePage(BasePage):
     def get_order_total(self):
         """Get the order total from checkout summary."""
         wait = WebDriverWait(self.driver, 10)
-        total = wait.until(
-            EC.presence_of_element_located(SauceLocators.SUMMARY_TOTAL)
-        )
+        total = wait.until(EC.presence_of_element_located(SauceLocators.SUMMARY_TOTAL))
         return total.text
 
     def sort_products(self, sort_option):
         """Sort products by given option."""
-        from selenium.webdriver.support.ui import Select
         wait = WebDriverWait(self.driver, 10)
         dropdown = wait.until(
             EC.presence_of_element_located(SauceLocators.SORT_DROPDOWN)

@@ -4,7 +4,7 @@ Comprehensive tests for login, inventory, cart, and checkout functionality.
 """
 
 import pytest
-from hamcrest import assert_that, equal_to, is_, greater_than, contains_string
+from hamcrest import assert_that, contains_string, equal_to, greater_than, is_
 
 from pages.sauce import SaucePage
 
