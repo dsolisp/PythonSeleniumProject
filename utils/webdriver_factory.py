@@ -10,7 +10,6 @@ import sqlite3
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Optional
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -36,9 +35,9 @@ class WebDriverFactory:
     @staticmethod
     def create_chrome_driver(
         *,
-        headless: bool = False,
-        window_size: Optional[tuple[int, int]] = None,
-    ) -> webdriver.Chrome:
+        headless=False,
+        window_size=None,
+    ):
         """Create Chrome driver with anti-detection configuration."""
         options = ChromeOptions()
 
@@ -92,9 +91,9 @@ class WebDriverFactory:
     @staticmethod
     def create_firefox_driver(
         *,
-        headless: bool = False,
-        window_size: Optional[tuple[int, int]] = None,
-    ) -> webdriver.Firefox:
+        headless=False,
+        window_size=None,
+    ):
         """Create Firefox driver with configuration."""
         options = FirefoxOptions()
 
@@ -122,9 +121,9 @@ class WebDriverFactory:
     @staticmethod
     def create_edge_driver(
         *,
-        headless: bool = False,
-        window_size: Optional[tuple[int, int]] = None,
-    ) -> webdriver.Edge:
+        headless=False,
+        window_size=None,
+    ):
         """Create Edge driver with configuration."""
         options = EdgeOptions()
 
@@ -157,20 +156,12 @@ class WebDriverFactory:
         return driver
 
     @staticmethod
-    def create_headless_chrome_for_testing() -> webdriver.Chrome:
+    def create_headless_chrome_for_testing():
         """
         Create a lightweight headless Chrome driver optimized for testing.
 
         This is a simplified version of create_chrome_driver specifically for
         unit and integration tests where anti-detection features are not needed.
-
-        Returns:
-            webdriver.Chrome: Configured headless Chrome driver
-
-        Example:
-            >>> driver = WebDriverFactory.create_headless_chrome_for_testing()
-            >>> driver.get("https://example.com")
-            >>> driver.quit()
         """
         options = ChromeOptions()
         options.add_argument("--headless")
@@ -187,10 +178,8 @@ class DatabaseFactory:
     """
 
     @staticmethod
-    def create_database_connection(
-        db_path: Optional[str] = None,
-    ) -> Optional[sqlite3.Connection]:
-        """Create database connection with error handling."""
+    def create_database_connection(db_path=None):
+        """Create database connection with error handling. Returns Connection or None."""
         try:
             db_file = db_path or os.getenv("DB_PATH", "resources/chinook.db")
 
@@ -221,14 +210,15 @@ class DatabaseFactory:
 
 
 def get_driver(
-    browser: str = "chrome",
+    browser="chrome",
     *,
-    headless: bool = False,
-    window_size: Optional[tuple[int, int]] = None,
-    db_path: Optional[str] = None,
-) -> tuple[object, Optional[object]]:
+    headless=False,
+    window_size=None,
+    db_path=None,
+):
     """
     Factory function that creates WebDriver and Database instances.
+    Returns tuple of (driver, database).
     """
     browser_lower = browser.lower()
 
@@ -257,15 +247,12 @@ def get_driver(
     return driver, database
 
 
-def create_headless_driver() -> tuple[webdriver.Chrome, Optional[object]]:
+def create_headless_driver():
     """Convenience method for creating headless drivers."""
     return get_driver(headless=True)
 
 
-def cleanup_driver_and_database(
-    driver: webdriver.Chrome,
-    database: Optional[object],
-) -> None:
+def cleanup_driver_and_database(driver, database):
     """Clean resource cleanup following DRY principle."""
     temp_dir = None
     try:

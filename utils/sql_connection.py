@@ -28,19 +28,18 @@ import logging
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
 
-def _validate_identifier(name: str, identifier_type: str = "identifier") -> str:
+def _validate_identifier(name, identifier_type="identifier"):
     """Validate table/column names (alphanumeric + underscore only)."""
     if not name or not name.replace("_", "").isalnum():
         raise ValueError(f"Invalid {identifier_type}: '{name}'")
     return name
 
 
-def get_connection(db_file: str) -> sqlite3.Connection:
+def get_connection(db_file):
     """Connect to SQLite database with row factory enabled."""
     if not Path(db_file).exists():
         raise FileNotFoundError(f"Database not found: {db_file}")
@@ -51,7 +50,7 @@ def get_connection(db_file: str) -> sqlite3.Connection:
 
 
 @contextmanager
-def connection_context(db_file: str):
+def connection_context(db_file):
     """
     Context manager for database connections with auto-cleanup.
 
@@ -73,30 +72,24 @@ def connection_context(db_file: str):
         conn.close()
 
 
-def execute_query(
-    conn: sqlite3.Connection, query: str, params: Optional[tuple] = None
-) -> sqlite3.Cursor:
+def execute_query(conn, query, params=None):
     """Execute a parameterized query."""
     cursor = conn.cursor()
     cursor.execute(query, params or ())
     return cursor
 
 
-def fetch_one(
-    conn: sqlite3.Connection, query: str, params: Optional[tuple] = None
-) -> Optional[sqlite3.Row]:
-    """Execute query and fetch single result."""
+def fetch_one(conn, query, params=None):
+    """Execute query and fetch single result. Returns Row or None."""
     return execute_query(conn, query, params).fetchone()
 
 
-def fetch_all(
-    conn: sqlite3.Connection, query: str, params: Optional[tuple] = None
-) -> list[sqlite3.Row]:
+def fetch_all(conn, query, params=None):
     """Execute query and fetch all results."""
     return execute_query(conn, query, params).fetchall()
 
 
-def insert(conn: sqlite3.Connection, table: str, data: dict[str, Any]) -> Optional[int]:
+def insert(conn, table, data):
     """Insert data into table. Returns row ID or None on failure."""
     try:
         table = _validate_identifier(table, "table")
@@ -111,13 +104,7 @@ def insert(conn: sqlite3.Connection, table: str, data: dict[str, Any]) -> Option
         return None
 
 
-def update(
-    conn: sqlite3.Connection,
-    table: str,
-    data: dict[str, Any],
-    where: str,
-    where_params: Optional[tuple] = None,
-) -> int:
+def update(conn, table, data, where, where_params=None):
     """Update rows matching WHERE clause. Returns affected row count."""
     try:
         table = _validate_identifier(table, "table")
@@ -134,12 +121,7 @@ def update(
         return 0
 
 
-def delete(
-    conn: sqlite3.Connection,
-    table: str,
-    where: str,
-    where_params: Optional[tuple] = None,
-) -> int:
+def delete(conn, table, where, where_params=None):
     """Delete rows matching WHERE clause. Returns deleted row count."""
     try:
         table = _validate_identifier(table, "table")
@@ -153,13 +135,13 @@ def delete(
         return 0
 
 
-def get_table_names(conn: sqlite3.Connection) -> list[str]:
+def get_table_names(conn):
     """Get all table names in database."""
     rows = fetch_all(conn, "SELECT name FROM sqlite_master WHERE type='table'")
     return [r["name"] for r in rows]
 
 
-def get_table_info(conn: sqlite3.Connection, table: str) -> list[sqlite3.Row]:
+def get_table_info(conn, table):
     """Get table schema (columns, types, etc.)."""
     table = _validate_identifier(table, "table")
     return fetch_all(conn, f"PRAGMA table_info({table})")  # noqa: S608

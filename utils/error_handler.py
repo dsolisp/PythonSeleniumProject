@@ -11,7 +11,6 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
 
 import psutil
 from tenacity import Retrying, stop_after_attempt, wait_exponential
@@ -31,15 +30,15 @@ class ErrorInfo:
     file: str
     line: int
 
-    def __str__(self) -> str:
+    def __str__(self):
         """Human-readable single-line format."""
         return f"[{self.error_type}] {self.message} ({self.file}:{self.line})"
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return self.__str__()
 
 
-def extract_error_info(exc: BaseException) -> ErrorInfo:
+def extract_error_info(exc):
     """Extract essential info from any exception."""
     exc_type = type(exc).__name__
     message = str(exc).split("\n")[0].strip()  # First line only
@@ -58,7 +57,7 @@ def extract_error_info(exc: BaseException) -> ErrorInfo:
     return ErrorInfo(exc_type, message, file, line)
 
 
-def format_error(exc: BaseException) -> str:
+def format_error(exc):
     """Format any exception as a clean, single-line string."""
     return str(extract_error_info(exc))
 
@@ -76,10 +75,10 @@ class CleanException(Exception):
         raise CleanException.wrap(original_exception)
     """
 
-    def __init__(self, message: str, cause: Optional[BaseException] = None):
+    def __init__(self, message, cause=None):
         self.clean_message = message
         self.cause = cause
-        self._info: Optional[ErrorInfo] = None
+        self._info = None
 
         if cause:
             self._info = extract_error_info(cause)
@@ -88,9 +87,7 @@ class CleanException(Exception):
             super().__init__(message)
 
     @classmethod
-    def wrap(
-        cls, exc: BaseException, message: Optional[str] = None
-    ) -> "CleanException":
+    def wrap(cls, exc, message=None):
         """Wrap an existing exception with clean formatting."""
         info = extract_error_info(exc)
         msg = message or info.message
@@ -99,11 +96,11 @@ class CleanException(Exception):
         return wrapped
 
     @property
-    def info(self) -> Optional[ErrorInfo]:
+    def info(self):
         """Get error info if available."""
         return self._info
 
-    def __str__(self) -> str:
+    def __str__(self):
         if self._info:
             return f"[{self._info.error_type}] {self.clean_message} ({self._info.file}:{self._info.line})"
         return self.clean_message
@@ -115,11 +112,11 @@ class CleanException(Exception):
 class ScreenshotService:
     """Simple screenshot capture for error documentation."""
 
-    def __init__(self, screenshots_dir: Optional[str] = None):
+    def __init__(self, screenshots_dir=None):
         self.screenshots_dir = Path(screenshots_dir or "screenshots")
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
 
-    def capture(self, driver, test_name: str, prefix: str = "error") -> Optional[str]:
+    def capture(self, driver, test_name, prefix="error"):
         """Capture screenshot. Returns path or None on failure."""
         ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         path = self.screenshots_dir / f"{prefix}_{test_name}_{ts}.png"
@@ -144,17 +141,11 @@ class SmartErrorHandler:
     - No complex recovery strategies
     """
 
-    def __init__(self, driver_factory=None, screenshots_dir: Optional[str] = None):
+    def __init__(self, driver_factory=None, screenshots_dir=None):
         self.driver_factory = driver_factory
         self.screenshot_service = ScreenshotService(screenshots_dir)
 
-    def handle_error(
-        self,
-        error: Exception,
-        driver,
-        test_name: str,
-        custom_recovery: Optional[Any] = None,  # noqa: ARG002
-    ) -> bool:
+    def handle_error(self, error, driver, test_name, custom_recovery=None):  # noqa: ARG002
         """
         Log error with clean formatting and capture screenshot.
         Returns False (no automatic recovery - use tenacity instead).
@@ -167,7 +158,7 @@ class SmartErrorHandler:
 
         return False  # No automatic recovery
 
-    def monitor_memory_usage(self) -> dict[str, Any]:
+    def monitor_memory_usage(self):
         """Return process memory/CPU usage."""
         p = psutil.Process()
         mem = p.memory_info()
@@ -182,10 +173,10 @@ class SmartErrorHandler:
         self,
         operation,
         *args,
-        max_attempts: int = 3,
-        retry_exceptions: Optional[tuple] = None,
+        max_attempts=3,
+        retry_exceptions=None,
         **kwargs,
-    ) -> Any:
+    ):
         """Execute operation with tenacity retry."""
         retry_exceptions = retry_exceptions or (Exception,)
         wait = wait_exponential(multiplier=1, min=1, max=10)

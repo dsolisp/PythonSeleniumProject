@@ -3,17 +3,8 @@ Playwright factory for modern browser automation.
 Provides sync browser automation capabilities alongside existing Selenium support.
 """
 
-from typing import Any, Optional
-
-from playwright.sync_api import (
-    Browser,
-    BrowserContext,
-    Page,
-    sync_playwright,
-)
-from playwright.sync_api import (
-    Error as PlaywrightError,
-)
+from playwright.sync_api import Error as PlaywrightError
+from playwright.sync_api import sync_playwright
 
 from config.constants import USER_AGENT_CHROME
 from config.settings import settings
@@ -32,11 +23,11 @@ class PlaywrightFactory:
 
     def create_browser(
         self,
-        browser_type: str = "chromium",
+        browser_type="chromium",
         *,
-        headless: Optional[bool] = None,
+        headless=None,
         **kwargs,
-    ) -> Browser:
+    ):
         """
         Create a Playwright browser instance.
 
@@ -44,9 +35,6 @@ class PlaywrightFactory:
             browser_type: Browser type ('chromium', 'firefox', 'webkit')
             headless: Run in headless mode
             **kwargs: Additional browser launch options
-
-        Returns:
-            Browser instance
         """
         if headless is None:
             headless = settings.HEADLESS
@@ -76,16 +64,13 @@ class PlaywrightFactory:
 
         return self.browser
 
-    def create_context(self, browser: Browser = None, **kwargs) -> BrowserContext:
+    def create_context(self, browser=None, **kwargs):
         """
         Create a browser context with optional configuration.
 
         Args:
             browser: Browser instance (uses self.browser if None)
             **kwargs: Context options
-
-        Returns:
-            BrowserContext instance
         """
         if browser is None:
             browser = self.browser
@@ -121,15 +106,12 @@ class PlaywrightFactory:
         self.context = browser.new_context(**context_options)
         return self.context
 
-    def create_page(self, context: BrowserContext = None) -> Page:
+    def create_page(self, context=None):
         """
         Create a new page in the browser context.
 
         Args:
             context: Browser context (uses self.context if None)
-
-        Returns:
-            Page instance
         """
         if context is None:
             context = self.context
@@ -193,65 +175,56 @@ class PlaywrightPage:
     Provides compatibility layer for existing test patterns.
     """
 
-    def __init__(self, page: Page):
-        """
-        Initialize with Playwright page instance.
-
-        Args:
-            page: Playwright Page instance
-        """
+    def __init__(self, page):
+        """Initialize with Playwright page instance."""
         self.page = page
 
-    def navigate_to(self, url: str) -> None:
+    def navigate_to(self, url):
         """Navigate to URL."""
         self.page.goto(url)
 
-    def find_element(self, selector: str) -> Optional[Any]:
-        """Find element by selector."""
+    def find_element(self, selector):
+        """Find element by selector. Returns element or None."""
         try:
             return self.page.wait_for_selector(selector, timeout=5000)
         except (TimeoutError, PlaywrightError):
             # Return None if element not found or timeout
             return None
 
-    def click(self, selector: str) -> None:
+    def click(self, selector):
         """Click element by selector."""
         self.page.click(selector)
 
-    def fill_text(self, selector: str, text: str) -> None:
+    def fill_text(self, selector, text):
         """Fill text in input field."""
         self.page.fill(selector, text)
 
-    def get_text(self, selector: str) -> str:
+    def get_text(self, selector):
         """Get text content of element."""
         element = self.page.wait_for_selector(selector)
         return element.text_content() or ""
 
-    def get_title(self) -> str:
+    def get_title(self):
         """Get page title."""
         return self.page.title()
 
-    def get_url(self) -> str:
+    def get_url(self):
         """Get current URL."""
         return self.page.url
 
-    def wait_for_element(
-        self,
-        selector: str,
-        timeout: Optional[int] = None,
-    ) -> Any:
+    def wait_for_element(self, selector, timeout=None):
         """Wait for element to be visible."""
         timeout_ms = (timeout or settings.TIMEOUT) * SECONDS_TO_MILLISECONDS
         return self.page.wait_for_selector(selector, timeout=timeout_ms)
 
-    def screenshot(self, path: Optional[str] = None) -> bytes:
-        """Take screenshot."""
+    def screenshot(self, path=None):
+        """Take screenshot. Returns bytes or empty bytes if path provided."""
         if path:
             self.page.screenshot(path=path)
             return b""
         return self.page.screenshot()
 
-    def evaluate_script(self, script: str) -> Any:
+    def evaluate_script(self, script):
         """Execute JavaScript on the page."""
         return self.page.evaluate(script)
 
@@ -259,18 +232,12 @@ class PlaywrightPage:
 # Utility functions for easy usage
 def create_playwright_session(
     *,
-    browser_type: str = "chromium",
-    headless: Optional[bool] = None,
-) -> tuple[PlaywrightFactory, PlaywrightPage]:
+    browser_type="chromium",
+    headless=None,
+):
     """
     Create a complete Playwright session with factory and page.
-
-    Args:
-        browser_type: Browser type
-        headless: Headless mode
-
-    Returns:
-        Tuple of (factory, page_wrapper)
+    Returns tuple of (factory, page_wrapper).
     """
     factory = PlaywrightFactory()
     browser = factory.create_browser(browser_type=browser_type, headless=headless)
