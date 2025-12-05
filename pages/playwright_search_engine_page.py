@@ -1,64 +1,50 @@
+"""Playwright implementation of Search Engine page."""
+
 import contextlib
 import time
-from typing import Optional
 
 from playwright.sync_api import Error as PlaywrightError
-from playwright.sync_api import Page
 
 from config.settings import settings
 from locators.playwright_search_engine_locators import PlaywrightSearchEngineLocators
-from pages.playwright_base_page import PlaywrightBasePage
+from pages.playwright_base_page import TIMEOUT_DEFAULT_MS, PlaywrightBasePage
 
 
 class PlaywrightSearchEnginePage(PlaywrightBasePage):
-    """
-    Playwright implementation of Search Engine page.
-    Provides modern async browser automation.
-    Uses centralized locators.
-    """
+    """Playwright Search Engine page with modern browser automation."""
 
-    def __init__(self, page: Page):
-        """Initialize Search Engine page with centralized locators."""
+    def __init__(self, page):
+        """Initialize Search Engine page."""
         super().__init__(page)
         self.base_url = settings.BASE_URL
         self.locators = PlaywrightSearchEngineLocators
 
-    def open_search_engine(self) -> bool:
-        """
-        Navigate to Search engine homepage with robust navigation and CAPTCHA check.
-        Returns:
-            bool: True if successful, False if CAPTCHA or error occurred
-        """
+    def open_search_engine(self):
+        """Navigate to Search engine homepage. Returns True on success."""
         try:
             self.navigate_to(self.base_url)
-            self.page.wait_for_load_state("networkidle", timeout=20000)
+            self.page.wait_for_load_state("networkidle", timeout=TIMEOUT_DEFAULT_MS)
             time.sleep(0.5)
             if self.is_captcha_present():
                 return False
             self.page.wait_for_selector(
                 self.locators.SEARCH_INPUT,
-                timeout=20000,
+                timeout=TIMEOUT_DEFAULT_MS,
             )
         except (TimeoutError, PlaywrightError):
             return False
         else:
             return True
 
-    def search_for(
-        self,
-        search_term: str,
-        *,
-        wait_for_results: bool = True,
-    ) -> bool:
+    def search_for(self, search_term, *, wait_for_results=True):
         """
-        Perform a search on the search engine.
+        Perform a search.
 
         Args:
             search_term: The term to search for
-            wait_for_results: Whether to wait for results to load (keyword-only)
+            wait_for_results: Whether to wait for results to load
 
-        Returns:
-            bool: True if search was successful, False otherwise
+        Returns True on success.
         """
         try:
             time.sleep(0.5)
@@ -71,7 +57,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
 
             if wait_for_results:
                 with contextlib.suppress(TimeoutError):
-                    self.page.wait_for_load_state("networkidle", timeout=20000)
+                    self.page.wait_for_load_state("networkidle", timeout=TIMEOUT_DEFAULT_MS)
                 try:
                     if self.is_captcha_present():
                         return False
@@ -85,7 +71,7 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
                     )
                     self.page.wait_for_selector(
                         selector,
-                        timeout=20000,
+                        timeout=TIMEOUT_DEFAULT_MS,
                     )
                 except TimeoutError:
                     try:
@@ -103,34 +89,23 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         else:
             return True
 
-    def get_search_input(self) -> Optional[str]:
-        """
-        Get the search input element value.
-
-        Returns:
-            str: Current value in search input, None if not found
-        """
+    def get_search_input(self):
+        """Get the search input value. Returns string or None."""
         try:
             element = self.page.wait_for_selector(
                 self.locators.SEARCH_INPUT,
-                timeout=5000,
+                timeout=TIMEOUT_DEFAULT_MS,
             )
             return element.input_value()
         except TimeoutError:
             return None
 
-    def get_search_suggestions(self) -> list[str]:
-        """
-        Get search suggestions from dropdown.
-
-        Returns:
-            List[str]: List of suggestion texts
-        """
+    def get_search_suggestions(self):
+        """Get search suggestions. Returns list of strings."""
         try:
-            # Type in search input to trigger suggestions
             self.page.wait_for_selector(
                 self.locators.SEARCH_SUGGESTIONS,
-                timeout=5000,
+                timeout=TIMEOUT_DEFAULT_MS,
             )
 
             suggestions = self.page.query_selector_all(
@@ -148,34 +123,24 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         else:
             return suggestion_texts
 
-    def get_result_count(self) -> int:
-        """
-        Get the number of search results on the page.
-
-        Returns:
-            int: Number of results found
-        """
+    def get_result_count(self):
+        """Get number of search results. Returns int."""
         try:
             self.page.wait_for_selector(
                 self.locators.RESULT_TITLES,
-                timeout=10000,
+                timeout=TIMEOUT_DEFAULT_MS,
             )
             results = self.page.query_selector_all(self.locators.RESULT_TITLES)
             return len(results)
         except TimeoutError:
             return 0
 
-    def get_result_titles(self) -> list[str]:
-        """
-        Get titles of search results.
-
-        Returns:
-            List[str]: List of result titles
-        """
+    def get_result_titles(self):
+        """Get titles of search results. Returns list of strings."""
         try:
             self.page.wait_for_selector(
                 self.locators.RESULT_TITLES,
-                timeout=10000,
+                timeout=TIMEOUT_DEFAULT_MS,
             )
             title_elements = self.page.query_selector_all(
                 self.locators.RESULT_TITLES,
@@ -192,22 +157,18 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         else:
             return titles
 
-    def get_result_links(self) -> list[str]:
-        """
-        Get URLs of search result links.
-
-        Returns:
-            List[str]: List of result URLs
-        """
+    def get_result_links(self):
+        """Get URLs of search result links. Returns list of strings."""
         try:
-            self.page.wait_for_selector(self.locators.RESULT_LINKS, timeout=10000)
+            self.page.wait_for_selector(
+                self.locators.RESULT_LINKS, timeout=TIMEOUT_DEFAULT_MS
+            )
             link_elements = self.page.query_selector_all(
                 self.locators.RESULT_LINKS,
             )
 
             links = []
             for element in link_elements:
-                # Get parent link element
                 link = element.query_selector(self.locators.ANCESTOR_LINK_XPATH)
                 if link:
                     href = link.get_attribute("href")
@@ -219,17 +180,12 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         else:
             return links
 
-    def click_first_result(self) -> bool:
-        """
-        Click the first search result.
-
-        Returns:
-            bool: True if successful, False otherwise
-        """
+    def click_first_result(self):
+        """Click the first search result. Returns True on success."""
         try:
             first_result = self.page.wait_for_selector(
                 f"{self.locators.RESULT_LINKS}:first-child",
-                timeout=10000,
+                timeout=TIMEOUT_DEFAULT_MS,
             )
 
             if first_result:
@@ -242,15 +198,9 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
 
         return False
 
-    def is_captcha_present(self) -> bool:
-        """
-        Check if CAPTCHA is present on the page.
-
-        Returns:
-            bool: True if CAPTCHA detected, False otherwise
-        """
+    def is_captcha_present(self):
+        """Check if CAPTCHA is present. Returns True or False."""
         try:
-            # Check URL for CAPTCHA indicators
             current_url = self.navigation_actions.get_current_url()
             if any(
                 word in current_url.lower()
@@ -258,7 +208,6 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             ):
                 return True
 
-            # Check for CAPTCHA elements
             captcha_element = self.page.query_selector(
                 self.locators.CAPTCHA_CONTAINER,
             )
@@ -267,13 +216,8 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
         else:
             return captcha_element is not None
 
-    def has_results(self) -> bool:
-        """
-        Check if search results are present.
-
-        Returns:
-            bool: True if results found, False otherwise
-        """
+    def has_results(self):
+        """Check if search results are present. Returns True or False."""
         try:
             current_url = self.navigation_actions.get_current_url()
             if "q=" in current_url or "search" in current_url.lower():
@@ -290,43 +234,29 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
 
     def perform_advanced_search(
         self,
-        search_term: str,
-        site_filter: Optional[str] = None,
-        file_type: Optional[str] = None,
-        date_range: Optional[str] = None,
-    ) -> bool:
+        search_term,
+        site_filter=None,
+        file_type=None,
+        date_range=None,
+    ):
         """
         Perform advanced search with filters.
-
-        Note: DuckDuckGo has limited support for advanced operators.
-        It supports:
-        - site:example.com (works well)
-        - filetype:pdf (limited support, may not return results)
-
-        Best practice: Use site: filter alone with simple terms.
 
         Args:
             search_term: Base search term
             site_filter: Site (e.g., "github.com" adds site: prefix)
             file_type: File type (e.g., "pdf" adds filetype: prefix)
-            date_range: Date range filter (limited DuckDuckGo support)
+            date_range: Date range filter (limited support)
 
-        Returns:
-            bool: True if search successful, False otherwise
+        Returns True on success.
         """
         try:
-            # Build advanced search query
             query_parts = [search_term]
 
-            # DuckDuckGo supports site: operator well
             if site_filter:
-                # Remove site: prefix if user included it
                 site = site_filter.replace("site:", "").strip()
                 query_parts.append(f"site:{site}")
 
-            # Note: DuckDuckGo's filetype: support is limited
-            # Combining site: + filetype: often returns no results
-            # Only add filetype if no site filter is specified
             if file_type and not site_filter:
                 filetype = file_type.replace("filetype:", "").strip()
                 query_parts.append(f"filetype:{filetype}")
@@ -348,43 +278,20 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
             print(f"Advanced search failed: {e}")
             return False
 
-    def wait_for_search_completion(self, timeout: int = 15) -> bool:
-        """
-        Wait for search to complete and results to load.
-
-        Args:
-            timeout: Maximum time to wait in seconds
-
-        Returns:
-            bool: True if search completed, False if timeout or error
-        """
+    def wait_for_search_completion(self):
+        """Wait for search to complete. Returns True on success."""
         try:
-            # Wait for either results or no-results message
             selector = f"{self.locators.RESULTS_CONTAINER}, {self.locators.NO_RESULTS}"
             self.page.wait_for_selector(
                 selector,
-                timeout=timeout * 1000,
+                timeout=TIMEOUT_DEFAULT_MS,
             )
-
-            # Additional wait for dynamic content
-            self.page.wait_for_load_state("networkidle", timeout=5000)
+            self.page.wait_for_load_state("networkidle", timeout=TIMEOUT_DEFAULT_MS)
         except TimeoutError:
             return False
         else:
             return True
 
-    def take_element_screenshot(
-        self,
-        selector: str,
-        filename: Optional[str] = None,
-    ) -> bytes:
-        """Take a screenshot of a specific element.
-
-        Args:
-            selector: CSS selector for the element
-            filename: Optional filename to save screenshot
-
-        Returns:
-            bytes: Screenshot data as bytes
-        """
+    def take_element_screenshot(self, selector, filename=None):
+        """Take element screenshot. Returns bytes."""
         return self.screenshot_actions.take_element_screenshot(selector, filename)

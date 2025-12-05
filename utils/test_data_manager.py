@@ -8,30 +8,29 @@ import json
 import random
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Optional, Union
 
 import yaml
 
 
-def _load_json(path: Path) -> dict[str, Any]:
+def _load_json(path):
     """Load data from JSON file."""
     with open(path) as f:
         return json.load(f)
 
 
-def _load_yaml(path: Path) -> dict[str, Any]:
+def _load_yaml(path):
     """Load data from YAML file."""
     with open(path) as f:
         return yaml.safe_load(f) or {}
 
 
-def _load_csv(path: Path) -> dict[str, Any]:
+def _load_csv(path):
     """Load data from CSV file as list of dicts."""
     with open(path, newline="") as f:
         return {"data": list(csv.DictReader(f))}
 
 
-def _load_file(path: Path) -> dict[str, Any]:
+def _load_file(path):
     """Auto-detect format and load file."""
     suffix = path.suffix.lower()
     if suffix == ".json":
@@ -52,18 +51,16 @@ _DOMAINS = ["test.com", "example.org", "demo.net", "qa.io"]
 class DataManager:
     """Multi-format test data manager with environment support."""
 
-    def __init__(self, data_directory: Optional[Union[str, Path]] = None):
+    def __init__(self, data_directory=None):
         self.data_dir = (
             Path(data_directory)
             if data_directory
             else Path(__file__).parent.parent / "data"
         )
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self._cache: dict[str, Any] = {}
+        self._cache = {}
 
-    def load_test_data(
-        self, filename: str, environment: str = "default"
-    ) -> dict[str, Any]:
+    def load_test_data(self, filename, environment="default"):
         """Load test data from JSON/YAML/CSV with environment support and caching."""
         key = f"{filename}_{environment}"
         if key in self._cache:
@@ -81,9 +78,7 @@ class DataManager:
             return self.load_test_data(filename, "default")
         return {}
 
-    def load_yaml_config(
-        self, config_name: str, environment: str = "default"
-    ) -> dict[str, Any]:
+    def load_yaml_config(self, config_name, environment="default"):
         """Load YAML config, creating default if missing."""
         path = self.data_dir / "configs" / f"{config_name}_{environment}.yml"
         path.parent.mkdir(exist_ok=True)
@@ -109,10 +104,8 @@ class DataManager:
         with open(path) as f:
             return yaml.safe_load(f)
 
-    def save_test_results_yaml(
-        self, results: dict[str, Any], filename: Optional[str] = None
-    ) -> str:
-        """Save test results in YAML format."""
+    def save_test_results_yaml(self, results, filename=None):
+        """Save test results in YAML format. Returns path."""
         ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         path = self.data_dir / "results" / (filename or f"results_{ts}.yml")
         path.parent.mkdir(exist_ok=True)
@@ -134,15 +127,11 @@ class DataManager:
 
     # === DATA ACCESSORS ===
 
-    def get_search_scenarios(
-        self, environment: str = "default"
-    ) -> list[dict[str, Any]]:
+    def get_search_scenarios(self, environment="default"):
         """Get search test scenarios."""
         return self.load_test_data("test_data", environment).get("search_scenarios", [])
 
-    def get_user_accounts(
-        self, role: Optional[str] = None, environment: str = "default"
-    ) -> list[dict[str, Any]]:
+    def get_user_accounts(self, role=None, environment="default"):
         """Get user accounts, optionally filtered by role."""
         accounts = self.load_test_data("test_data", environment).get(
             "user_accounts", []
@@ -151,7 +140,7 @@ class DataManager:
 
     # === DATA GENERATORS ===
 
-    def generate_search_data(self, count: int = 5) -> list[dict[str, Any]]:
+    def generate_search_data(self, count=5):
         """Generate dynamic search test scenarios."""
         terms = [
             "Python automation",
@@ -175,7 +164,7 @@ class DataManager:
 
     # === RESULT SAVING ===
 
-    def cleanup_old_results(self, days_to_keep: int = 30) -> None:
+    def cleanup_old_results(self, days_to_keep=30):
         """Clean up result files older than specified days."""
         cutoff = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
         results_dir = self.data_dir / "results"
@@ -191,7 +180,7 @@ class DataManager:
             except (OSError, ValueError):
                 continue
 
-    def validate_data_schema(self, data: dict[str, Any], schema_name: str) -> bool:
+    def validate_data_schema(self, data, schema_name):
         """Validate data against predefined schemas."""
         schemas = {
             "search_scenario": ["name", "search_term"],
@@ -202,7 +191,7 @@ class DataManager:
             return False
         return all(f in data for f in schemas[schema_name])
 
-    def _get_env_path(self, filename: str, environment: str, ext: str) -> Path:
+    def _get_env_path(self, filename, environment, ext):
         """Get environment-specific file path."""
         if environment == "default":
             return self.data_dir / f"{filename}{ext}"

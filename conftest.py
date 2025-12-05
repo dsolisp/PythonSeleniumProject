@@ -6,7 +6,6 @@ import contextlib
 import os
 import time
 from collections.abc import Generator
-from typing import Any
 
 import pytest
 from selenium import webdriver
@@ -27,7 +26,7 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def test_config(request) -> dict[str, Any]:
+def test_config(request):
     """Test configuration from command line and environment."""
     # Check both command line flag and environment variable for headless mode
     headless_cli = request.config.getoption("--headless")

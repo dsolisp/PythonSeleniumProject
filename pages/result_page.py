@@ -7,9 +7,9 @@ from pages.base_page import BasePage
 class ResultPage(BasePage):
     """Search result page using BasePage methods exclusively."""
 
-    def __init__(self, driver, timeout: int = 10):
+    def __init__(self, driver):
         """Initialize search engine result page."""
-        super().__init__(driver, timeout=timeout)
+        super().__init__(driver)
         self.result_locators = ResultPageLocators()
 
     def get_result_by_name(self, name):
@@ -28,8 +28,8 @@ class ResultPage(BasePage):
         """Get the first search result article element."""
         return self.find_element(self.result_locators.get_first_result_article())
 
-    def is_results_displayed(self) -> bool:
-        """Check if search results are displayed."""
+    def is_results_displayed(self):
+        """Check if search results are displayed. Returns True or False."""
         try:
             return (
                 self.is_element_visible(self.result_locators.SEARCH_RESULTS)
@@ -42,8 +42,8 @@ class ResultPage(BasePage):
         except (NoSuchElementException, WebDriverException):
             return False
 
-    def get_results_count(self) -> int:
-        """Get the number of search results found."""
+    def get_results_count(self):
+        """Get the number of search results. Returns int."""
         try:
             h3_elements = self.find_elements(self.result_locators.ALL_H3_ELEMENTS)
             if h3_elements:
@@ -56,9 +56,6 @@ class ResultPage(BasePage):
         except (NoSuchElementException, WebDriverException):
             return 0
 
-    def wait_for_results_page(self, timeout: int = 10) -> bool:
-        """Wait for results page to load."""
-        return (
-            self.wait_for_element(self.result_locators.SEARCH_RESULTS, timeout=timeout)
-            is not None
-        )
+    def wait_for_results_page(self):
+        """Wait for results page to load. Returns True on success."""
+        return self.wait_for_element(self.result_locators.SEARCH_RESULTS) is not None

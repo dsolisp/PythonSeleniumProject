@@ -122,5 +122,5 @@ class SaucePage(BasePage):
 
     def get_error_message(self):
         """Get error message if present."""
-        error = self.wait_for_element(SauceLocators.ERROR_MESSAGE, timeout=5)
+        error = self.wait_for_element(SauceLocators.ERROR_MESSAGE)
         return error.text if error else None

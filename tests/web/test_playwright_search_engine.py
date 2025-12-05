@@ -3,7 +3,6 @@ Playwright Search engine tests demonstrating modern browser automation.
 """
 
 from dataclasses import dataclass
-from typing import Optional
 from urllib.parse import urlparse
 
 import pytest
@@ -66,10 +65,8 @@ def playwright_session_firefox():
     factory.cleanup()
 
 
-def _get_search_engine_url_from_requests(
-    intercepted_requests: list[dict],
-) -> Optional[str]:
-    """Extract search engine URL from intercepted requests."""
+def _get_search_engine_url_from_requests(intercepted_requests):
+    """Extract search engine URL from intercepted requests. Returns URL or None."""
     # Try document/fetch requests first
     for req in intercepted_requests:
         try:

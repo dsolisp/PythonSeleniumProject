@@ -5,7 +5,6 @@ Provides consistent logging format for test automation framework.
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Optional
 
 import structlog
 
@@ -13,7 +12,7 @@ import structlog
 class StructuredLogger:
     """JSON structured logger with contextual information."""
 
-    def __init__(self, name: str = "TestFramework", level: str = "INFO"):
+    def __init__(self, name="TestFramework", level="INFO"):
         self.name = name
         level_value = getattr(logging, level.upper(), logging.INFO)
 
@@ -30,34 +29,34 @@ class StructuredLogger:
         self.logger = structlog.get_logger(name).bind(logger_name=name)
         self.level = level_value
 
-    def _log(self, level: str, msg: str, *args, **ctx):
+    def _log(self, level, msg, *args, **ctx):
         if args:
             msg = msg % args
         getattr(self.logger, level)(msg, **ctx)
 
-    def debug(self, msg: str, *args, **ctx):
+    def debug(self, msg, *args, **ctx):
         """Log a debug message."""
         self._log("debug", msg, *args, **ctx)
 
-    def info(self, msg: str, *args, **ctx):
+    def info(self, msg, *args, **ctx):
         """Log an info message."""
         self._log("info", msg, *args, **ctx)
 
-    def warning(self, msg: str, *args, **ctx):
+    def warning(self, msg, *args, **ctx):
         """Log a warning message."""
         self._log("warning", msg, *args, **ctx)
 
-    def error(self, msg: str, *args, **ctx):
+    def error(self, msg, *args, **ctx):
         """Log an error message."""
         self._log("error", msg, *args, **ctx)
 
-    def critical(self, msg: str, *args, **ctx):
+    def critical(self, msg, *args, **ctx):
         """Log a critical message."""
         self._log("critical", msg, *args, **ctx)
 
     # Domain-specific log methods
 
-    def test_start(self, test_name: str, test_class: Optional[str] = None, **ctx):
+    def test_start(self, test_name, test_class=None, **ctx):
         """Log test start event."""
         self.info(
             "Test started",
@@ -67,9 +66,7 @@ class StructuredLogger:
             **ctx,
         )
 
-    def test_end(
-        self, test_name: str, result: str, duration: Optional[float] = None, **ctx
-    ):
+    def test_end(self, test_name, result, duration=None, **ctx):
         """Log test end event."""
         self.info(
             "Test completed",
@@ -80,7 +77,7 @@ class StructuredLogger:
             **ctx,
         )
 
-    def test_step(self, step_name: str, action: str, **ctx):
+    def test_step(self, step_name, action, **ctx):
         """Log a test step execution."""
         self.info(
             "Test step executed",
@@ -90,15 +87,7 @@ class StructuredLogger:
             **ctx,
         )
 
-    def assertion_result(
-        self,
-        *,
-        assertion: str,
-        result: bool,
-        expected: Any = None,
-        actual: Any = None,
-        **ctx,
-    ):
+    def assertion_result(self, *, assertion, result, expected=None, actual=None, **ctx):
         """Log assertion result (pass or fail)."""
         log = self.info if result else self.error
         log(
@@ -111,9 +100,7 @@ class StructuredLogger:
             **ctx,
         )
 
-    def exception_caught(
-        self, exception: Exception, context_info: Optional[str] = None, **ctx
-    ):
+    def exception_caught(self, exception, context_info=None, **ctx):
         """Log caught exception details."""
         self.error(
             "Exception caught during execution",
@@ -124,9 +111,7 @@ class StructuredLogger:
             **ctx,
         )
 
-    def performance_metric(
-        self, metric_name: str, value: float, unit: str = "ms", **ctx
-    ):
+    def performance_metric(self, metric_name, value, unit="ms", **ctx):
         self.info(
             "Performance metric recorded",
             event_type="performance_metric",
@@ -136,7 +121,7 @@ class StructuredLogger:
             **ctx,
         )
 
-    def browser_action(self, action: str, element: Optional[str] = None, **ctx):
+    def browser_action(self, action, element=None, **ctx):
         self.info(
             "Browser action",
             event_type="browser_action",
@@ -145,14 +130,7 @@ class StructuredLogger:
             **ctx,
         )
 
-    def api_request(
-        self,
-        method: str,
-        url: str,
-        status_code: Optional[int] = None,
-        response_time: Optional[float] = None,
-        **ctx,
-    ):
+    def api_request(self, method, url, status_code=None, response_time=None, **ctx):
         self.info(
             "API request",
             event_type="api_request",
@@ -167,10 +145,10 @@ class StructuredLogger:
 class ExecutionLogger:
     """Test execution logger with timing and step counting."""
 
-    def __init__(self, test_name: str):
+    def __init__(self, test_name):
         self.test_name = test_name
         self.logger = StructuredLogger(f"Test.{test_name}")
-        self.start_time: Optional[datetime] = None
+        self.start_time = None
         self.step_count = 0
 
     def start_test(self, **ctx):
@@ -180,7 +158,7 @@ class ExecutionLogger:
             self.test_name, start_time=self.start_time.isoformat(), **ctx
         )
 
-    def end_test(self, result: str, **ctx):
+    def end_test(self, result, **ctx):
         duration = (
             (datetime.now(timezone.utc) - self.start_time).total_seconds()
             if self.start_time
@@ -190,24 +168,16 @@ class ExecutionLogger:
             self.test_name, result, duration, total_steps=self.step_count, **ctx
         )
 
-    def log_step(self, step_name: str, action: str, **ctx):
+    def log_step(self, step_name, action, **ctx):
         self.step_count += 1
         self.logger.test_step(step_name, action, step_number=self.step_count, **ctx)
 
-    def log_assertion(self, *, assertion: str, result: bool, **ctx):
+    def log_assertion(self, *, assertion, result, **ctx):
         self.logger.assertion_result(
             assertion=assertion, result=result, test_name=self.test_name, **ctx
         )
 
-    def api_request(
-        self,
-        *,
-        method: str,
-        url: str,
-        status_code: int,
-        response_time: float,
-        **ctx,
-    ):
+    def api_request(self, *, method, url, status_code, response_time, **ctx):
         """Log an API request with response details."""
         self.logger.info(
             "API request completed",
@@ -219,13 +189,7 @@ class ExecutionLogger:
             **ctx,
         )
 
-    def performance_metric(
-        self,
-        metric_name: str,
-        value: float,
-        unit: str = "ms",
-        **ctx,
-    ):
+    def performance_metric(self, metric_name, value, unit="ms", **ctx):
         """Log a performance metric."""
         self.logger.info(
             "Performance metric recorded",
@@ -236,7 +200,7 @@ class ExecutionLogger:
             **ctx,
         )
 
-    def browser_action(self, action: str, **ctx):
+    def browser_action(self, action, **ctx):
         """Log a browser action (navigate, click, type, etc.)."""
         self.logger.info(
             "Browser action performed",
@@ -247,11 +211,11 @@ class ExecutionLogger:
 
 
 # Factory functions
-def get_logger(name: str = "TestFramework", level: str = "INFO") -> StructuredLogger:
+def get_logger(name="TestFramework", level="INFO"):
     return StructuredLogger(name, level)
 
 
-def get_test_logger(test_name: str) -> ExecutionLogger:
+def get_test_logger(test_name):
     return ExecutionLogger(test_name)
 
 
