@@ -1,5 +1,5 @@
 """
-Search engine tests demonstrating page object model patterns.
+Bing search engine tests demonstrating page object model patterns.
 """
 
 import sqlite3
@@ -209,11 +209,11 @@ def test_element_health_monitoring(driver):
 
     search_page.enter_search_term("health test")
 
-    # Wait briefly for the value to be set (DuckDuckGo may have async behavior)
+    # Wait briefly for the value to be set
     time.sleep(0.5)
 
     input_value = search_page.get_search_input_value()
-    # DuckDuckGo may clear or modify the input, so check if text was entered
+    # Check if text was entered
     assert_that(len(input_value) >= 0, equal_to(True), "Input should accept text")  # noqa: FBT003
 
     element_dimensions = search_page.get_search_input_dimensions()

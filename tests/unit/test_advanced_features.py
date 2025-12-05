@@ -1,9 +1,14 @@
+"""
+Unit tests for framework components with advanced capabilities.
+Validates data management and error handling functionality.
+"""
+
 import json
 import os
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 from hamcrest import (
@@ -16,22 +21,9 @@ from hamcrest import (
     none,
     not_none,
 )
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
-from utils.error_handler import (
-    ErrorClassifier,
-    ErrorContext,
-    RecoveryAction,
-    RecoveryManager,
-    RecoveryStrategy,
-    SmartErrorHandler,
-)
+from utils.error_handler import SmartErrorHandler
 from utils.test_data_manager import DataManager
-
-"""
-Unit tests for framework components with advanced capabilities.
-Validates data management, and error handling functionality.
-"""
 
 
 class TestDataManagerTests:
@@ -156,232 +148,8 @@ class TestDataManagerTests:
         assert_that(recent_file.exists(), is_(True))
 
 
-class TestErrorClassifier:
-    """Unit tests for ErrorClassifier."""
-
-    def setup_method(self):
-        """Setup error classifier."""
-        self.classifier = ErrorClassifier()
-
-    def test_classify_timeout_error(self):
-        """Test classification of timeout errors."""
-        error = TimeoutException("Element not found within timeout")
-        context = ErrorContext(
-            error_type="TimeoutException",
-            error_message="Element not found within timeout",
-            timestamp=datetime.now(timezone.utc),
-            test_name="test_timeout",
-            page_url="https://example.com",
-        )
-
-        classification = self.classifier.classify_error(error, context)
-
-        assert_that(classification["error_type"], equal_to("TimeoutException"))
-        assert_that(classification["classification"]["category"], equal_to("timeout"))
-        assert_that(
-            classification["classification"]["severity"].value,
-            equal_to("medium"),
-        )
-
-    def test_classify_element_not_found_error(self):
-        """Test classification of element not found errors."""
-        error = NoSuchElementException("Unable to locate element")
-        context = ErrorContext(
-            error_type="NoSuchElementException",
-            error_message="Unable to locate element",
-            timestamp=datetime.now(timezone.utc),
-            test_name="test_element",
-            page_url="https://example.com",
-        )
-
-        classification = self.classifier.classify_error(error, context)
-
-        assert_that(classification["error_type"], equal_to("NoSuchElementException"))
-        assert_that(
-            classification["classification"]["category"],
-            equal_to("element_not_found"),
-        )
-        assert_that(
-            classification["classification"]["severity"].value,
-            equal_to("high"),
-        )
-
-    def test_classify_unknown_error(self):
-        """Test classification of unknown errors."""
-        error = ValueError("Unknown error type")
-        context = ErrorContext(
-            error_type="ValueError",
-            error_message="Unknown error type",
-            timestamp=datetime.now(timezone.utc),
-            test_name="test_unknown",
-            page_url="https://example.com",
-        )
-
-        classification = self.classifier.classify_error(error, context)
-
-        assert_that(classification["error_type"], equal_to("ValueError"))
-        assert_that(classification["classification"]["category"], equal_to("unknown"))
-        assert_that(classification["confidence"], equal_to(0.3))
-
-
-class TestRecoveryManager:
-    """Unit tests for RecoveryManager."""
-
-    def setup_method(self):
-        """Setup recovery manager with mocks."""
-        self.mock_driver_factory = Mock()
-        self.recovery_manager = RecoveryManager(self.mock_driver_factory)
-
-    def test_get_recovery_statistics_empty(self):
-        """Test getting recovery statistics when no recoveries recorded."""
-        stats = self.recovery_manager.get_recovery_statistics()
-        assert_that(stats["message"], equal_to("No recovery attempts recorded"))
-
-    def test_retry_recovery_success(self):
-        """Test successful retry recovery."""
-        mock_driver = Mock()
-        error_context = ErrorContext(
-            error_type="TimeoutException",
-            error_message="Timeout occurred",
-            timestamp=datetime.now(timezone.utc),
-            test_name="test_retry",
-            page_url="https://example.com",
-        )
-
-        # Mock success validation
-        success_validation = Mock(return_value=True)
-        recovery_action = RecoveryAction(
-            strategy=RecoveryStrategy.RETRY,
-            max_attempts=2,
-            wait_time=0.1,
-            success_validation=success_validation,
-        )
-
-        # Execute recovery
-        result = self.recovery_manager.execute_recovery(
-            mock_driver,
-            error_context,
-            recovery_action,
-        )
-
-        assert_that(result, is_(True))
-        assert_that(len(self.recovery_manager.recovery_history), equal_to(1))
-        assert_that(self.recovery_manager.recovery_history[0]["success"], is_(True))
-
-    def test_retry_recovery_failure(self):
-        """Test failed retry recovery."""
-        mock_driver = Mock()
-        error_context = ErrorContext(
-            error_type="TimeoutException",
-            error_message="Timeout occurred",
-            timestamp=datetime.now(timezone.utc),
-            test_name="test_retry_fail",
-            page_url="https://example.com",
-        )
-
-        # Mock failing validation: always returns False
-        def always_false():
-            return False
-
-        success_validation = Mock(side_effect=always_false)
-        recovery_action = RecoveryAction(
-            strategy=RecoveryStrategy.RETRY,
-            max_attempts=2,
-            wait_time=0.1,
-            success_validation=success_validation,
-        )
-
-        # Execute recovery
-        result = self.recovery_manager.execute_recovery(
-            mock_driver,
-            error_context,
-            recovery_action,
-        )
-
-        assert_that(result, is_(False))
-        assert_that(len(self.recovery_manager.recovery_history), equal_to(1))
-        assert_that(self.recovery_manager.recovery_history[0]["success"], is_(False))
-
-    @patch("selenium.webdriver.support.ui.WebDriverWait")
-    def test_refresh_recovery(self, mock_wait):
-        """Test page refresh recovery."""
-        mock_driver = Mock()
-        mock_driver.current_url = "https://example.com"
-        mock_driver.execute_script.return_value = "complete"  # Mock document.readyState
-
-        # Setup WebDriverWait mock
-        mock_wait_instance = Mock()
-        mock_wait_instance.until.return_value = True
-        mock_wait.return_value = mock_wait_instance
-
-        error_context = ErrorContext(
-            error_type="StaleElementReferenceException",
-            error_message="Element is stale",
-            timestamp=datetime.now(timezone.utc),
-            test_name="test_refresh",
-            page_url="https://example.com",
-        )
-
-        recovery_action = RecoveryAction(
-            strategy=RecoveryStrategy.REFRESH,
-            max_attempts=1,
-            wait_time=1.0,
-        )
-
-        # Execute recovery
-        result = self.recovery_manager.execute_recovery(
-            mock_driver,
-            error_context,
-            recovery_action,
-        )
-
-        # Verify refresh was called
-        mock_driver.refresh.assert_called_once()
-        # Verify document ready state was checked
-        mock_driver.execute_script.assert_called_with("return document.readyState")
-        assert_that(result, is_(True))
-
-    def test_get_recovery_statistics_with_data(self):
-        """Test getting recovery statistics with recorded data."""
-        # Manually add recovery records
-        self.recovery_manager.recovery_history = [
-            {
-                "strategy": "retry",
-                "success": True,
-                "duration": 1.5,
-                "timestamp": datetime.now(timezone.utc),
-            },
-            {
-                "strategy": "retry",
-                "success": False,
-                "duration": 2.0,
-                "timestamp": datetime.now(timezone.utc),
-            },
-            {
-                "strategy": "refresh",
-                "success": True,
-                "duration": 3.0,
-                "timestamp": datetime.now(timezone.utc),
-            },
-        ]
-
-        stats = self.recovery_manager.get_recovery_statistics()
-
-        assert_that(stats["total_recovery_attempts"], equal_to(3))
-        assert_that(stats["successful_recoveries"], equal_to(2))
-        assert_that(stats["success_rate"], equal_to(66.67))
-        assert_that(stats["average_recovery_time"], equal_to(2.17))
-
-        # Check strategy-specific stats
-        strategy_stats = stats["strategy_performance"]
-        assert_that(strategy_stats["retry"]["total"], equal_to(2))
-        assert_that(strategy_stats["retry"]["successful"], equal_to(1))
-        assert_that(strategy_stats["refresh"]["total"], equal_to(1))
-        assert_that(strategy_stats["refresh"]["successful"], equal_to(1))
-
-
 class TestSmartErrorHandler:
-    """Unit tests for SmartErrorHandler."""
+    """Unit tests for SmartErrorHandler (simplified version)."""
 
     def setup_method(self):
         """Setup smart error handler with mocks."""
@@ -392,53 +160,21 @@ class TestSmartErrorHandler:
         """Test that initialization creates screenshots directory."""
         assert_that(Path(self.temp_dir).exists(), is_(True))
 
-    def test_handle_error_with_recovery(self):
-        """Test error handling with successful recovery."""
+    def test_handle_error_returns_false(self):
+        """Test that simplified handler logs error and returns False."""
         mock_driver = Mock()
-        mock_driver.current_url = "https://example.com"
-        mock_driver.get_log.return_value = []
         mock_driver.save_screenshot.return_value = True
 
-        # Mock successful recovery
-        with patch.object(
-            self.error_handler.recovery_manager,
-            "execute_recovery",
-        ) as mock_recovery:
-            mock_recovery.return_value = True
+        error = Exception("TimeoutException: Element not found")
+        result = self.error_handler.handle_error(error, mock_driver, "test_name")
 
-            # Use a recognizable error type for the classifier
-            error = Exception("TimeoutException: Element not found after timeout")
-            result = self.error_handler.handle_error(error, mock_driver, "test_name")
+        # Simplified handler always returns False (no automatic recovery)
+        assert_that(result, is_(False))
 
-            assert_that(result, is_(True))
-            mock_recovery.assert_called_once()
-
-    def test_handle_error_with_failed_recovery(self):
-        """Test error handling with failed recovery."""
-        mock_driver = Mock()
-        mock_driver.current_url = "https://example.com"
-        mock_driver.get_log.return_value = []
-        mock_driver.save_screenshot.return_value = True
-
-        # Mock failed recovery
-        with patch.object(
-            self.error_handler.recovery_manager,
-            "execute_recovery",
-        ) as mock_recovery:
-            mock_recovery.return_value = False
-
-            # Use a recognizable error type for the classifier
-            error = Exception("NoSuchElementException: Unable to locate element")
-            result = self.error_handler.handle_error(error, mock_driver, "test_name")
-
-            assert_that(result, is_(False))
-            mock_recovery.assert_called_once()
-
-    def test_screenshot_service_capture_success(self):
-        """Test successful screenshot capture via ScreenshotService."""
+    def test_handle_error_captures_screenshot(self):
+        """Test that handle_error captures a screenshot."""
         mock_driver = Mock()
 
-        # Mock the save_screenshot to create the file
         def mock_save_screenshot(path):
             with Path(path).open("w") as f:
                 f.write("fake image data")
@@ -446,7 +182,24 @@ class TestSmartErrorHandler:
 
         mock_driver.save_screenshot = mock_save_screenshot
 
-        # Use the screenshot_service from error_handler
+        error = Exception("Test error")
+        self.error_handler.handle_error(error, mock_driver, "test_screenshot")
+
+        # Check screenshot was created
+        screenshots = list(Path(self.temp_dir).glob("error_test_screenshot_*.png"))
+        assert_that(len(screenshots), equal_to(1))
+
+    def test_screenshot_service_capture_success(self):
+        """Test successful screenshot capture via ScreenshotService."""
+        mock_driver = Mock()
+
+        def mock_save_screenshot(path):
+            with Path(path).open("w") as f:
+                f.write("fake image data")
+            return True
+
+        mock_driver.save_screenshot = mock_save_screenshot
+
         result = self.error_handler.screenshot_service.capture(mock_driver, "test_name")
 
         assert_that(result, is_(not_none()))

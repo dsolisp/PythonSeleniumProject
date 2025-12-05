@@ -1,45 +1,28 @@
 """
-Search engine page implementation using the Page Object Model pattern.
+Bing search engine page implementation using the Page Object Model pattern.
 Demonstrates clean POM architecture with consolidated methods.
 """
 
 import time
-from functools import wraps
-from typing import Any, Optional
+from typing import Any
 
-from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 
 from config.settings import settings
 from locators.search_engine_locators import SearchEngineLocators
 from pages.base_page import BasePage
 
 
-def timed(func):
-    """Decorator that returns (result, execution_time) tuple."""
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        start = time.time()
-        result = func(*args, **kwargs)
-        return result, time.time() - start
-
-    return wrapper
-
-
 class SearchEnginePage(BasePage):
     """
-    Search engine page object demonstrating clean POM architecture.
+    Bing search engine page object demonstrating clean POM architecture.
     Consolidated from 355 lines to ~150 lines while keeping all functionality.
     """
 
-    def __init__(
-        self, driver_and_db, test_name: Optional[str] = None, environment: str = "test"
-    ):
-        super().__init__(driver_and_db, test_name=test_name, environment=environment)
+    def __init__(self, driver, timeout: int = 10):
+        super().__init__(driver, timeout=timeout)
         self.page_url = settings.BASE_URL
         self._locators = SearchEngineLocators  # Alias for cleaner code
 
@@ -49,12 +32,7 @@ class SearchEnginePage(BasePage):
         """Navigate to search engine and verify page loaded."""
         if not self.navigate_to(self.page_url):
             return False
-        try:
-            return (
-                self.wait_for_element(self._locators.SEARCH_BOX, timeout=10) is not None
-            )
-        except TimeoutException:
-            return False
+        return self.wait_for_element(self._locators.SEARCH_BOX, timeout=10) is not None
 
     def search(
         self, search_term: str, *, navigate_first: bool = False, use_enter: bool = True
@@ -103,7 +81,7 @@ class SearchEnginePage(BasePage):
         """Clear the search input field using JavaScript."""
         element = self.find_element(self._locators.SEARCH_BOX)
         if element:
-            self.driver.execute_script("arguments[0].value = '';", element)
+            self.execute_script("arguments[0].value = '';", element)
             return True
         return False
 
@@ -142,7 +120,7 @@ class SearchEnginePage(BasePage):
     def get_result_titles(self, max_count: int = 5) -> list[str]:
         """Get list of search result titles."""
         try:
-            elements = self.driver.find_elements(*self._locators.RESULT_TITLES)
+            elements = self.find_elements(self._locators.RESULT_TITLES)
             return [e.text.strip() for e in elements[:max_count] if e.text.strip()]
         except WebDriverException:
             return []
@@ -151,13 +129,10 @@ class SearchEnginePage(BasePage):
 
     def wait_for_suggestions(self, timeout: int = 5) -> bool:
         """Wait for search suggestions to appear."""
-        try:
-            WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located(self._locators.SUGGESTIONS_LISTBOX)
-            )
-            return True
-        except TimeoutException:
-            return False
+        return (
+            self.wait_for_element(self._locators.SUGGESTIONS_LISTBOX, timeout=timeout)
+            is not None
+        )
 
     def wait_for_search_input_clickable(self, timeout: int = 10) -> bool:
         """Wait until search input is clickable."""
@@ -181,7 +156,7 @@ class SearchEnginePage(BasePage):
 
         end_time = time.time() + timeout
         while time.time() < end_time:
-            if self.driver.execute_script(
+            if self.execute_script(
                 "return document.activeElement === arguments[0]", element
             ):
                 return True
@@ -226,35 +201,6 @@ class SearchEnginePage(BasePage):
         if not element:
             return {"width": 0, "height": 0, "x": 0, "y": 0}
         return {**element.size, **element.location}
-
-    # === Timing Methods (for performance tests) ===
-
-    def open_search_engine_with_timing(self) -> float:
-        """Open search engine and return time taken."""
-        start = time.time()
-        self.open()
-        return time.time() - start
-
-    def get_search_input_timing(self) -> float:
-        """Find search input and return time taken."""
-        start = time.time()
-        self.find_element(self._locators.SEARCH_BOX)
-        return time.time() - start
-
-    def enter_search_term_with_timing(self, search_term: str) -> float:
-        """Enter search term and return time taken."""
-        start = time.time()
-        self.enter_search_term(search_term)
-        return time.time() - start
-
-    def clear_and_retype_with_timing(self, search_term: str) -> float:
-        """Clear and retype text, return time taken."""
-        start = time.time()
-        self.clear_search()
-        element = self.find_element(self._locators.SEARCH_BOX)
-        if element:
-            element.send_keys(search_term)
-        return time.time() - start
 
     # === Workflow Methods ===
 

@@ -33,12 +33,12 @@ class Settings:
         )
 
         # URLs
-        self.BASE_URL = os.getenv("BASE_URL", "https://duckduckgo.com")
+        self.BASE_URL = os.getenv("BASE_URL", "https://www.bing.com")
         self.API_BASE_URL = os.getenv(
             "API_BASE_URL",
             "https://jsonplaceholder.typicode.com",
         )
-        self.SEARCH_URL = os.getenv("SEARCH_URL", "https://duckduckgo.com/?q=test")
+        self.SEARCH_URL = os.getenv("SEARCH_URL", "https://www.bing.com/search?q=test")
 
         # Test URLs for different testing scenarios
         self.TEST_API_URL = os.getenv("TEST_API_URL", "https://httpbin.org/json")

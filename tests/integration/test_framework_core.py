@@ -68,8 +68,8 @@ def test_base_page_functionality(driver):
     </body>
     </html>
     """
-
-    base_page = BasePage(driver)
+    webdriver, _db = driver  # Unpack tuple from fixture
+    base_page = BasePage(webdriver)
 
     base_page.navigate_to(f"data:text/html,{test_html}")
 
@@ -147,7 +147,7 @@ def test_framework_integration():
     driver, db = get_driver(headless=True)
 
     try:
-        base_page = BasePage((driver, db))
+        base_page = BasePage(driver)
 
         simple_page = (
             "data:text/html,<html><body><h1>Integration Test</h1>"
@@ -164,10 +164,6 @@ def test_framework_integration():
             ),
             "Should be on test page",
         )
-
-        if db:
-            query_result = base_page.execute_query("SELECT 1 as test")
-            print(f"Database query result: {query_result}")
 
         print("✅ Framework integration test passed!")
 

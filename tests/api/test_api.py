@@ -25,9 +25,9 @@ from hamcrest import (
     is_in,
     less_than,
 )
+from utils.performance_monitor import APIPerformanceMonitor
 
 from config.settings import settings
-from utils.performance_monitor import APIPerformanceMonitor
 from utils.structured_logger import get_test_logger
 
 

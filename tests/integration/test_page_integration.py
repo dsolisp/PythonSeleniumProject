@@ -32,7 +32,7 @@ from locators.test_framework_locators import TestFrameworkLocators
 from pages.base_page import BasePage
 from pages.result_page import ResultPage
 from pages.search_engine_page import SearchEnginePage
-from utils.sql_connection import execute_query, get_connection
+from utils.sql_connection import execute_query, fetch_all, get_connection
 from utils.structured_logger import TestLogger
 from utils.webdriver_factory import WebDriverFactory, get_driver
 
@@ -80,21 +80,23 @@ class TestPageObjectIntegration:
         Path(temp_db.name).unlink()
 
     def test_base_page_integration(self, chrome_driver, temp_database):
-        """Test BasePage integration with solid design."""
+        """Test BasePage integration with navigation."""
         conn = get_connection(temp_database)
-        base_page = BasePage(chrome_driver, conn)
+        base_page = BasePage(chrome_driver)
 
         # Test navigation integration
         base_page.navigate_to(settings.BASE_URL)
         current_url = base_page.get_current_url()
         assert_that(current_url, contains_string("duckduckgo.com"))
 
-        # Test database integration through direct methods
+        # Test database operations directly (not through page object)
         query = "INSERT INTO test_results (test_name, result) VALUES (?, ?)"
-        base_page.execute_query(query, ("integration_test", "passed"))
+        execute_query(conn, query, ("integration_test", "passed"))
+        conn.commit()
 
         # Verify data was inserted
-        fetched_record = base_page.execute_query(
+        fetched_record = fetch_all(
+            conn,
             "SELECT * FROM test_results WHERE test_name = ?",
             ("integration_test",),
         )
@@ -133,14 +135,11 @@ class TestPageObjectIntegration:
         page = BasePage(driver)
         assert_that(page.driver, equal_to(mock_driver))
 
-    def test_database_integration_with_page_actions(self, temp_database):
-        """Test database operations integration with page actions."""
+    def test_database_operations(self, temp_database):
+        """Test database operations directly using sql_connection functions."""
         conn = get_connection(temp_database)
-        mock_driver = Mock()
 
-        page = BasePage(mock_driver, conn)
-
-        # Test database operations through direct methods
+        # Test database operations directly
         test_results = [
             ("test_1", "passed"),
             ("test_2", "failed"),
@@ -150,18 +149,21 @@ class TestPageObjectIntegration:
         # Insert test data
         for test_name, result in test_results:
             query = "INSERT INTO test_results (test_name, result) VALUES (?, ?)"
-            page.execute_query(query, (test_name, result))
+            execute_query(conn, query, (test_name, result))
+        conn.commit()
 
         # Verify all records were inserted
-        all_records = page.execute_query("SELECT * FROM test_results")
+        all_records = fetch_all(conn, "SELECT * FROM test_results")
         assert_that(len(all_records), equal_to(3))
 
         # Test update operation
         update_query = "UPDATE test_results SET result = ? WHERE test_name = ?"
-        page.execute_query(update_query, ("re-tested", "test_2"))
+        execute_query(conn, update_query, ("re-tested", "test_2"))
+        conn.commit()
 
         # Verify update
-        updated_record = page.execute_query(
+        updated_record = fetch_all(
+            conn,
             "SELECT result FROM test_results WHERE test_name = ?",
             ("test_2",),
         )
@@ -170,10 +172,11 @@ class TestPageObjectIntegration:
 
         # Test delete operation
         delete_query = "DELETE FROM test_results WHERE result = ?"
-        page.execute_query(delete_query, ("skipped",))
+        execute_query(conn, delete_query, ("skipped",))
+        conn.commit()
 
         # Verify deletion
-        remaining_records = page.execute_query("SELECT * FROM test_results")
+        remaining_records = fetch_all(conn, "SELECT * FROM test_results")
         assert_that(len(remaining_records), equal_to(2))
 
         conn.close()
@@ -299,19 +302,15 @@ class TestConfigurationIntegration:
             # Test that logger works with different components
             mock_driver = Mock()
 
-            page = BasePage(mock_driver, conn)
+            page = BasePage(mock_driver)
 
-            # Test that page object can perform database operations (core
-            # functionality)
+            # Test that page object has driver
             assert_that(page.driver, equal_to(mock_driver))
-            assert_that(page.database, equal_to(conn))
 
-            # Test database integration through page actions
+            # Test database operations directly
             query = "INSERT INTO test_results (test_name, result) VALUES (?, ?)"
-            page.execute_query(
-                query,
-                ("logger_test", "passed"),
-            )  # Verify no exceptions were raised during logging
+            execute_query(conn, query, ("logger_test", "passed"))
+            conn.commit()
             conn.close()
 
         finally:
@@ -343,11 +342,12 @@ class TestEndToEndWorkflow:
         chrome_driver = webdriver.Chrome(options=options)
 
         try:
-            search_page = SearchEnginePage((chrome_driver, conn))
+            search_page = SearchEnginePage(chrome_driver)
 
             # Record test start
             start_query = "INSERT INTO test_results (test_name, result) VALUES (?, ?)"
-            search_page.execute_query(start_query, ("end_to_end_workflow", "started"))
+            execute_query(conn, start_query, ("end_to_end_workflow", "started"))
+            conn.commit()
 
             # Navigate to search page
             search_page.navigate_to(settings.BASE_URL)
@@ -359,13 +359,12 @@ class TestEndToEndWorkflow:
             # Update test result
             result_status = "completed" if screenshot_success else "failed"
             update_query = "UPDATE test_results SET result = ? WHERE test_name = ?"
-            search_page.execute_query(
-                update_query,
-                (result_status, "end_to_end_workflow"),
-            )
+            execute_query(conn, update_query, (result_status, "end_to_end_workflow"))
+            conn.commit()
 
             # Verify final state
-            final_result = search_page.execute_query(
+            final_result = fetch_all(
+                conn,
                 "SELECT result FROM test_results WHERE test_name = ?",
                 ("end_to_end_workflow",),
             )

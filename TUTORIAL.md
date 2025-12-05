@@ -80,7 +80,7 @@ pytest-rerunfailures>=15.0
 requests>=2.32.3
 allure-pytest>=2.13.5
 
-# Data & Analytics
+# Data & Utilities
 numpy>=1.24.0
 pandas>=2.0.0
 
@@ -401,35 +401,28 @@ def compare_screenshots(baseline: str, current: str) -> float:
     return (diff_pixels / total_pixels) * 100
 ```
 
-### 7.2 Test Analytics (`utils/test_analytics.py`)
+### 7.2 Flaky Test Detection (pytest-history)
 
-**Purpose**: Detect flaky tests and track reliability.
+**Purpose**: Detect flaky tests and track reliability across runs.
 
-```python
-import pandas as pd
-from pathlib import Path
+```bash
+# Run tests - history tracked automatically
+pytest tests/
 
-class TestAnalytics:
-    """Analyze test execution data."""
+# View flaky tests
+pytest-history flakes
 
-    def detect_flaky_tests(self, min_runs: int = 3) -> list:
-        """Find tests with inconsistent results."""
-        results = self.load_results()
+# View test run history
+pytest-history list runs
 
-        # Group by test name, calculate pass rate
-        stats = results.groupby('test_name').agg({
-            'passed': ['mean', 'count']
-        })
-
-        # Flaky = pass rate between 10% and 90%
-        flaky = stats[
-            (stats['passed']['mean'] > 0.1) &
-            (stats['passed']['mean'] < 0.9) &
-            (stats['passed']['count'] >= min_runs)
-        ]
-
-        return flaky.index.tolist()
+# Use via run_tests.py
+python run_tests.py --type unit --flaky
 ```
+
+**How it works**:
+- pytest-history automatically stores results in `.test-results.db`
+- Flaky tests are identified when they alternate between pass/fail
+- No custom code needed - just run pytest normally
 
 ### 7.3 Load Testing (Locust)
 

@@ -31,17 +31,17 @@ Complete documentation for the Python Selenium Test Automation Framework.
   - Request/response validation
   - Structured logging
 
-### 📊 Analytics & Intelligence
+### 📊 Analytics & Reporting
 
-- **[Analytics and Reporting](ANALYTICS_AND_REPORTING.md)** - Test result analysis
-  - Pandas DataFrame analytics
-  - Statistical analysis and outlier detection
+- **[Analytics and Reporting](ANALYTICS_AND_REPORTING.md)** - Test result reports
+  - HTML/JSON report generation
+  - CI/CD integration
   - CSV export for external tools
 
-- **[Test Analytics](TEST_ANALYTICS.md)** - Statistical test intelligence
-  - Flaky test detection
-  - Performance anomaly detection
-  - Test reliability scoring
+- **[Test Analytics](TEST_ANALYTICS.md)** - Historical test tracking
+  - Flaky test detection via pytest-history
+  - Test run history analysis
+  - Zero-configuration setup
 
 ### 🔧 Infrastructure & Utilities
 
@@ -84,27 +84,18 @@ Test Execution
         ├─ Load test data
         └─ Export results
 
-Results Export (data/results/)
+Results & History
     │
-    ├─ JSON/YAML format
-    └─ Environment-specific
-    
-Analytics Pipeline
-    │
-    └─ Test Analytics (utils/test_analytics.py)
-        ├─ Flaky test detection
-        ├─ Slow test identification
-        └─ Reliability scoring
+    ├─ JSON/YAML export (data/results/)
+    └─ Test history (.test-results.db)
+        └─ pytest-history plugin
+            ├─ Flaky test detection
+            └─ Run history tracking
 
 Monitoring & Recovery
     │
-    ├─ Error Handler (utils/error_handler.py)
-    │   ├─ Tenacity retry
-    │   └─ Recovery strategies
-    │
-    └─ Performance Monitor (utils/performance_monitor.py)
-        ├─ Psutil tracking
-        └─ Real-time metrics
+    └─ Error Handler (utils/error_handler.py)
+        └─ Tenacity retry
 ```
 
 ## 📖 Usage Workflows
@@ -113,9 +104,8 @@ Monitoring & Recovery
 ```
 1. Define test data → data/test_data.json
 2. Load data → DataManager.load_test_data()
-3. Execute tests → tests/web/
-4. Export results → DataManager.save_test_results_json()
-5. Analyze → python utils/test_analytics.py
+3. Execute tests → pytest tests/web/
+4. Results tracked automatically → .test-results.db
 ```
 
 ### Workflow 2: API Testing with Reporting
@@ -126,22 +116,19 @@ Monitoring & Recovery
 4. View structured logs → Check JSON logs in console
 ```
 
-### Workflow 3: Test Analytics Optimization
+### Workflow 3: Flaky Test Detection
 ```
-1. Run tests regularly → Export to data/results/
-2. Collect historical data → 10+ executions
-3. Run analytics → python utils/test_analytics.py
-4. Review flaky tests → Fix unreliable tests first
-5. Monitor trends → Track reliability over time
+1. Run tests regularly → pytest tests/
+2. History tracked automatically → .test-results.db
+3. Check flaky tests → pytest-history flakes
+4. Fix unreliable tests first
 ```
 
 ### Workflow 4: Performance Testing
 ```
-1. Benchmark functions → @performance_test decorator
-2. Load test APIs → locust -f locustfile.py
-3. Monitor resources → Psutil system tracking
-4. Analyze trends → PerformanceMonitor.get_performance_report()
-5. Set thresholds → Fail tests exceeding limits
+1. Benchmark tests → pytest tests/performance/ --benchmark-only
+2. Load test APIs → locust -f tests/performance/locustfile.py
+3. Set thresholds → Fail tests exceeding limits
 ```
 
 ## 🎯 Quick Reference
@@ -152,38 +139,39 @@ Monitoring & Recovery
 |------|-----|----------|
 | Test web UI | Selenium or Playwright | [Playwright](PLAYWRIGHT_INTEGRATION.md) |
 | Test REST APIs | API Testing | [API Testing](API_TESTING.md) |
-| Analyze test results | Test Analytics | [Analytics](ANALYTICS_AND_REPORTING.md) |
-| Detect flaky tests | Test Analytics | [Test Analytics](TEST_ANALYTICS.md) |
-| Manage test data | Test Data Manager | [Data Management](TEST_DATA_MANAGEMENT.md) |
+| Generate reports | pytest-html, pytest-json | [Analytics](ANALYTICS_AND_REPORTING.md) |
+| Detect flaky tests | pytest-history | [Test Analytics](TEST_ANALYTICS.md) |
+| Manage test data | DataManager | [Data Management](TEST_DATA_MANAGEMENT.md) |
 | Handle errors | Error Handler | [Error Recovery](ERROR_RECOVERY_AND_MONITORING.md) |
 | Load test APIs | Locust | [Performance](PERFORMANCE_MONITORING.md) |
-| Track performance | Performance Monitor | [Performance](PERFORMANCE_MONITORING.md) |
 
 ### Command Cheat Sheet
 
 ```bash
 # Run tests
 pytest tests/web/ -v                    # Selenium web tests
-pytest tests/api/ -v                    # API tests (fast mode)
-ENABLE_ALLURE=true pytest tests/api/    # API tests with Allure
+pytest tests/api/ -v                    # API tests
+python run_tests.py --type unit         # Unit tests via runner
+
+# Flaky test detection
+pytest-history flakes                   # List flaky tests
+pytest-history list runs                # View test run history
+python run_tests.py --type unit --flaky # Run with flaky summary
 
 # Generate reports
-allure serve reports/allure-results     # View Allure report
-python utils/test_analytics.py          # Test analytics report
+pytest --html=report.html               # HTML report
+allure serve reports/allure-results     # Allure report
 
 # Performance testing
 pytest tests/performance/ --benchmark-only  # Benchmarks
 locust -f tests/performance/locustfile.py  # Load testing
-
-# Data operations
-python examples/export_test_results_example.py  # Export results
 ```
 
 ## 🔗 External Resources
 
 - **Selenium Documentation**: https://selenium.dev/documentation/
 - **Playwright Documentation**: https://playwright.dev/python/
-- **Pandas Documentation**: https://pandas.pydata.org/docs/
+- **pytest-history**: https://pypi.org/project/pytest-history/
 - **Locust Documentation**: https://locust.io/
 - **Allure Reports**: https://docs.qameta.io/allure/
 
@@ -191,18 +179,16 @@ python examples/export_test_results_example.py  # Export results
 
 1. **Start Simple**: Begin with basic Selenium/Playwright tests
 2. **Add Data**: Use DataManager for parameterized tests
-3. **Export Results**: Save execution data for analytics
-4. **Monitor Performance**: Track metrics from day one
-5. **Analyze Trends**: Run test analytics regularly for insights
-6. **Fix Flaky Tests**: Address unreliable tests first
+3. **Track History**: Let pytest-history record all runs
+4. **Fix Flaky Tests**: Run `pytest-history flakes` regularly
+5. **Monitor Performance**: Use benchmarks from day one
 
 ## 🆘 Troubleshooting
 
 - **Import errors**: Ensure `pip install -r requirements.txt`
 - **Playwright not found**: Run `playwright install`
-- **Analytics need more data**: Collect 10+ test executions
+- **No flaky tests**: Need 3+ runs with mixed pass/fail results
 - **Allure not generating**: Install Allure CLI: `brew install allure`
-- **Performance issues**: Check system resources with Psutil
 
 ---
 

@@ -116,13 +116,12 @@ class TestPageObjectStructure:
     """Verify page objects follow correct patterns and inheritance."""
 
     def test_base_page_initialization(self):
-        """Verify BasePage can be initialized with driver and database."""
+        """Verify BasePage can be initialized with driver."""
         mock_driver = Mock()
-        mock_sql = Mock()
+        mock_driver.get = Mock()
 
-        page = BasePage(mock_driver, mock_sql)
+        page = BasePage(mock_driver)
         assert_that(page.driver, equal_to(mock_driver))
-        assert_that(page.database, equal_to(mock_sql))
 
     def test_page_object_inheritance(self):
         """Verify page objects inherit from BasePage correctly."""
@@ -132,6 +131,7 @@ class TestPageObjectStructure:
     def test_page_object_initialization(self):
         """Verify page objects can be initialized with mock driver."""
         mock_driver = Mock()
+        mock_driver.get = Mock()
 
         search_page = SearchEnginePage(mock_driver)
         result_page = ResultPage(mock_driver)

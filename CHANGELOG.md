@@ -2,6 +2,53 @@
 
 All notable changes to the Python Selenium Test Automation Framework.
 
+## [2.1.0] - 2025-12-04
+
+### 🔄 Flaky Test Detection Overhaul
+
+This release replaces the custom test analytics implementation with `pytest-history` for simpler, zero-configuration flaky test detection.
+
+### Removed
+- **utils/test_analytics.py** - Replaced with pytest-history plugin
+- Custom pandas-based statistical analysis for flaky detection
+- ML analysis references throughout documentation
+
+### Added
+- **pytest-history>=0.3.0** - Automatic test history tracking
+- `--flaky` flag to `run_tests.py` for flaky test summary
+- `.test-results.db` SQLite database for test history (auto-created)
+
+### Changed
+- **run_tests.py** - Added `--flaky` argument for pytest-history integration
+- **run_full_workflow.py** - Uses pytest-history instead of custom analytics
+- **pytest.ini** - Added pytest-history configuration comments
+- **requirements.txt** - Updated pytest to >=8.0.0, added pytest-history
+
+### Documentation Updated
+- **TEST_ANALYTICS.md** - Complete rewrite for pytest-history
+- **ANALYTICS_AND_REPORTING.md** - Updated for new approach
+- **INDEX.md** - Removed old references, added new commands
+- **TEST_DATA_MANAGEMENT.md** - Removed ML analysis references
+- **TUTORIAL.md** - Updated flaky detection section
+- **README.md** - Updated project structure
+
+### How to Use
+```bash
+# Run tests (history tracked automatically)
+pytest tests/
+
+# View flaky tests
+pytest-history flakes
+
+# View test run history
+pytest-history list runs
+
+# Use via run_tests.py
+python run_tests.py --type unit --flaky
+```
+
+---
+
 ## [2.0.0] - 2025-11-30
 
 ### 🎯 Major Refactoring Release

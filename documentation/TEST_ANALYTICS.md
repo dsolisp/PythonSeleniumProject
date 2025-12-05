@@ -1,244 +1,204 @@
-# Test Analytics Engine
-
-## Unified Workflow
-
-> **Recommended:** Use the integrated workflow script for test analytics. Statistical analysis, flaky test detection, and reliability scoring are automatically triggered by running:
->
-> ```bash
-> python run_full_workflow.py
-> ```
->
-> This script runs all tests, exports results, performs analytics, and generates analysis reports—no manual steps required.
+# Historical Test Tracking & Flaky Test Detection
 
 ## Overview
 
-Test analytics is fully automated as part of the unified workflow. The Test Analytics Engine (`utils/test_analytics.py`) uses **pandas** for statistical analysis to provide flaky test detection, reliability scoring, and performance anomaly detection based on historical execution data.
+The framework uses **pytest-history** to automatically track test results across multiple runs and detect flaky tests. This is a zero-configuration solution that stores results in a SQLite database.
 
 ## 🎯 When to Use
 
-- **After running the workflow script**: Analysis reports are generated automatically
-- **Test suite optimization**: Flaky tests and performance issues are detected
-- **CI/CD optimization**: Use analytics to prioritize test improvements
-- **Quality monitoring**: Track test reliability over time
+- **Detecting flaky tests**: Find tests that sometimes pass, sometimes fail
+- **Historical analysis**: Track test reliability over time
+- **CI/CD optimization**: Identify unreliable tests causing pipeline failures
+- **Quality monitoring**: Build confidence in your test suite
 
-## 📊 Key Features (Automated)
+## 🔧 How It Works
 
-### 1. Flaky Test Detection
+1. **Automatic tracking**: Every pytest run automatically stores results in `.test-results.db`
+2. **No configuration needed**: Just run pytest normally
+3. **Built-in CLI**: Use `pytest-history` commands to analyze results
+4. **SQLite storage**: Query directly with any SQLite client if needed
 
-**Purpose**: Identify tests with inconsistent pass/fail behavior
+## 📊 Key Features
 
-**How it Works**:
-- Analyzes test pass rates across multiple executions
-- Identifies tests with success rates < 90%
-- Requires minimum 3 executions per test
+### 1. Automatic Test History
 
-**Usage**:
-```bash
-# Run analyzer
-python utils/test_analytics.py
-
-# Output:
-⚠️  Flaky Tests (3):
-   • test_checkout: 65% pass rate
-   • test_payment: 80% pass rate
-   • test_network_interception: 75% pass rate
-```
-
-### 2. Performance Anomaly Detection
-
-**Purpose**: Identify tests with unusual execution times
-
-**Metrics**:
-- Average duration per test
-- Identifies slow tests (duration > threshold)
-- Tracks performance trends
-
-**Usage**:
-```python
-from utils.test_analytics import TestAnalytics
-
-analytics = TestAnalytics()
-analytics.load_test_results()
-
-# Output:
-🐢 Slow Tests (5):
-   • test_api_users: 1.20s
-   • test_visual_comparison: 2.50s
-```
-
-### 3. Test Reliability Scoring
-
-**Purpose**: Rank tests by reliability for prioritization
-
-**Scoring Approach**:
-- Pass rate calculation per test
-- Risk scoring based on failure frequency
-- Prioritized list for test maintenance
-
-**Usage**:
-```python
-analytics = TestAnalytics()
-analytics.load_test_results()
-analytics.generate_report()
-
-# Output:
-🏆 Test Reliability (Top 5 risks):
-   • test_multiple_browsers: 25% pass [⚠️ FLAKY]
-   • test_mobile_emulation: 75% pass [⚠️ FLAKY]
-   • test_api_health: 100% pass [Risk: 0%]
-```
-
-## 📊 Data Requirements
-
-### Input Data Format
-
-The analyzer reads JSON files from `data/results/`:
-
-```
-data/results/
-├── local/
-│   └── api_tests_20251006_160530.json
-├── staging/
-│   └── web_tests_20251006_161234.json
-└── production/
-    └── integration_tests_20251006_162000.json
-```
-
-**Expected JSON Structure**:
-```json
-{
-    "test_name": "api_tests",
-    "environment": "staging",
-    "timestamp": "20251006_160530",
-    "results": {
-        "browser": "chrome",
-        "headless": false,
-        "tests": [
-            {
-                "name": "test_api_health",
-                "status": "passed",
-                "duration": 0.5
-            },
-            {
-                "name": "test_api_users",
-                "status": "failed",
-                "duration": 1.2
-            }
-        ]
-    }
-}
-```
-
-### Minimum Dataset Requirements
-
-- **For basic analytics**: Any amount of data
-- **For flaky detection**: Minimum 3 executions per test
-- **Best results**: 20+ executions for trend analysis
-
-## 🚀 Usage Scenarios
-
-### 1. CI/CD Integration
-
-**Identify flaky tests before they cause CI failures**:
+Every test run is automatically recorded:
 
 ```bash
-# Run analytics
-python utils/test_analytics.py > reports/test_analysis.txt
-
-# Review flaky tests
-grep "FLAKY" reports/test_analysis.txt
+# Just run tests normally - history is tracked automatically
+pytest tests/unit/
+pytest tests/integration/
+python run_tests.py --type all
 ```
 
-### 2. Weekly Maintenance Report
+### 2. Flaky Test Detection
+
+Identify tests with inconsistent pass/fail behavior:
 
 ```bash
-# Generate weekly health report
-python utils/test_analytics.py > reports/weekly_health_$(date +%Y%m%d).txt
+# List all flaky tests
+pytest-history flakes
 
-# Review:
-# - Flaky tests to fix
-# - Slow tests to optimize
-# - Reliability trends
+# Example output:
+# tests/web/test_search.py::test_search_results - flaky (passed: 7, failed: 3)
+# tests/api/test_api.py::test_network_call - flaky (passed: 5, failed: 2)
 ```
 
-### 3. Test Prioritization
+### 3. Historical Run Analysis
 
-**Focus on unreliable tests first**:
-
-```python
-from utils.test_analytics import TestAnalytics
-
-analytics = TestAnalytics()
-analytics.load_test_results()
-flaky_tests = analytics.detect_flaky_tests()
-
-# Prioritize fixing flaky tests
-for test in flaky_tests:
-    print(f"Fix: {test['name']} - {test['pass_rate']}% pass rate")
-```
-
-## 📈 Report Generation
-
-### Console Report
+View past test runs and their results:
 
 ```bash
-python utils/test_analytics.py
+# List all recorded test runs
+pytest-history list runs
+
+# Example output:
+# 1 2025-12-04 10:26:05.262201
+# 2 2025-12-04 10:26:33.421358
+# 3 2025-12-04 10:27:14.076058
+
+# View results for a specific run
+pytest-history list results 3
 ```
 
-**Output includes**:
-- Dataset overview (total test executions)
-- Flaky test list with pass rates
-- Slow test identification
-- Test reliability rankings
+## 🚀 Usage
 
-### Integrated Workflow
+### Basic Commands
 
 ```bash
-# Full pipeline with analytics
-python run_full_workflow.py
+# Run tests (history tracked automatically)
+pytest tests/
 
-# Output shows:
-# [POST] Running test analytics (flaky detection, reliability scores)...
-# ⚠️  Flaky Tests (3):
-# 🐢 Slow Tests (5):
-# 🏆 Test Reliability (Top 5 risks):
+# View flaky tests
+pytest-history flakes
+
+# View all test runs
+pytest-history list runs
+
+# View results for run #5
+pytest-history list results 5
 ```
 
-## 🔧 Configuration
+### Using run_tests.py
 
-The analytics engine reads from `data/results/` directory. Results are exported automatically by the test framework.
+```bash
+# Run tests with flaky analysis
+python run_tests.py --type unit --flaky
 
-## ⚠️ Limitations
+# Output includes:
+# ============================================================
+# 🔍 FLAKY TEST ANALYSIS (pytest-history)
+# ============================================================
+# tests/web/test_search.py::test_flaky_example - flaky (passed: 3, failed: 2)
+```
 
-### Small Datasets
-- Flaky detection requires minimum 3 executions per test
-- More data = more accurate trends
-- Solution: Run tests regularly and accumulate data
+### Custom Database Location
 
-### All Passing Tests
-- If all tests always pass, no flaky tests will be detected
-- Solution: Include varied execution scenarios
-- Solution: Ensure consistent test result exports
+```bash
+# Use environment variable
+export PYTEST_HISTORY_DB=/path/to/custom.db
+pytest tests/
+
+# Or command line
+pytest --history-db /path/to/custom.db tests/
+
+# Analyze with custom DB
+pytest-history --db /path/to/custom.db flakes
+```
+
+## 📈 CI/CD Integration
+
+### GitHub Actions Example
+
+```yaml
+- name: Run Tests
+  run: pytest tests/ -v
+
+- name: Check for Flaky Tests
+  run: |
+    echo "## Flaky Test Report" >> $GITHUB_STEP_SUMMARY
+    pytest-history flakes >> $GITHUB_STEP_SUMMARY || echo "No flaky tests detected" >> $GITHUB_STEP_SUMMARY
+
+- name: Upload Test History
+  uses: actions/upload-artifact@v3
+  with:
+    name: test-history
+    path: .test-results.db
+```
+
+### Persisting History Across Runs
+
+To track flaky tests across CI runs, persist the database:
+
+```yaml
+- name: Download Previous History
+  uses: actions/download-artifact@v3
+  with:
+    name: test-history
+  continue-on-error: true
+
+- name: Run Tests
+  run: pytest tests/
+
+- name: Upload Updated History
+  uses: actions/upload-artifact@v3
+  with:
+    name: test-history
+    path: .test-results.db
+```
+
+## 🔍 Advanced: Direct SQLite Queries
+
+The `.test-results.db` is a standard SQLite database. Query it directly for custom analysis:
+
+```bash
+# Open with sqlite3
+sqlite3 .test-results.db
+
+# View tables
+.tables
+
+# Find tests that flip between pass/fail
+SELECT t1.testcase, t1.outcome, t2.outcome
+FROM "test.results" t1
+JOIN "test.results" t2 ON t1.testcase = t2.testcase
+  AND t1.test_run = 1 AND t2.test_run = 2
+WHERE (t1.outcome = 'passed' AND t2.outcome = 'failed')
+   OR (t1.outcome = 'failed' AND t2.outcome = 'passed');
+```
+
+## 📁 File Locations
+
+| File | Purpose |
+|------|---------|
+| `.test-results.db` | SQLite database with test history (auto-created) |
+| `pytest.ini` | Configuration comments for pytest-history |
+| `run_tests.py` | `--flaky` flag for flaky test summary |
+
+## ⚠️ Notes
+
+- **Minimum runs needed**: Flaky detection works best with 3+ runs per test
+- **Database grows**: Consider archiving old history periodically
+- **gitignore**: `.test-results.db` is in `.gitignore` (local history only)
 
 ## 💡 Best Practices
 
-1. **Regular Execution**: Run full workflow daily to track trends
-2. **Prioritize Flaky Tests**: Fix identified flaky tests first - highest ROI
-3. **Track Performance**: Monitor for gradual performance degradation
-4. **Data Hygiene**: Maintain consistent test result format
+1. **Run tests regularly**: More runs = better flaky detection
+2. **Check flakes before merging**: Run `pytest-history flakes` in CI
+3. **Fix flaky tests first**: They erode confidence in the test suite
+4. **Persist in CI**: Upload/download the DB artifact for cross-run analysis
 
 ## 📚 Related Documentation
 
-- [Test Results Export](TEST_DATA_MANAGEMENT.md#test-results-export) - How to export data for analysis
-- [Analytics & Reporting](ANALYTICS_AND_REPORTING.md) - Complementary analytics features
-- [Performance Monitoring](PERFORMANCE_MONITORING.md) - Real-time performance tracking
+- [Pytest Configuration](PYTEST_README.md) - pytest.ini settings
+- [Test Data Management](TEST_DATA_MANAGEMENT.md) - Data-driven testing
+- [Analytics & Reporting](ANALYTICS_AND_REPORTING.md) - Report generation
 
-## 🔗 File Locations
+## 🔗 External Resources
 
-- **Implementation**: `utils/test_analytics.py`
-- **Input Data**: `data/results/*.json`
-- **Workflow**: `run_full_workflow.py`
+- **pytest-history PyPI**: https://pypi.org/project/pytest-history/
+- **pytest-history GitHub**: https://github.com/Nicoretti/one-piece/tree/grand-line/python/pytest-history
 
 ---
 
-**Value Proposition**: Use statistical analysis to detect flaky tests, identify slow tests, and score test reliability - transforming reactive testing into proactive quality assurance.
+**Value Proposition**: Zero-configuration flaky test detection using pytest-history. Just run your tests and let the plugin track history automatically.
