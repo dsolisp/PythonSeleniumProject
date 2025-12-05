@@ -11,7 +11,7 @@ playwright>=1.40.0              # Modern browser automation (dual-browser demo)
 # ═══════════════════════════════════════════════════════════════════════════════
 # TEST FRAMEWORK & ASSERTIONS
 # ═══════════════════════════════════════════════════════════════════════════════
-pytest>=8.0.0                   # Test framework
+pytest>=8.1.0                   # Test framework (8.1+ required by pytest-benchmark)
 pytest-html>=4.1.0              # HTML test reports
 pytest-cov>=4.1.0               # Coverage reporting
 pytest-benchmark>=4.0.0         # Performance benchmarking
