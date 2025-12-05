@@ -57,7 +57,9 @@ class PlaywrightSearchEnginePage(PlaywrightBasePage):
 
             if wait_for_results:
                 with contextlib.suppress(TimeoutError):
-                    self.page.wait_for_load_state("networkidle", timeout=TIMEOUT_DEFAULT_MS)
+                    self.page.wait_for_load_state(
+                        "networkidle", timeout=TIMEOUT_DEFAULT_MS
+                    )
                 try:
                     if self.is_captcha_present():
                         return False
