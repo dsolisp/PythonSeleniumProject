@@ -31,6 +31,7 @@ custom_logs/
 data/results/
 .coverage
 /venv-enhanced
+.test-results.db
 screenshots/
 /.github
 data/.DS_Store

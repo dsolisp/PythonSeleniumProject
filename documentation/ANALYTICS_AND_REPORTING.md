@@ -2,17 +2,15 @@
 
 ## Overview
 
-The framework provides comprehensive analytics and reporting capabilities using **pytest plugins** and the **Test Analytics Engine**. These tools transform raw test execution data into actionable insights.
+The framework provides comprehensive reporting capabilities using **pytest plugins** and **pytest-history** for flaky test detection. These tools transform raw test execution data into actionable insights.
 
 ## 🎯 When to Use
 
 - **After test execution**: Generate detailed HTML/JSON reports
-- **Performance analysis**: Identify slow and flaky tests
+- **Flaky test detection**: Identify tests with inconsistent behavior
 - **Trend tracking**: Monitor test suite health over time
-- **Data export**: Share results with external tools (CSV, JSON)
+- **Data export**: Share results with external tools (JSON)
 - **CI/CD integration**: Automatic reporting in pipelines
-
-> **Tip:** Run `python run_full_workflow.py` to automatically trigger tests, analytics, and report generation.
 
 ## 🔧 Key Components
 
@@ -34,28 +32,29 @@ pytest tests/ --html=reports/html/report.html --self-contained-html
 pytest tests/ --json-report --json-report-file=reports/json/results.json
 ```
 
-### 3. Test Analytics Engine (`utils/test_analytics.py`)
+### 3. pytest-history (Flaky Test Detection)
 
-**Purpose**: Statistical analysis of test execution data
+**Purpose**: Track test results across runs and detect flaky tests
 
 **Features**:
+- Automatic history tracking (zero config)
 - Flaky test detection
-- Slow test identification
-- Reliability scoring
-- Pandas-based analysis
+- Run history analysis
+- SQLite-based storage
 
 **Usage**:
 ```bash
-# Run analytics after tests
-python utils/test_analytics.py
+# Run tests (history tracked automatically)
+pytest tests/
 
-# Output:
-# ⚠️  Flaky Tests (3):
-#    • test_network: 75% pass rate
-# 🐢 Slow Tests (5):
-#    • test_api_users: 1.20s
-# 🏆 Test Reliability (Top 5 risks):
-#    • test_checkout: 65% pass [⚠️ FLAKY]
+# View flaky tests
+pytest-history flakes
+
+# View test run history
+pytest-history list runs
+
+# Use via run_tests.py
+python run_tests.py --type unit --flaky
 ```
 
 ## 📊 Report Types
@@ -74,12 +73,11 @@ pytest tests/ --html=reports/report.html --self-contained-html
 pytest tests/ --json-report --json-report-file=reports/results.json
 ```
 
-### 3. CSV Analytics Export
-**Use case**: Excel analysis, data visualization tools
+### 3. Flaky Test Reports (pytest-history)
+**Use case**: Identify unreliable tests
 
-The full workflow automatically exports to `reports/analytics_summary.csv`:
 ```bash
-python run_full_workflow.py
+pytest-history flakes
 ```
 
 ## 📈 Integration with CI/CD
@@ -91,8 +89,8 @@ python run_full_workflow.py
   run: |
     pytest tests/ --html=reports/report.html --json-report
 
-- name: Run Analytics
-  run: python utils/test_analytics.py
+- name: Check Flaky Tests
+  run: pytest-history flakes || echo "No flaky tests"
 
 - name: Upload Reports
   uses: actions/upload-artifact@v3
@@ -103,16 +101,15 @@ python run_full_workflow.py
 
 ## 📚 Related Documentation
 
-- [Test Analytics](TEST_ANALYTICS.md) - Flaky detection & reliability scoring
+- [Test Analytics](TEST_ANALYTICS.md) - Flaky detection via pytest-history
 - [Test Data Management](TEST_DATA_MANAGEMENT.md) - Data-driven testing
-- [Performance Monitoring](PERFORMANCE_MONITORING.md) - Real-time metrics
+- [Performance Monitoring](PERFORMANCE_MONITORING.md) - Benchmark testing
 
 ## 🔗 File Locations
 
-- **Analytics Engine**: `utils/test_analytics.py`
+- **Test History DB**: `.test-results.db` (auto-created by pytest-history)
 - **Report Output**: `reports/`
-- **Analytics CSV**: `reports/analytics_summary.csv`
 
 ---
 
-**Value Proposition**: Transform raw test results into actionable insights with pytest reporting plugins and statistical analytics.
+**Value Proposition**: Transform raw test results into actionable insights with pytest reporting plugins and automatic flaky test detection.

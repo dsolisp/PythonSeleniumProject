@@ -9,13 +9,25 @@
 
 **Enterprise-grade test automation portfolio demonstrating modern QA engineering** 🚀
 
+---
+
+## 📚 Learning Resources
+
+| Resource | Description |
+|----------|-------------|
+| 📖 **[Zero-to-Hero Tutorial](documentation/ZERO_TO_HERO_TUTORIAL.md)** | Complete guide to building this framework from scratch |
+| 📋 **[Cheat Sheet](documentation/PYTHON_AUTOMATION_CHEAT_SHEET.md)** | Quick reference for pytest, Selenium, Playwright commands |
+| 📑 **[Full Documentation](documentation/INDEX.md)** | All documentation in one place |
+
+---
+
 ## 🎯 What Makes This Project Special
 
 | Feature | Why It Matters |
 |---------|----------------|
 | **Dual Framework Support** | Selenium AND Playwright - shows versatility |
 | **Real CI/CD Integration** | 607-line GitHub Actions workflow with matrix testing |
-| **Statistical Test Analytics** | Pandas-powered flaky test detection & risk scoring |
+| **Flaky Test Detection** | pytest-history tracks test reliability over time |
 | **Visual Regression Testing** | Multiple approaches (pixelmatch, playwright-visual) |
 | **Performance Monitoring** | Real-time metrics with psutil + load testing with Locust |
 | **Self-Healing Tests** | Smart error recovery with retry logic |
@@ -42,7 +54,7 @@
 ./setup_env.sh && python run_full_workflow.py
 ```
 
-That's it! Runs tests, analytics, ML predictions, and generates reports automatically.
+That's it! Runs tests, generates reports, and checks for flaky tests automatically.
 
 ## ✨ Key Features
 
@@ -103,7 +115,6 @@ PythonSeleniumProject/
 │   ├── webdriver_factory.py         # Selenium driver management (297 lines)
 │   ├── test_data_manager.py         # Multi-format data loading (285 lines)
 │   ├── playwright_factory.py        # Playwright browser management (282 lines)
-│   ├── test_analytics.py            # Statistical test analysis (281 lines)
 │   ├── structured_logger.py         # JSON structured logging (266 lines)
 │   └── sql_connection.py            # SQLite utilities (165 lines)
 ├── 📁 config/                       # ⚙️ Environment configurations
@@ -122,7 +133,7 @@ PythonSeleniumProject/
 │   └── normalize_results.py         # Data processing utilities
 ├── 📁 data/                         # 💾 Test data & results storage
 │   ├── configs/                     # Environment-specific configs
-│   └── results/                     # Test execution data for ML analysis
+│   └── results/                     # Test execution data for archiving
 │       ├── local/                   # Local environment results
 │       ├── staging/                 # Staging environment results
 │       └── production/              # Production environment results

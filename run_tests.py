@@ -3,7 +3,7 @@
 Test Runner Script for Python Selenium Test Automation Framework
 
 Provides easy commands to run different types of tests with automatic
-test result export to YAML/JSON and ML-powered analysis.
+test result export and historical tracking.
 
 Test Categories (256 total tests):
   - API tests (5): REST API validation with conditional Allure
@@ -14,9 +14,8 @@ Test Categories (256 total tests):
 
 Features:
   - Automatic test result export to data/results/
-  - ML-powered analysis for flaky test detection & predictions
-  - Performance tracking and anomaly detection
-  - Comprehensive reporting
+  - Historical test tracking via pytest-history (SQLite-based)
+  - Flaky test detection: run `pytest-history flakes` or use --flaky flag
 """
 
 import argparse
@@ -64,7 +63,7 @@ def run_command(command, description):
 
 def export_test_results(*, test_type: str, success: bool, duration: float):
     """
-    Export test results to YAML for ML analysis.
+    Export test results to YAML for archiving.
 
     Args:
         test_type: Type of tests run (unit, integration, etc.)
@@ -104,60 +103,9 @@ def export_test_results(*, test_type: str, success: bool, duration: float):
         return yaml_file
 
 
-def run_ml_analysis():
-    """Run ML-powered test analysis on historical data."""
-    print(f"\n{'=' * 60}")
-    print("🤖 Running ML-Powered Test Analysis")
-    print("=" * 60)
-
-    try:
-        # Check if we have test result data
-        results_dir = Path("data/results")
-        if not results_dir.exists() or not any(results_dir.rglob("*.json")):
-            print("⚠️  No historical test data found for ML analysis")
-            print("   Test data will accumulate over multiple runs")
-            return
-
-        # Run the test analytics
-        analyzer_script = Path("utils/test_analytics.py")
-        if not analyzer_script.exists():
-            print("⚠️  Test analytics script not found")
-            return
-
-        result = subprocess.run(
-            [sys.executable, str(analyzer_script)],
-            check=False,
-            cwd=str(Path.cwd()),
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-
-        print(result.stdout)
-        if result.stderr and "warning" not in result.stderr.lower():
-            print(result.stderr, file=sys.stderr)
-
-        # Check if report was generated
-        report_path = Path("reports/ml_analysis_report.txt")
-        if report_path.exists():
-            print(f"\n✅ ML analysis complete! Report: {report_path}")
-            print("\n📋 Quick Summary:")
-            with Path.open(report_path) as f:
-                lines = f.readlines()
-                # Print first 20 lines of report
-                for line in lines[:20]:
-                    print(line.rstrip())
-
-    except subprocess.TimeoutExpired:
-        print("⚠️  ML analysis timed out (>60s)")
-    except (OSError, RuntimeError) as e:
-        print(f"⚠️  ML analysis failed: {e}")
-        print("   Continuing without analysis...")
-
-
 def main():
     parser = argparse.ArgumentParser(
-        description="Test runner with automatic result export and ML analysis",
+        description="Test runner with automatic result export",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -165,15 +113,14 @@ Examples:
   python run_tests.py --type unit --coverage     # Run unit tests with coverage
   python run_tests.py --type all                 # Run all test suites (~256 tests)
   python run_tests.py --type regression          # Quick smoke test
-  python run_tests.py --type api --no-ml         # Skip ML analysis
 
 Test Counts:
   api         : 5 tests (REST API with conditional Allure)
-  unit        : 229 tests (core, libraries, settings, etc.)
+  unit        : ~180 tests (core, libraries, settings, etc.)
   integration : 19 tests (framework core, page integration)
   performance : 3 tests (benchmarking, monitoring)
   web         : Multiple (Selenium & Playwright UI tests)
-  all         : ~256 tests (comprehensive suite)
+  all         : ~200 tests (comprehensive suite)
   regression  : Quick smoke test
         """,
     )
@@ -205,12 +152,12 @@ Test Counts:
     parser.add_argument(
         "--no-export",
         action="store_true",
-        help="Skip test result export and ML analysis",
+        help="Skip test result export",
     )
     parser.add_argument(
-        "--no-ml",
+        "--flaky",
         action="store_true",
-        help="Skip ML analysis (still exports results)",
+        help="Show flaky tests summary after run (uses pytest-history)",
     )
 
     args = parser.parse_args()
@@ -327,10 +274,6 @@ Test Counts:
                 duration=duration,
             )
 
-    # Run ML analysis (unless disabled)
-    if not args.no_export and not args.no_ml:
-        run_ml_analysis()
-
     # Summary
     print(f"\n{'=' * 60}")
     print("📋 TEST RUN SUMMARY")
@@ -347,8 +290,29 @@ Test Counts:
 
     if not args.no_export:
         print("\n📊 Test results exported for historical tracking")
-        if not args.no_ml:
-            print("🤖 ML analysis completed - check reports/ml_analysis_report.txt")
+
+    # Show flaky tests if requested
+    if args.flaky:
+        print(f"\n{'=' * 60}")
+        print("🔍 FLAKY TEST ANALYSIS (pytest-history)")
+        print("=" * 60)
+        try:
+            flaky_result = subprocess.run(
+                ["pytest-history", "flakes"],
+                capture_output=True,
+                text=True,
+                cwd=Path.cwd(),
+                check=False,
+            )
+            if flaky_result.stdout.strip():
+                print(flaky_result.stdout)
+            else:
+                print("No flaky tests detected yet.")
+                print("Run more tests to build history for flaky detection.")
+        except FileNotFoundError:
+            print(
+                "⚠️  pytest-history CLI not found. Install: pip install pytest-history"
+            )
 
     print("=" * 60)
 

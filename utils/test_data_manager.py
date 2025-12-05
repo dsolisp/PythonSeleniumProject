@@ -149,56 +149,7 @@ class DataManager:
         )
         return [a for a in accounts if a.get("role") == role] if role else accounts
 
-    def get_api_endpoints(
-        self, method: Optional[str] = None, environment: str = "default"
-    ) -> list[dict[str, Any]]:
-        """Get API endpoints, optionally filtered by HTTP method."""
-        endpoints = self.load_test_data("test_data", environment).get(
-            "api_endpoints", []
-        )
-        return (
-            [e for e in endpoints if e.get("method", "").upper() == method.upper()]
-            if method
-            else endpoints
-        )
-
-    def get_browser_configurations(
-        self,
-        browser: Optional[str] = None,
-        mobile: Optional[bool] = None,
-        environment: str = "default",
-    ) -> list[dict[str, Any]]:
-        """Get browser configs with optional filters."""
-        configs = self.load_test_data("test_data", environment).get(
-            "browser_configurations", []
-        )
-        if browser:
-            configs = [c for c in configs if c.get("browser") == browser]
-        if mobile is not None:
-            configs = [c for c in configs if c.get("mobile") == mobile]
-        return configs
-
     # === DATA GENERATORS ===
-
-    def generate_test_user(self, role: str = "standard") -> dict[str, Any]:
-        """Generate dynamic test user data."""
-        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        uid = random.randint(1000, 9999)
-        perms = {
-            "admin": ["read", "write", "delete", "admin"],
-            "standard": ["read", "write"],
-            "readonly": ["read"],
-        }
-        return {
-            "username": f"{role}_user_{uid}",
-            "password": f"{role}_pass_{ts}",
-            "email": f"{role}{uid}@testdomain.com",
-            "role": role,
-            "permissions": perms.get(role, ["read"]),
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "active": True,
-            "user_id": uid,
-        }
 
     def generate_search_data(self, count: int = 5) -> list[dict[str, Any]]:
         """Generate dynamic search test scenarios."""
@@ -223,33 +174,6 @@ class DataManager:
         ]
 
     # === RESULT SAVING ===
-
-    def save_test_results(
-        self, _test_name: str, _results: dict[str, Any], environment: str = "default"
-    ) -> None:
-        """Save test results (creates directory)."""
-        (self.data_dir / "results" / environment).mkdir(parents=True, exist_ok=True)
-
-    def save_test_results_json(
-        self,
-        test_name: str,
-        results: list[dict[str, Any]],
-        environment: str = "default",
-    ) -> str:
-        """Save test results in JSON format with metadata."""
-        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        path = self.data_dir / "results" / f"{test_name}_{ts}.json"
-        path.parent.mkdir(exist_ok=True)
-        data = {
-            "test_name": test_name,
-            "environment": environment,
-            "timestamp": ts,
-            "execution_time": datetime.now(timezone.utc).isoformat(),
-            "results": results,
-        }
-        with open(path, "w") as f:
-            json.dump(data, f, indent=2, default=str)
-        return str(path)
 
     def cleanup_old_results(self, days_to_keep: int = 30) -> None:
         """Clean up result files older than specified days."""

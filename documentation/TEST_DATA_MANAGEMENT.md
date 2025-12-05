@@ -2,30 +2,33 @@
 
 ## Overview
 
-Comprehensive data management system supporting **JSON**, **YAML**, and **CSV** formats for flexible, environment-specific test data handling.
-
-> **Tip:** Run `python run_full_workflow.py` to automatically export test results and manage data archiving.
+Data management system supporting **JSON**, **YAML**, and **CSV** formats for flexible, environment-specific test data handling.
 
 ## 🎯 When to Use
 
 - **Data-driven testing**: Parameterized tests with external data
-- **Environment management**: Different data per environment (local/dev/qa/prod)
+- **Environment management**: Different data per environment (local/qa/prod)
 - **Configuration management**: Complex, hierarchical test configurations
-- **Test result export**: Save execution results for analysis and ML
-- **Dynamic data generation**: Create test users, scenarios on-demand
+- **Test result export**: Save execution results in YAML format
+- **Dynamic data generation**: Create search scenarios on-demand
 
 ## 🔧 Key Components
 
-### 1. DataManager (`utils/test_data_manager.py`)
+### DataManager (`utils/test_data_manager.py`)
 
-**Purpose**: Unified interface for all test data operations
+**Purpose**: Unified interface for test data operations
 
-**Features**:
-- Multi-format support (JSON, YAML, CSV)
-- Environment-specific data loading
-- Data caching for performance
-- Dynamic data generation
-- Result archiving
+**Available Methods**:
+| Method | Purpose |
+|--------|---------|
+| `load_test_data(filename, environment)` | Load JSON/YAML/CSV with caching |
+| `load_yaml_config(config_name, environment)` | Load YAML config (creates default if missing) |
+| `save_test_results_yaml(results, filename)` | Export test results to YAML |
+| `get_search_scenarios(environment)` | Get search test scenarios |
+| `get_user_accounts(role, environment)` | Get user accounts, optionally filtered |
+| `generate_search_data(count)` | Generate dynamic search scenarios |
+| `cleanup_old_results(days_to_keep)` | Remove old result files |
+| `validate_data_schema(data, schema_name)` | Validate data structure |
 
 ## 📁 Data Organization
 
@@ -35,17 +38,14 @@ Comprehensive data management system supporting **JSON**, **YAML**, and **CSV** 
 data/
 ├── test_data.json              # Main test data
 ├── configs/                    # YAML configurations
-│   ├── browser_settings_local.yml
+│   ├── browser_config_local.yml
 │   ├── browser_settings_qa.yml
-│   └── browser_settings_prod.yml
-├── results/                    # Test execution results
-│   ├── local/
-│   ├── staging/
-│   └── production/
-└── environments/               # Environment-specific data
-    ├── local.json
-    ├── qa.json
-    └── prod.json
+│   ├── browser_settings_production.yml
+│   └── browser_settings_test.yml
+└── results/                    # Test execution results
+    ├── local/
+    ├── staging/
+    └── production/
 ```
 
 ## 🎨 Usage Patterns
@@ -137,56 +137,52 @@ prod_url = prod_data['base_url']   # https://prod.example.com
 
 ### 4. Export Test Results
 
-**Purpose**: Save execution results for ML analysis and reporting
+**Purpose**: Save execution results for reporting
 
 ```python
 # After test execution
 test_results = {
-    'test_name': 'api_tests',
-    'environment': 'staging',
-    'timestamp': datetime.now().strftime('%Y%m%d_%H%M%S'),
-    'results': {
-        'browser': 'chrome',
-        'headless': False,
-        'tests': [
-            {
-                'name': 'test_login',
-                'status': 'passed',
-                'duration': 1.2
-            },
-            {
-                'name': 'test_checkout',
-                'status': 'failed',
-                'duration': 3.5
-            }
-        ]
-    }
+    'total_tests': 10,
+    'passed': 8,
+    'failed': 2,
+    'success_rate': 0.8,
+    'test_details': [
+        {'name': 'test_login', 'status': 'passed', 'duration': 1.2},
+        {'name': 'test_checkout', 'status': 'failed', 'duration': 3.5}
+    ],
+    'performance_metrics': {'avg_duration': 2.35},
+    'environment_info': {'browser': 'chrome'}
 }
 
-# Export to JSON
-manager.save_test_results_json(test_results)
-# Saves to: data/results/staging/api_tests_20251006_160530.json
-
-# Export to YAML (human-readable)
-manager.save_test_results_yaml(test_results)
-# Saves to: data/results/staging/api_tests_20251006_160530.yml
+# Export to YAML
+path = manager.save_test_results_yaml(test_results)
+# Saves to: data/results/results_20251006_160530.yml
+print(f"Results saved to: {path}")
 ```
 
 ### 5. Dynamic Data Generation
 
 ```python
-# Generate test user on-demand
-user = manager.generate_test_user(
-    prefix='testuser',
-    environment='qa'
-)
-# Returns: {'username': 'testuser_qa_1234', 'password': 'auto_generated_pass'}
+# Generate search test scenarios
+scenarios = manager.generate_search_data(count=5)
+# Returns list of dicts with:
+# - name, search_term, expected_results_count
+# - timeout, expected_title_contains
+# - generated=True, created_at timestamp
 
-# Generate test scenario
-scenario = manager.generate_test_scenario(
-    scenario_type='search',
-    complexity='simple'
-)
+for scenario in scenarios:
+    print(f"Search: {scenario['search_term']}")
+```
+
+### 6. Data Accessors
+
+```python
+# Get search scenarios from test_data.json
+scenarios = manager.get_search_scenarios(environment='default')
+
+# Get user accounts, optionally filtered by role
+all_users = manager.get_user_accounts()
+admins = manager.get_user_accounts(role='admin')
 ```
 
 ## 🎯 Real-World Examples
@@ -232,59 +228,55 @@ def test_with_env_config(driver, config):
     driver.get(config['base_url'])
 ```
 
-### Example 3: Test Result Export Integration
+### Example 3: Test Result Export
 
 ```python
-# conftest.py - Automatic export after test session
-import pytest
+# Export test results after execution
 from utils.test_data_manager import DataManager
 
-@pytest.fixture(scope='session')
-def test_results_collector():
-    results = []
-    yield results
-    
-    # Export results after all tests complete
-    if results:
-        manager = DataManager()
-        export_data = {
-            'test_name': 'regression_suite',
-            'environment': os.getenv('TEST_ENV', 'local'),
-            'timestamp': datetime.now().strftime('%Y%m%d_%H%M%S'),
-            'results': {
-                'browser': 'chrome',
-                'tests': results
-            }
-        }
-        manager.save_test_results_json(export_data)
+manager = DataManager()
 
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item, call):
-    outcome = yield
-    report = outcome.get_result()
-    
-    if report.when == 'call':
-        test_results_collector = item.funcargs.get('test_results_collector')
-        if test_results_collector is not None:
-            test_results_collector.append({
-                'name': item.name,
-                'status': 'passed' if report.passed else 'failed',
-                'duration': report.duration
-            })
+# Collect results
+results = {
+    'total_tests': 25,
+    'passed': 23,
+    'failed': 2,
+    'success_rate': 0.92,
+    'test_details': [
+        {'name': 'test_login', 'status': 'passed', 'duration': 1.2},
+        {'name': 'test_checkout', 'status': 'failed', 'duration': 3.5}
+    ]
+}
+
+# Save to YAML
+path = manager.save_test_results_yaml(results)
+print(f"Results saved: {path}")
 ```
 
-## 🔗 Integration with Test Analytics
+> **Note**: For automatic test history tracking, pytest-history handles this automatically.
+> Just run `pytest tests/` and results are stored in `.test-results.db`.
 
-Test results exported via DataManager are automatically consumed by Test Analytics:
+## 🔗 Integration with Test History
+
+Test results are tracked automatically by pytest-history:
+
+```bash
+# Run tests - history tracked automatically
+pytest tests/
+
+# View flaky tests
+pytest-history flakes
+
+# View test run history
+pytest-history list runs
+```
+
+For manual result exports (e.g., for external reporting), use DataManager:
 
 ```python
-# Export results during test execution
 manager = DataManager()
-manager.save_test_results_json(results)
-
-# Test Analytics Engine picks them up automatically
-# Run: python utils/test_analytics.py
-# Or use the full workflow: python run_full_workflow.py
+manager.save_test_results_yaml(results)
+# Saves to: data/results/results_[timestamp].yml
 ```
 
 ## 📊 Supported Formats
@@ -298,7 +290,7 @@ manager.save_test_results_json(results)
 }
 ```
 
-### YAML  
+### YAML
 **Best for**: Configuration files, hierarchical data, human editing
 ```yaml
 database:
@@ -332,27 +324,23 @@ data2 = manager.load_test_data('test_data')
 ### Data Validation
 
 ```python
-# Validate required fields
-try:
-    manager.validate_test_data(data, required_fields=['users', 'scenarios'])
-except ValueError as e:
-    print(f"Invalid data: {e}")
+# Validate against predefined schemas
+# Available schemas: 'search_scenario', 'user_account', 'api_endpoint'
+is_valid = manager.validate_data_schema(data, 'search_scenario')
+# Returns True if data has required fields: ['name', 'search_term']
 ```
 
-### Data Versioning
+### Cleanup Old Results
 
 ```python
-# Archive old results
-manager.archive_results(older_than_days=30)
-
-# Load specific version
-historical_data = manager.load_historical_data('2024_Q1')
+# Remove result files older than 30 days
+manager.cleanup_old_results(days_to_keep=30)
 ```
 
 ## 📚 Related Documentation
 
-- [Test Analytics](TEST_ANALYTICS.md) - How Test Analytics uses exported data
-- [Analytics & Reporting](ANALYTICS_AND_REPORTING.md) - Analyzing test results
+- [Test Analytics](TEST_ANALYTICS.md) - Flaky test detection via pytest-history
+- [Analytics & Reporting](ANALYTICS_AND_REPORTING.md) - Report generation
 - [API Testing](API_TESTING.md) - Data-driven API tests
 
 ## 🔗 File Locations
@@ -360,18 +348,16 @@ historical_data = manager.load_historical_data('2024_Q1')
 - **Implementation**: `utils/test_data_manager.py`
 - **Test Data**: `data/test_data.json`
 - **Configurations**: `data/configs/*.yml`
-- **Results**: `data/results/[environment]/*.json`
-- **Examples**: `examples/export_test_results_example.py`
+- **Results**: `data/results/*.yml`
 
 ## 💡 Best Practices
 
 1. **Separate environments**: Use different data files per environment
 2. **YAML for configs**: Use YAML for complex, nested configurations
 3. **JSON for data**: Use JSON for programmatic test data
-4. **Regular exports**: Export test results after each run
-5. **Version control**: Commit data structure, not sensitive values
-6. **Data cleanup**: Archive old results to prevent directory bloat
+4. **Version control**: Commit data structure, not sensitive values
+5. **Cleanup regularly**: Use `cleanup_old_results()` to prevent bloat
 
 ---
 
-**Value Proposition**: Flexible, multi-format data management enabling true data-driven testing with environment-specific configurations and seamless analytics integration.
+**Value Proposition**: Flexible, multi-format data management enabling data-driven testing with environment-specific configurations.

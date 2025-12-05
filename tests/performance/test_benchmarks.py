@@ -8,9 +8,7 @@ import requests
 from hamcrest import (
     assert_that,
     equal_to,
-    greater_than,
     greater_than_or_equal_to,
-    has_key,
     is_,
     less_than,
 )
@@ -20,12 +18,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from config.settings import settings
-from utils.performance_monitor import (
-    PerformanceMonitor,
-    api_performance,
-    performance_test,
-    web_performance,
-)
 from utils.sql_connection import get_connection
 from utils.structured_logger import get_logger
 from utils.webdriver_factory import WebDriverFactory
@@ -42,14 +34,12 @@ class TestPerformanceBenchmarks:
     def setup_class(cls):
         """Setup class-level resources."""
         cls.logger = get_logger("PerformanceBenchmarks")
-        cls.monitor = PerformanceMonitor("BenchmarkTests")
         cls.logger.info("Performance benchmark test suite started")
 
     @classmethod
     def teardown_class(cls):
         """Cleanup and log performance summary."""
-        summary = cls.monitor.get_metrics_summary()
-        cls.logger.info("Performance benchmark suite completed", **summary)
+        cls.logger.info("Performance benchmark suite completed")
 
     def test_webdriver_creation_benchmark(self, benchmark):
         """Benchmark WebDriver creation performance."""
@@ -215,7 +205,6 @@ class TestPerformanceBenchmarks:
 
         assert_that(result, is_(True))
 
-    @performance_test(threshold_ms=8000, name="page_load_threshold")
     def test_page_load_with_threshold(self):
         """Test page load with performance threshold validation."""
         factory = WebDriverFactory()
@@ -305,69 +294,3 @@ class TestPerformanceBenchmarks:
             tasks_completed=result,
             mean_time=benchmark.stats["mean"],
         )
-
-
-class TestPerformanceMonitoringIntegration:
-    """Test performance monitoring utilities integration."""
-
-    def test_performance_monitor_timer_decorator(self):
-        """Test performance monitor timer decorator."""
-        monitor = PerformanceMonitor("TestMonitor")
-
-        @monitor.timer(name="test_function_timing")
-        def slow_function():
-            time.sleep(0.1)  # 100ms delay
-            return "completed"
-
-        result = slow_function()
-        assert_that(result, equal_to("completed"))
-
-        # Check if metric was recorded
-        metrics = monitor.get_metrics_summary()
-        assert_that(metrics["total_metrics"], greater_than(0))
-        assert_that(metrics["metrics"], has_key("test_function_timing"))
-
-        timing_metric = metrics["metrics"]["test_function_timing"]
-        # Should be at least 100ms
-        assert_that(timing_metric["value"], greater_than_or_equal_to(100))
-
-    def test_web_performance_monitor(self):
-        """Test WebDriver performance monitoring."""
-        factory = WebDriverFactory()
-        driver = factory.create_chrome_driver(headless=True)
-
-        try:
-            # Monitor page load
-            load_time = web_performance.monitor_page_load(driver, settings.BASE_URL)
-            assert_that(load_time, greater_than(0))
-
-            # Monitor element finding
-            find_time = web_performance.monitor_element_find(driver, By.NAME, "q")
-            assert_that(find_time, greater_than(0))
-
-            # Check metrics were recorded
-            summary = web_performance.get_metrics_summary()
-            assert_that(summary["total_metrics"], greater_than_or_equal_to(2))
-
-        finally:
-            driver.quit()
-
-    def test_api_performance_monitor(self):
-        """Test API performance monitoring."""
-        session = requests.Session()
-
-        # Monitor API request
-        timing_data = api_performance.monitor_api_request(
-            session,
-            "GET",
-            settings.TEST_API_URL,
-        )
-
-        assert_that(timing_data, has_key("response_time"))
-        assert_that(timing_data, has_key("total_time"))
-        assert_that(timing_data, has_key("status_code"))
-        assert_that(timing_data["status_code"], equal_to(200))
-
-        # Check metrics were recorded
-        summary = api_performance.get_metrics_summary()
-        assert_that(summary["total_metrics"], greater_than_or_equal_to(2))

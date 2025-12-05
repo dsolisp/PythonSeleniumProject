@@ -4,8 +4,8 @@ Integrated QA Automation Workflow Script
 
 - Prepares environment (cleans old results, sets up directories)
 - Runs all web and API tests
-- Exports results for analytics/ML
-- Runs analytics and ML modules
+- Exports results for reporting
+- Runs flaky test detection via pytest-history
 - Prints clear output/report locations
 """
 
@@ -122,7 +122,7 @@ def run_pytest(test_path, label):
 
 
 def export_results():
-    print("[POST] Exporting test results for analytics/ML...")
+    print("[POST] Exporting test results for reporting...")
     # If any json reports were created in reports/, copy them to
     # data/results for completeness.
     for f in REPORTS_DIR.glob("test_results_*.json"):
@@ -135,9 +135,9 @@ def export_results():
         print(f"[POST] Found result: {f}")
 
 
-# --- POST-TEST: ANALYTICS & ML ---
+# --- POST-TEST: ANALYTICS & REPORTING ---
 def run_analytics():
-    print("[POST] Running analytics (pandas reporting)...")
+    print("[POST] Running analytics (CSV export)...")
     try:
         # Load all results from JSON files in data/results/
         all_results = []
@@ -158,19 +158,20 @@ def run_analytics():
         print(f"[ERROR] Analytics failed: {e}")
 
 
-def run_ml_analysis():
-    print("[POST] Running test analytics (flaky detection, reliability scores)...")
+def run_flaky_detection():
+    print("[POST] Running flaky test detection (pytest-history)...")
     result = subprocess.run(
-        [str(VENV_PYTHON), "utils/test_analytics.py"],
+        [str(VENV_PYTHON), "-m", "pytest_history", "flakes"],
         check=False,
         capture_output=True,
         text=True,
     )
-    print(result.stdout)
-    if result.returncode != 0:
-        print(f"[ERROR] ML analysis failed: {result.stderr}")
+    if result.stdout.strip():
+        print(result.stdout)
     else:
-        print("[POST] ML analysis completed.")
+        print("[POST] No flaky tests detected yet. Run more tests to build history.")
+    if result.returncode != 0 and result.stderr:
+        print(f"[WARN] Flaky detection issue: {result.stderr}")
 
 
 def archive_old_results(max_reports=30):
@@ -193,7 +194,7 @@ def main():
     run_pytest(API_TESTS, "api")
     export_results()
     run_analytics()
-    run_ml_analysis()
+    run_flaky_detection()
     archive_old_results(max_reports=30)
     print(
         "\n[COMPLETE] Full workflow finished. See reports/ and "
