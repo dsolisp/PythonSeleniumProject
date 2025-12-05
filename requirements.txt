@@ -11,10 +11,10 @@ playwright>=1.40.0              # Modern browser automation (dual-browser demo)
 # ═══════════════════════════════════════════════════════════════════════════════
 # TEST FRAMEWORK & ASSERTIONS
 # ═══════════════════════════════════════════════════════════════════════════════
-pytest>=8.1.0                   # Test framework (8.1+ required by pytest-benchmark)
+pytest>=7.4.3,<8.0.0            # Test framework (pinned for pytest-history compatibility)
 pytest-html>=4.1.0              # HTML test reports
 pytest-cov>=4.1.0               # Coverage reporting
-pytest-benchmark>=4.0.0         # Performance benchmarking
+pytest-benchmark>=4.0.0,<5.0.0  # Performance benchmarking (pinned for pytest 7.x compat)
 pytest-json-report>=1.5.0       # JSON reports for test result export
 pytest-rerunfailures>=13.0      # Flaky test retry in current session
 pytest-history>=0.3.0           # Historical test tracking & flaky detection
