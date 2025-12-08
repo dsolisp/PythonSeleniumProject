@@ -44,7 +44,9 @@ ruff check pages/base_page.py
 ruff format utils/
 ```
 
-### 2. **Type Checking with mypy**
+### 2. **Type Checking with mypy** (Optional)
+
+> **Note**: This project uses a simplified approach with clear docstrings instead of complex type hints (`Any`, `Optional`, etc.). mypy is still available for checking any type annotations that exist.
 
 **Check type annotations:**
 ```bash

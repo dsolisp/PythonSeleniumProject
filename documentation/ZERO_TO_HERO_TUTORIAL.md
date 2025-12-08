@@ -95,7 +95,7 @@ class AbstractElementInteractionStrategy(ABC):
         pass
 
 # ✅ GOOD: Simple, direct method
-def click(self, locator: tuple) -> bool:
+def click(self, locator):
     """Click element. Returns True on success."""
     element = self.find_element(locator)
     if element:
@@ -117,7 +117,7 @@ Ask yourself: "Does this abstraction provide value, or just add complexity?"
 |-----------|-------------|
 | **DRY** | Shared utilities in `utils/`, common locators in `locators/` |
 | **Single Responsibility** | Each page class handles one page |
-| **Explicit > Implicit** | Clear method names, type hints everywhere |
+| **Explicit > Implicit** | Clear method names, descriptive docstrings |
 
 #### 4. When to Use Each Testing Approach
 
@@ -300,17 +300,17 @@ class ExamplePage(BasePage):
         super().__init__(driver)
         self.url = "https://example.com"
 
-    def open(self) -> bool:
-        """Navigate to example.com."""
+    def open(self):
+        """Navigate to example.com. Returns True on success."""
         return self.navigate_to(self.url)
 
-    def get_heading_text(self) -> str:
-        """Get the main heading text."""
+    def get_heading_text(self):
+        """Get the main heading text. Returns string or empty string."""
         element = self.find_element(self.HEADING)
         return element.text if element else ""
 
-    def click_more_info(self) -> bool:
-        """Click the 'More information' link."""
+    def click_more_info(self):
+        """Click the 'More information' link. Returns True on success."""
         return self.click(self.MORE_INFO_LINK)
 ```
 

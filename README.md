@@ -31,13 +31,13 @@
 | **Visual Regression Testing** | Multiple approaches (pixelmatch, playwright-visual) |
 | **Performance Monitoring** | Real-time metrics with psutil + load testing with Locust |
 | **Self-Healing Tests** | Smart error recovery with retry logic |
-| **Clean Architecture** | Page Object Model, modular utilities, type hints throughout |
+| **Clean Architecture** | Page Object Model, modular utilities, clear docstrings |
 
 ### Project Metrics
 - **~10,000 lines** of production-quality Python
 - **263 tests** (205 unit + 58 integration/web/api/performance)
-- **100% type hints** on public APIs
-- **Zero linter warnings** (ruff/mypy/bandit compliant)
+- **Simple, readable code** with clear docstrings over complex type hints
+- **Zero linter warnings** (ruff/bandit compliant)
 
 ## 📋 Prerequisites
 

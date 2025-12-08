@@ -86,7 +86,7 @@ This release focuses on reducing code bloat while maintaining portfolio showcase
 ### Improved
 - **Test execution**: 212 unit tests, all passing
 - **Linter compliance**: Zero ruff errors
-- **Type hints**: Updated to use `Optional[]` properly
+- **Code simplification**: Clear docstrings over complex type hints
 
 ### Metrics
 
