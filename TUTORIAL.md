@@ -131,8 +131,13 @@ import structlog
 import logging
 from pathlib import Path
 
-def setup_logging(log_level: str = "INFO", log_file: str | None = None):
-    """Configure structured logging with JSON output."""
+def setup_logging(log_level="INFO", log_file=None):
+    """Configure structured logging with JSON output.
+
+    Args:
+        log_level: Logging level (DEBUG, INFO, WARNING, ERROR). Default: INFO
+        log_file: Optional path to log file
+    """
     logging.basicConfig(
         level=getattr(logging, log_level.upper()),
         format="%(message)s"
@@ -177,12 +182,16 @@ class WebDriverFactory:
     SUPPORTED_BROWSERS = {"chrome", "firefox", "edge"}
 
     @classmethod
-    def create_driver(
-        cls,
-        browser: str = "chrome",
-        headless: bool = False
-    ) -> webdriver.Remote:
-        """Create a WebDriver instance."""
+    def create_driver(cls, browser="chrome", headless=False):
+        """Create a WebDriver instance.
+
+        Args:
+            browser: Browser name (chrome, firefox, edge). Default: chrome
+            headless: Run in headless mode. Default: False
+
+        Returns:
+            WebDriver instance
+        """
         browser = browser.lower()
 
         if browser == "chrome":
@@ -241,24 +250,27 @@ class SmartErrorHandler:
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+# Timeout constants - centralized for consistency
+TIMEOUT_DEFAULT = 20  # Standard operations
+TIMEOUT_SLOW = 45  # Slow-loading elements
+
 class BasePage:
     """Base class for all page objects."""
 
-    def __init__(self, driver, timeout: int = 10):
+    def __init__(self, driver):
         self.driver = driver
-        self.timeout = timeout
-        self.wait = WebDriverWait(driver, timeout)
+        self.wait = WebDriverWait(driver, TIMEOUT_DEFAULT)
 
-    def find_element(self, locator: tuple):
-        """Find element with explicit wait."""
-        return self.wait.until(EC.presence_of_element_located(locator))
+    def find_element(self, locator):
+        """Find element immediately. Returns WebElement or None."""
+        return self.driver.find_element(*locator)
 
-    def click(self, locator: tuple):
+    def click(self, locator):
         """Click element with wait for clickability."""
         element = self.wait.until(EC.element_to_be_clickable(locator))
         element.click()
 
-    def type_text(self, locator: tuple, text: str):
+    def type_text(self, locator, text):
         """Type text into element."""
         element = self.find_element(locator)
         element.clear()
@@ -390,8 +402,16 @@ chmod +x scripts/run_ci_checks.sh
 from PIL import Image
 from pixelmatch import pixelmatch
 
-def compare_screenshots(baseline: str, current: str) -> float:
-    """Compare two screenshots, return difference percentage."""
+def compare_screenshots(baseline, current):
+    """Compare two screenshots, return difference percentage.
+
+    Args:
+        baseline: Path to baseline screenshot
+        current: Path to current screenshot
+
+    Returns:
+        Difference percentage as float
+    """
     img1 = Image.open(baseline)
     img2 = Image.open(current)
 
