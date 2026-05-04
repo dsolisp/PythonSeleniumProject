@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.integration
 class TestFrameworkIntegration:
     """Framework integration tests (6 tests to match standard)."""

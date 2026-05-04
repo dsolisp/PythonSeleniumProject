@@ -13,14 +13,14 @@ class IframesLocators:
 
     # ── /iframes.html host-page iframe elements ───────────────────────────
     PARENT_FRAME = (By.CSS_SELECTOR, '[data-test="parent-frame"]')
-    OUTER_FRAME  = (By.CSS_SELECTOR, '[data-test="outer-frame"]')
+    OUTER_FRAME = (By.CSS_SELECTOR, '[data-test="outer-frame"]')
 
     # ── Inside parentFrame (editor.html) ──────────────────────────────────
     EDITOR = (By.CSS_SELECTOR, '[data-test="editor"]')
 
     # ── Inside outerFrame → childFrame (inner-form.html) ──────────────────
-    CHILD_FRAME   = (By.CSS_SELECTOR, '[data-test="child-frame"]')
-    INNER_NAME    = (By.CSS_SELECTOR, '[data-test="inner-name"]')
-    INNER_EMAIL   = (By.CSS_SELECTOR, '[data-test="inner-email"]')
-    INNER_SUBMIT  = (By.CSS_SELECTOR, '[data-test="inner-submit"]')
-    INNER_RESULT  = (By.CSS_SELECTOR, '[data-test="inner-result"]')
+    CHILD_FRAME = (By.CSS_SELECTOR, '[data-test="child-frame"]')
+    INNER_NAME = (By.CSS_SELECTOR, '[data-test="inner-name"]')
+    INNER_EMAIL = (By.CSS_SELECTOR, '[data-test="inner-email"]')
+    INNER_SUBMIT = (By.CSS_SELECTOR, '[data-test="inner-submit"]')
+    INNER_RESULT = (By.CSS_SELECTOR, '[data-test="inner-result"]')

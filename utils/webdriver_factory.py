@@ -22,7 +22,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
-from config.constants import USER_AGENTS, PATHS
+from config.constants import PATHS, USER_AGENTS
 
 logger = logging.getLogger(__name__)
 

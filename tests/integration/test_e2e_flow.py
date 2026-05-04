@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.integration
 class TestE2EFlow:
     """E2E Flow tests (3 tests to match standard)."""

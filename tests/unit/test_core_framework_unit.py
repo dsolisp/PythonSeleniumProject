@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.unit
 class TestCoreFrameworkUnit:
     """Core framework unit tests (10 tests to match standard)."""

@@ -87,7 +87,9 @@ class TestLighthouseAccessibility:
         print("\n=== Lighthouse-Style Accessibility Audit ===")
         print(f"Bing Homepage Score: {score_data.score}%")
         print(f"Passes: {score_data.passes}, Violations: {score_data.violations}")
-        print(f"Critical: {score_data.critical_violations}, Serious: {score_data.serious_violations}")
+        print(
+            f"Critical: {score_data.critical_violations}, Serious: {score_data.serious_violations}"
+        )
 
         # Expect at least 70% accessibility score
         assert score_data.score >= 70, f"Score {score_data.score}% below 70% threshold"

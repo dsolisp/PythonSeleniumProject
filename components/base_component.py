@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from config.constants import TIMEOUTS
 
+
 class BaseComponent:
     """Thin wrapper around a shared WebDriver instance.
 

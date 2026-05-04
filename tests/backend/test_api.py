@@ -4,17 +4,20 @@ Equivalent to Cypress api.cy.ts.
 Covers: positive, negative, schema validation, SLA, and pagination.
 """
 
+import math
 import time
+
 import pytest
 import requests
-import math
 import urllib3
 from hamcrest import assert_that, equal_to, greater_than, has_key, is_not
+
 from config.constants import URLS
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 BASE_URL = URLS.SWAPI
+
 
 @pytest.mark.api
 class TestSwapiAPI:
@@ -61,10 +64,24 @@ class TestSwapiAPI:
         assert_that(res.status_code, equal_to(200))
         body = res.json()
         expected_keys = [
-            'name', 'model', 'manufacturer', 'cost_in_credits', 'length',
-            'max_atmosphering_speed', 'crew', 'passengers', 'cargo_capacity',
-            'consumables', 'hyperdrive_rating', 'MGLT', 'starship_class',
-            'pilots', 'films', 'created', 'edited', 'url'
+            "name",
+            "model",
+            "manufacturer",
+            "cost_in_credits",
+            "length",
+            "max_atmosphering_speed",
+            "crew",
+            "passengers",
+            "cargo_capacity",
+            "consumables",
+            "hyperdrive_rating",
+            "MGLT",
+            "starship_class",
+            "pilots",
+            "films",
+            "created",
+            "edited",
+            "url",
         ]
         for key in expected_keys:
             assert_that(body, has_key(key))

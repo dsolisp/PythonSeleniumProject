@@ -8,7 +8,7 @@ class AlertsLocators:
     Pure selector definitions — zero logic, zero assertions (Law 2).
     """
 
-    TRIGGER_ALERT   = (By.CSS_SELECTOR, '[data-test="trigger-alert"]')
+    TRIGGER_ALERT = (By.CSS_SELECTOR, '[data-test="trigger-alert"]')
     TRIGGER_CONFIRM = (By.CSS_SELECTOR, '[data-test="trigger-confirm"]')
-    TRIGGER_PROMPT  = (By.CSS_SELECTOR, '[data-test="trigger-prompt"]')
-    RESULT_TEXT     = (By.CSS_SELECTOR, '[data-test="result-text"]')
+    TRIGGER_PROMPT = (By.CSS_SELECTOR, '[data-test="trigger-prompt"]')
+    RESULT_TEXT = (By.CSS_SELECTOR, '[data-test="result-text"]')

@@ -1,5 +1,6 @@
-from __future__ import annotations
 """Login page object for SauceDemo."""
+
+from __future__ import annotations
 
 from locators.sauce.inventory_locators import InventoryLocators
 from locators.sauce.login_locators import LoginLocators
@@ -16,7 +17,7 @@ class LoginPage(BasePage):
     Inherits BasePage only (max 1 level — Law 4).
     """
 
-    def open(self) -> "LoginPage":
+    def open(self) -> LoginPage:
         """Navigate to the login page and return self for chaining."""
         self.navigate_to(URL)
         return self

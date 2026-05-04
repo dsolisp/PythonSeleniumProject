@@ -9,7 +9,7 @@ Architecture:
 """
 
 import pytest
-from hamcrest import assert_that, contains_string, equal_to, greater_than, has_item, is_
+from hamcrest import assert_that, contains_string, equal_to, is_
 
 from pages.sauce.cart_page import CartPage
 from pages.sauce.checkout_page import CheckoutPage
@@ -43,7 +43,9 @@ class TestSauceDemoLogin:
 
     def test_invalid_credentials_show_error(self, selenium_driver):
         """should show error for invalid credentials"""
-        creds = UserBuilder().with_username("bad_user").with_password("bad_pass").build()
+        creds = (
+            UserBuilder().with_username("bad_user").with_password("bad_pass").build()
+        )
         login = LoginPage(selenium_driver).open()
         login.login(creds.username, creds.password)
         error = login.get_error_message()

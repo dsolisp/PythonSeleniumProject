@@ -1,19 +1,19 @@
-import time
-import requests
-import pytest
-from hamcrest import assert_that, less_than, equal_to
 import concurrent.futures
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+import time
 
-from config.settings import settings
+import requests
+from hamcrest import assert_that, equal_to, less_than
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
 from utils.webdriver_factory import WebDriverFactory
 
 """
 Performance tests measuring page load times, API response, and Web Vitals.
 Aligned to have exactly 8 tests across all stacks.
 """
+
 
 class TestPerformance:
     """Performance Tests"""
@@ -24,7 +24,7 @@ class TestPerformance:
         self.api_base_url = "https://jsonplaceholder.typicode.com"
 
     def teardown_method(self):
-        if hasattr(self, 'driver') and self.driver:
+        if hasattr(self, "driver") and self.driver:
             self.driver.quit()
 
     def test_homepage_should_load_within_acceptable_time(self):
@@ -78,7 +78,13 @@ class TestPerformance:
 
     def test_concurrent_api_requests_should_be_fast(self):
         start_time = time.time()
-        endpoints = ["/posts/1", "/posts/2", "/posts/3", "/users/1", "/comments?postId=1"]
+        endpoints = [
+            "/posts/1",
+            "/posts/2",
+            "/posts/3",
+            "/users/1",
+            "/comments?postId=1",
+        ]
 
         def make_request(endpoint):
             return requests.get(f"{self.api_base_url}{endpoint}")

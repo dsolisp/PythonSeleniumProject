@@ -10,8 +10,8 @@ class WindowsLocators:
 
     # ── /windows.html ──────────────────────────────────────────────────────
     OPEN_TAB_LINK = (By.CSS_SELECTOR, '[data-test="open-new-tab-link"]')
-    OPEN_TAB_JS   = (By.CSS_SELECTOR, '[data-test="open-new-tab-js"]')
+    OPEN_TAB_JS = (By.CSS_SELECTOR, '[data-test="open-new-tab-js"]')
 
     # ── /windows/new.html (in new window/tab) ─────────────────────────────
     NEW_WINDOW_HEADING = (By.CSS_SELECTOR, '[data-test="new-window-heading"]')
-    NEW_WINDOW_BODY    = (By.CSS_SELECTOR, '[data-test="new-window-body"]')
+    NEW_WINDOW_BODY = (By.CSS_SELECTOR, '[data-test="new-window-body"]')

@@ -41,7 +41,10 @@ class TestSelectors:
 
     def test_s3_aria_label_link(self):
         """S3: locate link by aria-label attribute."""
-        assert self.page.get_aria_link_attribute("aria-label") == "Download the PDF document"
+        assert (
+            self.page.get_aria_link_attribute("aria-label")
+            == "Download the PDF document"
+        )
 
     def test_s4_aria_email_input(self):
         """S4: locate input by role and aria-label."""

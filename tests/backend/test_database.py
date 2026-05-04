@@ -5,12 +5,18 @@ Demonstrates 5 patterns for combining UI automation with a local SQLite database
 """
 
 import sqlite3
+import subprocess
+import sys
 from pathlib import Path
+
 import pytest
-from pages.sauce.login_page import LoginPage
+
+from components.header_component import HeaderComponent
+from config.constants import PATHS
 from pages.sauce.inventory_page import InventoryPage
+from pages.sauce.login_page import LoginPage
 from utils.builders.user_builder import UserBuilder
-from config.constants import PATHS, URLS
+
 
 @pytest.mark.database
 @pytest.mark.api
@@ -20,8 +26,6 @@ class TestDatabase:
     @pytest.fixture(scope="class", autouse=True)
     def setup_database(self):
         # Database seeding is handled via PythonSeleniumProject/scripts/seed_db.py
-        import subprocess
-        import sys
         script_path = Path(__file__).parent.parent.parent / "scripts" / "seed_db.py"
         subprocess.run([sys.executable, str(script_path)], check=True)
 
@@ -35,7 +39,10 @@ class TestDatabase:
     def test_example_1_seeds_user_then_login(self, selenium_driver, db_connection):
         test_user = {"id": 101, "username": "db_user", "password": "password123"}
         cursor = db_connection.cursor()
-        cursor.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?)", (test_user["id"], test_user["username"], "customer"))
+        cursor.execute(
+            "INSERT OR IGNORE INTO users VALUES (?, ?, ?)",
+            (test_user["id"], test_user["username"], "customer"),
+        )
         db_connection.commit()
 
         login_page = LoginPage(selenium_driver)
@@ -63,7 +70,9 @@ class TestDatabase:
     # ── Example 3: DB Data → UI Assertion (Data-Driven) ─────────────────
     def test_example_3_verify_ui_price_matches_db(self, selenium_driver, db_connection):
         cursor = db_connection.cursor()
-        cursor.execute("SELECT price FROM products WHERE name=?", ("Sauce Labs Backpack",))
+        cursor.execute(
+            "SELECT price FROM products WHERE name=?", ("Sauce Labs Backpack",)
+        )
         db_price = cursor.fetchone()[0]
 
         user = UserBuilder().standard().build()
@@ -78,7 +87,10 @@ class TestDatabase:
     # ── Example 4: Data-Driven Login (Iterate from DB) ───────────────────
     def test_example_4_login_every_customer(self, selenium_driver, db_connection):
         cursor = db_connection.cursor()
-        cursor.execute("SELECT * FROM users WHERE role=? AND username != ?", ("customer", "db_user"))
+        cursor.execute(
+            "SELECT * FROM users WHERE role=? AND username != ?",
+            ("customer", "db_user"),
+        )
         users = cursor.fetchall()
 
         for user in users:
@@ -89,7 +101,6 @@ class TestDatabase:
             assert "inventory.html" in selenium_driver.current_url
 
             # Logout
-            from components.header_component import HeaderComponent
             header = HeaderComponent(selenium_driver)
             header.logout()
 
@@ -99,7 +110,10 @@ class TestDatabase:
         cursor = db_connection.cursor()
 
         # Create
-        cursor.execute("INSERT OR REPLACE INTO users VALUES (?, ?, ?)", (new_user_id, "test_cleanup_user", "tester"))
+        cursor.execute(
+            "INSERT OR REPLACE INTO users VALUES (?, ?, ?)",
+            (new_user_id, "test_cleanup_user", "tester"),
+        )
         db_connection.commit()
 
         # Read
