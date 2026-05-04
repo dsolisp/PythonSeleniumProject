@@ -8,7 +8,7 @@ import math
 import time
 
 import pytest
-import requests  # type: ignore
+import requests  # type: ignore[import-untyped]
 import urllib3
 from hamcrest import assert_that, equal_to, greater_than, has_key, is_not
 

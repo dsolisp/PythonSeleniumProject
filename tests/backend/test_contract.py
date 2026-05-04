@@ -5,7 +5,7 @@ Validates API schemas and contract stability for SWAPI.
 """
 
 import pytest
-import requests  # type: ignore
+import requests  # type: ignore[import-untyped]
 import urllib3
 from hamcrest import assert_that, equal_to, has_key, instance_of
 

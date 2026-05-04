@@ -9,7 +9,7 @@ import random
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import yaml  # type: ignore
+import yaml  # type: ignore[import-untyped]
 
 
 def _load_json(path):
@@ -172,7 +172,10 @@ class DataManager:
             return
         for path in results_dir.rglob("*.json"):
             try:
-                if datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc) < cutoff:
+                if (
+                    datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+                    < cutoff
+                ):
                     path.unlink()
             except (OSError, ValueError):
                 continue

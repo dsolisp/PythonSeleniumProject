@@ -1,7 +1,7 @@
 import concurrent.futures
 import time
 
-import requests  # type: ignore
+import requests  # type: ignore[import-untyped]
 from hamcrest import assert_that, equal_to, less_than
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
