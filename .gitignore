@@ -1,56 +1,85 @@
-.idea/
+# ═══════════════════════════════════════════════════════════════════════════════
+# PythonSeleniumProject .gitignore
+# 7 Laws of QA Automation — Law 3: Repeatability (no local state committed)
+# ADR-009: Auth state must never be committed
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Python bytecode & cache ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
 *.pyc
-node_modules/
-dist/
-coverage/
-playwright-report/
+*.pyo
+.Python
+
+# ── Virtual environments ───────────────────────────────────────────────────────
+venv/
+venv-enhanced/
+.venv/
+env/
+ENV/
+
+# ── Test outputs ───────────────────────────────────────────────────────────────
 test-results/
+test_reports/
 allure-results/
-package-lock.json
-# keep main repository package.json if needed, ignore nested lock files only
-# DO NOT ignore root package.json for PlaywrightProject
-PlaywrightProject/package-lock.json
+allure-report/
+playwright-report/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Screenshots & visual diffs ─────────────────────────────────────────────────
+screenshots/
+screenshots_diff/
+custom_screenshots/
 *.png
 *.mp4
 *.webm
-logs/
-screenshots/
-screenshots_diff/
-*.exe
-/drivers
-/reports
-*.png
-*.log
 *.trace.zip
-*.zip
-*.csv
-*.json
-custom_screenshots/
+
+# ── Reports ───────────────────────────────────────────────────────────────────
+reports/
 custom_reports/
 custom_logs/
-data/results/
-.coverage
-/venv-enhanced
-.test-results.db
-screenshots/
-/.github
-data/.DS_Store
-.DS_Store
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# JAVA PROJECT
-# ═══════════════════════════════════════════════════════════════════════════════
-JavaSeleniumProject/target/
-JavaSeleniumProject/.idea/
-JavaSeleniumProject/*.iml
-JavaSeleniumProject/.classpath
-JavaSeleniumProject/.project
-JavaSeleniumProject/.settings/
-JavaSeleniumProject/bin/
-JavaSeleniumProject/build/
-JavaSeleniumProject/.gradle/
-JavaSeleniumProject/reports/
-JavaSeleniumProject/allure-results/
-/JavaSeleniumProject
-/PlaywrightProject
-/CSharpSeleniumProject
+# ── Auth state (ADR-009) ──────────────────────────────────────────────────────
+.auth/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Data results ──────────────────────────────────────────────────────────────
+data/results/
+
+# ── Database artifacts ────────────────────────────────────────────────────────
+*.db
+*.sqlite
+.test-results.db
+
+# ── Build & distribution ──────────────────────────────────────────────────────
+dist/
+coverage/
+*.zip
+*.exe
+drivers/
+
+# ── Environment & secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+
+# ── OS files ──────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+data/.DS_Store
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# ── IDE files ─────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*~
