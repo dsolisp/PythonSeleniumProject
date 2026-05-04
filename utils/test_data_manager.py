@@ -9,7 +9,7 @@ import random
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 
 def _load_json(path):

@@ -80,20 +80,13 @@ pytest-rerunfailures>=15.0
 requests>=2.32.3
 allure-pytest>=2.13.5
 
-# Data & Utilities
-numpy>=1.24.0
-pandas>=2.0.0
-
 # Visual Testing
 Pillow>=11.0.0
 pixelmatch>=0.3.0
 
 # Utilities
-tenacity>=9.0.0
-structlog>=24.4.0
 python-dotenv>=1.0.1
-psutil>=5.9.0
-Faker>=33.3.1
+PyYAML>=6.0.1
 Jinja2>=3.1.6
 
 # Load Testing
@@ -120,52 +113,7 @@ python -c "import selenium; import playwright; print('✅ Dependencies installed
 
 ## Step 3: Core Components
 
-### 3.1 Structured Logger (`utils/structured_logger.py`)
-
-**Purpose**: Consistent, JSON-formatted logging for debugging and analysis.
-
-**Design Pattern**: Singleton pattern ensures consistent logging configuration.
-
-```python
-import structlog
-import logging
-from pathlib import Path
-
-def setup_logging(log_level="INFO", log_file=None):
-    """Configure structured logging with JSON output.
-
-    Args:
-        log_level: Logging level (DEBUG, INFO, WARNING, ERROR). Default: INFO
-        log_file: Optional path to log file
-    """
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper()),
-        format="%(message)s"
-    )
-
-    structlog.configure(
-        processors=[
-            structlog.stdlib.add_log_level,
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.JSONRenderer()
-        ],
-        wrapper_class=structlog.stdlib.BoundLogger,
-        logger_factory=structlog.stdlib.LoggerFactory()
-    )
-
-    return structlog.get_logger()
-
-# Usage:
-logger = setup_logging()
-logger.info("test_started", test_name="test_login", browser="chrome")
-```
-
-**Why structlog?**
-- JSON output integrates with log aggregation tools (ELK, Datadog)
-- Structured context makes debugging easier
-- Thread-safe for parallel test execution
-
-### 3.2 WebDriver Factory (`utils/webdriver_factory.py`)
+### 3.1 WebDriver Factory (`utils/webdriver_factory.py`)
 
 **Purpose**: Create browser instances with consistent configuration.
 
@@ -251,15 +199,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 # Timeout constants - centralized for consistency
-TIMEOUT_DEFAULT = 20  # Standard operations
-TIMEOUT_SLOW = 45  # Slow-loading elements
+TIMEOUTS.DEFAULT = 20  # Standard operations
+TIMEOUTS.LONG = 60  # Slow-loading elements
 
 class BasePage:
     """Base class for all page objects."""
 
     def __init__(self, driver):
         self.driver = driver
-        self.wait = WebDriverWait(driver, TIMEOUT_DEFAULT)
+        self.wait = WebDriverWait(driver, TIMEOUTS.DEFAULT / 1000)
 
     def find_element(self, locator):
         """Find element immediately. Returns WebElement or None."""

@@ -3,15 +3,23 @@ Pytest configuration and fixtures for test automation.
 """
 
 import contextlib
+import json
 import os
 import time
 from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 from selenium import webdriver
 
 from config.settings import settings
 from utils.webdriver_factory import cleanup_driver_and_database, get_driver
+
+# ── Auth state cache (ADR-009) ────────────────────────────────────────────────
+_AUTH_FILE = Path(".auth/sauce.json")
+_SAUCE_URL = "https://www.saucedemo.com/"
+_SAUCE_USERNAME = "standard_user"
+_SAUCE_PASSWORD = "secret_sauce"
 
 
 def pytest_addoption(parser):
@@ -23,64 +31,142 @@ def pytest_addoption(parser):
         help="Browser to use for Selenium tests",
     )
     parser.addoption("--headless", action="store_true", help="Run in headless mode")
+    parser.addoption(
+        "--no-cache-auth",
+        action="store_true",
+        default=False,
+        help="Skip auth state cache and perform a fresh login every session",
+    )
 
 
 @pytest.fixture(scope="session")
 def test_config(request):
     """Test configuration from command line and environment."""
-    # Check both command line flag and environment variable for headless mode
     headless_cli = request.config.getoption("--headless")
     headless_env = os.getenv("HEADLESS", "false").lower() == "true"
-
     return {
         "browser": request.config.getoption("--selenium-browser"),
-        "headless": headless_cli or headless_env,  # Use headless if either is True
+        "headless": headless_cli or headless_env,
+        "no_cache_auth": request.config.getoption("--no-cache-auth"),
     }
+
+
+# ── Clean Selenium driver fixture (replaces the old tuple pattern) ────────────
+
+
+@pytest.fixture
+def selenium_driver(
+    request,
+    test_config,
+) -> Generator[webdriver.Chrome]:
+    """Function-scoped Selenium WebDriver — returns the driver directly (no tuple)."""
+    test_name = request.node.name
+    start_time = time.time()
+
+    drv, db = get_driver(
+        browser=test_config["browser"],
+        headless=test_config["headless"],
+    )
+
+    try:
+        yield drv
+    finally:
+        duration = time.time() - start_time
+        print(f"\nTest '{test_name}' completed in {duration:.2f}s")
+
+        if (
+            hasattr(request.node, "rep_call")
+            and request.node.rep_call.failed
+            and settings.SCREENSHOT_ON_FAILURE
+        ):
+            with contextlib.suppress(OSError):
+                screenshot_path = settings.SCREENSHOTS_DIR / f"{test_name}_failure.png"
+                drv.save_screenshot(str(screenshot_path))
+                print(f"Failure screenshot: {screenshot_path}")
+
+        cleanup_driver_and_database(drv, db)
+
+
+# ── Session-scoped authenticated driver (ADR-009 — auth state reuse) ─────────
+
+
+@pytest.fixture(scope="session")
+def authenticated_driver(test_config) -> Generator[webdriver.Chrome]:
+    """Session-scoped driver pre-authenticated as standard_user.
+
+    On first use it logs in and writes cookies to `.auth/sauce.json`.
+    Subsequent tests in the same session reuse the cached state so
+    the login page is only hit once per session (--no-cache-auth bypasses this).
+    """
+    drv, db = get_driver(
+        browser=test_config["browser"],
+        headless=test_config["headless"],
+    )
+
+    _auth_file = _AUTH_FILE
+    use_cache = not test_config["no_cache_auth"]
+
+    if use_cache and _auth_file.exists():
+        # Restore cookies from cache — navigate first so domain matches
+        drv.get(_SAUCE_URL)
+        state = json.loads(_auth_file.read_text())
+        for cookie in state.get("cookies", []):
+            with contextlib.suppress(Exception):
+                drv.add_cookie(cookie)
+        drv.get(_SAUCE_URL)
+    else:
+        # Fresh login
+        drv.get(_SAUCE_URL)
+        from pages.sauce.login_page import LoginPage  # noqa: PLC0415
+
+        login = LoginPage(drv)
+        login.login(_SAUCE_USERNAME, _SAUCE_PASSWORD)
+
+        # Persist auth state
+        if use_cache:
+            _auth_file.parent.mkdir(parents=True, exist_ok=True)
+            state = {"cookies": drv.get_cookies()}
+            _auth_file.write_text(json.dumps(state, indent=2))
+
+    try:
+        yield drv
+    finally:
+        cleanup_driver_and_database(drv, db)
+
+
+# ── Legacy driver fixture (backward-compat — returns (driver, db) tuple) ──────
 
 
 @pytest.fixture
 def driver(
     request,
     test_config,
-) -> Generator[
-    tuple[webdriver.Chrome, object],
-    None,
-    None,
-]:
-    """
-    Main driver fixture providing WebDriver and database connection.
-    """
+) -> Generator[tuple[webdriver.Chrome, object]]:
+    """Legacy fixture returning (WebDriver, db) tuple. Prefer selenium_driver."""
     test_name = request.node.name
     start_time = time.time()
 
-    # Setup phase
-    driver, db = get_driver(
+    drv, db = get_driver(
         browser=test_config["browser"],
         headless=test_config["headless"],
     )
 
     try:
-        yield driver, db
+        yield drv, db
     finally:
-        # Cleanup phase
         duration = time.time() - start_time
-        print(f"Test {test_name} completed in {duration:.2f}s")
+        print(f"\nTest '{test_name}' completed in {duration:.2f}s")
 
-        # Screenshot on failure
         if (
             hasattr(request.node, "rep_call")
             and request.node.rep_call.failed
             and settings.SCREENSHOT_ON_FAILURE
         ):
-            try:
+            with contextlib.suppress(OSError):
                 screenshot_path = settings.SCREENSHOTS_DIR / f"{test_name}_failure.png"
-                driver.save_screenshot(str(screenshot_path))
-                print(f"Failure screenshot: {screenshot_path}")
-            except OSError as e:
-                print(f"Screenshot failed: {e}")
+                drv.save_screenshot(str(screenshot_path))
 
-        # Centralized cleanup
-        cleanup_driver_and_database(driver, db)
+        cleanup_driver_and_database(drv, db)
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -91,16 +177,26 @@ def pytest_runtest_makereport(item):
     setattr(item, "rep_" + rep.when, rep)
 
 
-# Test markers
+# ── Markers ───────────────────────────────────────────────────────────────────
+
+
 def pytest_configure(config):
-    """Configure test markers."""
+    """Register test markers."""
     markers = [
-        "ui: UI automation tests",
-        "api: API tests",
-        "database: Database tests",
+        "ui: UI automation tests (tests/ui/)",
+        "web: Legacy alias for ui tests",
+        "api: API tests (tests/api/)",
+        "database: Database tests (tests/api/test_database.py)",
         "framework: Framework functionality tests",
-        "visual: Visual regression tests",
+        "visual: Visual regression tests (tests/ui/visual/)",
         "playwright: Playwright-based tests",
+        "sauce: SauceDemo E2E tests (tests/ui/sauce/)",
+        "practice: QA Practice App tests (tests/ui/practice/)",
+        "smoke: Smoke / fast-feedback tests",
+        "selectors: Selector strategy showcase tests",
+        "accessibility: Accessibility tests (tests/accessibility/)",
+        "performance: Performance / benchmarking tests (tests/performance/)",
+        "integration: Integration tests (tests/integration/)",
     ]
     for marker in markers:
         config.addinivalue_line("markers", marker)

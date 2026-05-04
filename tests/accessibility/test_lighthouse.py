@@ -88,12 +88,11 @@ class TestLighthouseAccessibility:
         print(f"Bing Homepage Score: {score_data.score}%")
         print(f"Passes: {score_data.passes}, Violations: {score_data.violations}")
         print(
-            f"Critical: {score_data.critical_violations}, "
-            f"Serious: {score_data.serious_violations}"
+            f"Critical: {score_data.critical_violations}, Serious: {score_data.serious_violations}"
         )
 
-        # Expect at least 50% accessibility score (Bing has known issues)
-        assert score_data.score >= 50, f"Score {score_data.score}% below 50% threshold"
+        # Expect at least 70% accessibility score
+        assert score_data.score >= 70, f"Score {score_data.score}% below 70% threshold"
 
     def test_saucedemo_login_accessibility_score(self, browser):
         """Should have good accessibility score on SauceDemo login."""

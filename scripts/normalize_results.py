@@ -8,14 +8,15 @@ Run with:
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Optional
 
 ROOT = Path(__file__).parent.parent
 RESULTS_DIR = ROOT / "data" / "results"
 
 
-def normalize_custom_file(path: Path) -> Path:
+def normalize_custom_file(path: Path) -> Optional[Path]:
     with Path.open(path) as f:
         try:
             data = json.load(f)
@@ -30,7 +31,7 @@ def normalize_custom_file(path: Path) -> Path:
         and isinstance(data["results"], dict)
         and "tests" in data["results"]
     ):
-        norm = {}
+        norm: dict[str, Any] = {}
         # created: try to use execution_time or timestamp fields if present, else now
         created = data.get("execution_time") or data.get("timestamp") or None
         if isinstance(created, str):
@@ -41,13 +42,13 @@ def normalize_custom_file(path: Path) -> Path:
                 created_ts = dt.timestamp()
             except (ValueError, OSError):
                 try:
-                    created_ts = datetime.now(datetime.UTC).timestamp()
+                    created_ts = datetime.now(timezone.utc).timestamp()
                 except OSError:
                     created_ts = None
         elif isinstance(created, (int, float)):
             created_ts = float(created)
         else:
-            created_ts = datetime.now(datetime.UTC).timestamp()
+            created_ts = datetime.now(timezone.utc).timestamp()
 
         norm["created"] = created_ts
         norm["duration"] = data.get("duration", 0)

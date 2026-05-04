@@ -9,14 +9,13 @@ Integrated QA Automation Workflow Script
 - Prints clear output/report locations
 """
 
+import csv
 import json
 import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-
-import pandas as pd
 
 # --- VIRTUAL ENVIRONMENT DETECTION ---
 VENV_DIR = Path(__file__).parent / "venv-enhanced"
@@ -75,12 +74,9 @@ def validate_environment():
     required_packages = [
         "selenium",
         "pytest",
-        "pandas",
-        "numpy",
-        "structlog",
         "hamcrest",
-        "tenacity",
-        "psutil",
+        "yaml",
+        "requests",
     ]
     missing = []
     for package in required_packages:
@@ -137,6 +133,7 @@ def export_results():
 
 # --- POST-TEST: ANALYTICS & REPORTING ---
 def run_analytics():
+    """Export test results to CSV using stdlib csv module."""
     print("[POST] Running analytics (CSV export)...")
     try:
         # Load all results from JSON files in data/results/
@@ -148,9 +145,21 @@ def run_analytics():
                 all_results.extend(tests)
 
         if all_results:
-            df = pd.DataFrame(all_results)
             csv_path = REPORTS_DIR / "analytics_summary.csv"
-            df.to_csv(csv_path, index=False)
+            # Get all unique keys across all results for CSV headers
+            fieldnames = set()
+            for result in all_results:
+                if isinstance(result, dict):
+                    fieldnames.update(result.keys())
+            fieldnames = sorted(fieldnames)
+
+            with open(csv_path, "w", newline="") as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+                for result in all_results:
+                    if isinstance(result, dict):
+                        writer.writerow(result)
+
             print(f"[POST] Analytics CSV: {csv_path}")
         else:
             print("[POST] No test results found to analyze.")

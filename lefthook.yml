@@ -1,0 +1,60 @@
+# lefthook.yml — Python / Selenium repo
+# SYNC-MANAGED (base guards). Stack-specific hooks below are repo-owned.
+# See shared-docs/docs/adr/ADR-013-multirepo-sync-strategy.md
+
+min_version: 1.6.0
+
+pre-commit:
+  parallel: true
+  commands:
+
+    # ── Universal guards (sync-managed) ─────────────────────────────────────
+
+    no-search-engine:
+      glob: "**/*.py"
+      run: |
+        if grep -rn "bing\|google\.com\|search_engine\|SearchEngine" {staged_files} 2>/dev/null | grep -v "#"; then
+          echo "❌ Search-engine reference found. See ADR decommission plan."
+          exit 1
+        fi
+
+    no-assertions-in-poms:
+      glob: "{pages,locators,components}/**/*.py"
+      run: |
+        if grep -n "^\s*assert\b\|assert_that\|hamcrest" {staged_files} 2>/dev/null; then
+          echo "❌ Assertion found in pages/locators/components. Violates Law 2."
+          exit 1
+        fi
+
+    no-selectors-in-tests:
+      glob: "tests/**/*.py"
+      run: |
+        if grep -n "By\.\|find_element\|find_elements" {staged_files} 2>/dev/null; then
+          echo "❌ Selector literal found in tests/. Violates Law 3."
+          exit 1
+        fi
+
+    # ── Stack-specific linting ───────────────────────────────────────────────
+
+    ruff-check:
+      glob: "**/*.py"
+      run: uv run ruff check {staged_files}
+
+    ruff-format:
+      glob: "**/*.py"
+      run: uv run ruff format --check {staged_files}
+
+    import-linter:
+      glob: "{pages,locators,tests,utils}/**/*.py"
+      run: uv run lint-imports
+
+commit-msg:
+  commands:
+    commitlint:
+      run: |
+        MSG=$(cat {1})
+        if ! echo "$MSG" | grep -qP "^(feat|fix|docs|style|refactor|test|chore|ci|perf|revert)(\(.+\))?: .{1,100}$"; then
+          echo "❌ Commit message must follow Conventional Commits."
+          echo "   Example: feat(login): add storage state reuse"
+          exit 1
+        fi

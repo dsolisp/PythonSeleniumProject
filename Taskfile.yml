@@ -1,0 +1,125 @@
+version: "3"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# QA Portfolio — Python / Selenium Stack
+# Interface contract: task names are IDENTICAL across all 5 repos.
+# ──────────────────────────────────────────────────────────────────────────────
+
+vars:
+  ALLURE_RESULTS: allure-results
+  ALLURE_REPORT:  allure-report
+  AUTH_FILE:      .auth/sauce.json
+
+tasks:
+
+  # ── Core ──────────────────────────────────────────────────────────────────
+
+  test:
+    desc: "Run the full test suite"
+    cmds:
+      - uv run pytest tests/ --alluredir={{.ALLURE_RESULTS}} -v
+    env:
+      PYTHONPATH: "."
+
+  test:sauce:
+    desc: "Run SauceDemo E2E tests only"
+    cmds:
+      - uv run pytest tests/web/ -m sauce --alluredir={{.ALLURE_RESULTS}} -v
+
+  test:advanced:
+    desc: "Run Advanced Interactions tests (E1-E9)"
+    cmds:
+      - uv run pytest tests/web/advanced/ --alluredir={{.ALLURE_RESULTS}} -v
+
+  test:api:
+    desc: "Run API tests"
+    cmds:
+      - uv run pytest tests/api/ --alluredir={{.ALLURE_RESULTS}} -v
+
+  test:a11y:
+    desc: "Run Accessibility tests"
+    cmds:
+      - uv run pytest tests/accessibility/ --alluredir={{.ALLURE_RESULTS}} -v
+
+  test:headless:
+    desc: "Run full suite in headless mode"
+    cmds:
+      - uv run pytest tests/ --alluredir={{.ALLURE_RESULTS}} -v
+    env:
+      HEADLESS: "true"
+
+  # ── Quality ───────────────────────────────────────────────────────────────
+
+  lint:
+    desc: "Run ruff linter (0 warnings policy)"
+    cmds:
+      - uv run ruff check .
+      - uv run ruff format --check .
+
+  lint:fix:
+    desc: "Auto-fix ruff violations"
+    cmds:
+      - uv run ruff check --fix .
+      - uv run ruff format .
+
+  lint:arch:
+    desc: "Run import-linter architecture contracts"
+    cmds:
+      - uv run lint-imports
+
+  audit:
+    desc: "Run violation audit (must return 0)"
+    cmds:
+      - bash scripts/audit_violations.sh
+      - bash scripts/check-sync.sh
+
+  # ── Practice App ──────────────────────────────────────────────────────────
+
+  practice:up:
+    desc: "Start qa-practice-app on localhost:8080"
+    cmds:
+      - docker compose -f qa-practice-app/docker-compose.yml up -d
+      - echo "Practice app running at http://localhost:8080"
+
+  practice:down:
+    desc: "Stop qa-practice-app"
+    cmds:
+      - docker compose -f qa-practice-app/docker-compose.yml down
+
+  # ── Auth ──────────────────────────────────────────────────────────────────
+
+  auth:clear:
+    desc: "Delete cached auth state (force fresh login on next run)"
+    cmds:
+      - rm -f {{.AUTH_FILE}}
+      - echo "Auth cache cleared."
+
+  # ── Allure ────────────────────────────────────────────────────────────────
+
+  allure:open:
+    desc: "Generate and open Allure report"
+    cmds:
+      - allure generate {{.ALLURE_RESULTS}} -o {{.ALLURE_REPORT}} --clean
+      - allure open {{.ALLURE_REPORT}}
+
+  allure:clean:
+    desc: "Remove allure results and report"
+    cmds:
+      - rm -rf {{.ALLURE_RESULTS}} {{.ALLURE_REPORT}}
+
+  # ── Setup ─────────────────────────────────────────────────────────────────
+
+  setup:
+    desc: "Install all dependencies via uv"
+    cmds:
+      - uv sync
+
+  # ── CI convenience ────────────────────────────────────────────────────────
+
+  ci:
+    desc: "Full CI pipeline (lint + audit + test)"
+    cmds:
+      - task: lint
+      - task: lint:arch
+      - task: audit
+      - task: test

@@ -22,7 +22,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
-from config.constants import USER_AGENT_CHROME, USER_AGENT_EDGE, USER_AGENT_FIREFOX
+from config.constants import PATHS, USER_AGENTS
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class WebDriverFactory:
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", value=False)
 
-        options.add_argument(f"--user-agent={USER_AGENT_CHROME}")
+        options.add_argument(f"--user-agent={USER_AGENTS.CHROME}")
 
         if headless:
             options.add_argument("--headless=new")  # Use new headless mode
@@ -101,7 +101,7 @@ class WebDriverFactory:
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
 
-        options.set_preference("general.useragent.override", USER_AGENT_FIREFOX)
+        options.set_preference("general.useragent.override", USER_AGENTS.FIREFOX)
 
         if headless:
             options.add_argument("--headless")
@@ -134,7 +134,7 @@ class WebDriverFactory:
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", value=False)
 
-        options.add_argument(f"--user-agent={USER_AGENT_EDGE}")
+        options.add_argument(f"--user-agent={USER_AGENTS.EDGE}")
 
         if headless:
             options.add_argument("--headless=new")
@@ -181,7 +181,7 @@ class DatabaseFactory:
     def create_database_connection(db_path=None):
         """Create database connection with error handling. Returns Connection or None."""
         try:
-            db_file = db_path or os.getenv("DB_PATH", "resources/chinook.db")
+            db_file = db_path or PATHS.DB
 
             # For custom paths (like in tests), attempt connection directly
             if db_path:

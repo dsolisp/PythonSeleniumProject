@@ -53,8 +53,8 @@ def run_command(command, description):
             print(result.stderr, file=sys.stderr)
         print(f"✅ {description} - PASSED")
     except subprocess.CalledProcessError as e:
-        print(e.stdout if e.stdout else "")
-        print(e.stderr if e.stderr else "", file=sys.stderr)
+        print(e.stdout or "")
+        print(e.stderr or "", file=sys.stderr)
         print(f"❌ {description} - FAILED with exit code {e.returncode}")
         return False, e
     else:

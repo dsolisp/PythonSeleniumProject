@@ -1,156 +1,61 @@
-[tool.black]
-line-length = 88
-target-version = ['py39']
-# Prevent Black from breaking strings aggressively
-skip-string-normalization = false
-# Preserve some formatting to avoid syntax errors
-preview = false
+# ── Project metadata ──────────────────────────────────────────────────────────
+[project]
+name = "python-selenium-project"
+version = "0.1.0"
+description = "QA Portfolio — Python / Selenium Gold Standard"
+requires-python = ">=3.13"
 
-[tool.isort]
-profile = "black"
-line_length = 88
-
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203", "W503"]
-
-[tool.mypy]
-python_version = "3.9"
-warn_return_any = false
-warn_unused_configs = true
-disallow_untyped_defs = false
-ignore_missing_imports = true
-
-# Allow implicit optional for now (can be tightened later)
-no_implicit_optional = false
-
-# Disable specific checks that are too strict for now
-disable_error_code = [
-    "assignment",
-    "attr-defined",
-    "misc",
-    "index",
-    "union-attr",
-    "no-any-return",
-    "var-annotated",
-    "return-value",
-    "arg-type",
-    "import-untyped",
-    "annotation-unchecked",
-    "valid-type",
-    "return"
+dependencies = [
+    # Browser automation
+    "selenium>=4.20.0",
+    "webdriver-manager>=4.0.0",
+    "playwright>=1.40.0",
+    # Test framework & assertions
+    "pytest>=8.3.0",
+    "pytest-html>=4.1.0",
+    "pytest-cov>=5.0.0",
+    "pytest-xdist>=3.5.0",
+    "pytest-rerunfailures>=14.0",
+    "pytest-json-report>=1.5.0",
+    "PyHamcrest>=2.1.0",
+    # Reporting
+    "allure-pytest>=2.13.0",
+    # Test data builders
+    "factory-boy>=3.3.0",
+    "faker>=26.0.0",
+    # Structured logging
+    "structlog>=24.4.0",
+    # Accessibility
+    "axe-selenium-python>=2.1.6",
+    # Utilities
+    "requests>=2.31.0",
+    "PyYAML>=6.0.1",
+    "python-dotenv>=1.0.0",
+    # Architecture guardrails
+    "import-linter>=2.1",
 ]
 
-# Exclude patterns
-exclude = [
-    "venv",
-    "venv-enhanced",
-    ".venv",
-    "__pycache__",
-    ".git",
-    "build",
-    "dist"
+[dependency-groups]
+dev = [
+    "ruff>=0.7.0",
+    "lefthook>=1.7.0",
 ]
 
+[tool.uv]
+package = false
+
+# ── Ruff (linter + formatter — replaces flake8, black, isort, pylint) ─────────
 [tool.ruff]
-# Exclude a variety of commonly ignored directories.
 exclude = [
-    "venv",
-    "venv-enhanced",
-    ".venv",
-    "__pycache__",
-    ".git",
-    "build",
-    "dist",
-    "data/results",
-    "downloads",
-    "drivers",
-    "reports",
-    "test_reports",
-    "logs",
-    "screenshots",
-    "screenshots_diff",
-    "resources"
+    "venv", "venv-enhanced", ".venv", "__pycache__", ".git",
+    "build", "dist", "data/results", "reports", "test_reports",
+    "logs", "screenshots", "screenshots_diff", "resources",
 ]
-
-# Same as Black.
 line-length = 88
 indent-width = 4
-
-# Assume Python 3.9.6+
-target-version = "py39"
+target-version = "py313"
 
 [tool.ruff.lint]
-# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
-# Additional rule categories that make sense for this project:
-# - `I` (isort): Import sorting
-# - `UP` (pyupgrade): Python syntax upgrades
-# - `B` (flake8-bugbear): Additional bug and design problem detection
-# - `C4` (flake8-comprehensions): Unnecessary list/tuple/dict comprehensions
-# - `T10` (flake8-debugger): Debugger statements
-# - `DJ` (flake8-django): Django-specific rules (if applicable)
-# - `S` (flake8-bandit): Security issues (partial replacement for bandit)
-# - `BLE` (blind-except): Blind exception handling
-# - `FBT` (boolean-trap): Boolean positional arguments
-# - `A` (flake8-builtins): Shadowing built-ins
-# - `COM` (trailing-comma): Trailing comma rules
-# - `C90` (mccabe): Cyclomatic complexity
-# - `DTZ` (flake8-datetimez): Naive datetime usage
-# - `T` (flake8-print): Print statements
-# - `ERA` (eradicate): Commented-out code
-# - `PD` (pandas-vet): Pandas-specific rules
-# - `PGH` (pygrep-hooks): Regex patterns
-# - `PL` (pylint): Pylint rules
-# - `TRY` (tryceratops): Exception handling
-# - `FLY` (flynt): String formatting
-# - `NPY` (numpy): NumPy-specific rules
-# - `AIR` (airflow): Airflow-specific rules
-# - `PERF` (perflint): Performance issues
-# - `FURB` (refurb): Code modernization
-# - `LOG` (flake8-logging-format): Logging format
-# - `G` (flake8-logging-format): Additional logging rules
-# - `INP` (flake8-no-pep420): Package structure
-# - `PT` (flake8-pytest-style): Pytest-specific rules
-# - `Q` (flake8-quotes): Quote consistency
-# - `RSE` (flake8-raise): Exception raising
-# - `RET` (flake8-return): Return statement issues
-# - `SLF` (flake8-self): Private member access
-# - `SLOT` (flake8-slots): __slots__ usage
-# - `SIM` (flake8-simplify): Code simplification
-# - `TID` (flake8-tidy-imports): Import organization
-# - `TCH` (flake8-type-checking): Type checking imports
-# - `INT` (flake8-gettext): Gettext usage
-# - `ARG` (flake8-unused-arguments): Unused arguments
-# - `PTH` (flake8-use-pathlib): Pathlib usage
-# - `TD` (flake8-todos): TODO comments
-# - `FIX` (flake8-fixme): FIXME comments
-# - `ERA` (eradicate): Commented-out code
-# - `PD` (pandas-vet): Pandas rules
-# - `PGH` (pygrep-hooks): Regex patterns
-# - `PL` (pylint): Pylint rules
-# - `TRY` (tryceratops): Exception handling
-# - `FLY` (flynt): String formatting
-# - `NPY` (numpy): NumPy rules
-# - `AIR` (airflow): Airflow rules
-# - `PERF` (perflint): Performance
-# - `FURB` (refurb): Modernization
-# - `LOG` (flake8-logging-format): Logging
-# - `G` (flake8-logging-format): Logging
-# - `INP` (flake8-no-pep420): Package structure
-# - `PT` (flake8-pytest-style): Pytest
-# - `Q` (flake8-quotes): Quotes
-# - `RSE` (flake8-raise): Exceptions
-# - `RET` (flake8-return): Returns
-# - `SLF` (flake8-self): Private access
-# - `SLOT` (flake8-slots): Slots
-# - `SIM` (flake8-simplify): Simplification
-# - `TID` (flake8-tidy-imports): Imports
-# - `TCH` (flake8-type-checking): Type checking
-# - `INT` (flake8-gettext): Gettext
-# - `ARG` (flake8-unused-arguments): Arguments
-# - `PTH` (flake8-use-pathlib): Pathlib
-# - `TD` (flake8-todos): TODOs
-# - `FIX` (flake8-fixme): FIXMEs
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -269,3 +174,26 @@ max-args = 10
 max-branches = 20
 # Maximum number of statements
 max-statements = 50
+
+
+# ── import-linter architecture contracts ──────────────────────────────────────
+[tool.importlinter]
+root_packages = ["pages", "locators", "components", "utils", "config", "tests"]
+
+[[tool.importlinter.contracts]]
+name = "Pages must not import from tests"
+type = "forbidden"
+source_modules = ["pages"]
+forbidden_modules = ["tests"]
+
+[[tool.importlinter.contracts]]
+name = "Locators must not import from tests or utils"
+type = "forbidden"
+source_modules = ["locators"]
+forbidden_modules = ["tests", "utils"]
+
+[[tool.importlinter.contracts]]
+name = "Components must not import from tests"
+type = "forbidden"
+source_modules = ["components"]
+forbidden_modules = ["tests"]
