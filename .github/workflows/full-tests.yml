@@ -1,0 +1,85 @@
+name: Full Test Suite
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Test suite to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - smoke
+          - advanced
+          - database
+          - backend
+          - visual
+          - a11y
+          - performance
+
+concurrency:
+  group: full-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HEADLESS: true
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: playwright install --with-deps chromium firefox webkit
+
+      - name: Run Unit Tests
+        run: pytest tests/unit/ -v --tb=short
+
+      - name: Run Smoke tests
+        if: ${{ inputs.suite == 'all' || inputs.suite == 'smoke' }}
+        run: pytest tests/web/ -m smoke --alluredir=allure-results || true
+
+      - name: Run Advanced tests
+        if: ${{ inputs.suite == 'all' || inputs.suite == 'advanced' }}
+        run: pytest tests/web/ -m advanced --alluredir=allure-results || true
+
+      - name: Run Database UI tests
+        if: ${{ inputs.suite == 'all' || inputs.suite == 'database' }}
+        run: pytest tests/web/ -m database --alluredir=allure-results || true
+
+      - name: Run Backend/API tests
+        if: ${{ inputs.suite == 'all' || inputs.suite == 'backend' }}
+        run: pytest tests/api/ tests/backend/ --alluredir=allure-results || true
+
+      - name: Run Visual tests
+        if: ${{ inputs.suite == 'all' || inputs.suite == 'visual' }}
+        run: pytest tests/ui/visual/ -m visual --alluredir=allure-results || true
+
+      - name: Run Accessibility tests
+        if: ${{ inputs.suite == 'all' || inputs.suite == 'a11y' }}
+        run: pytest tests/ui/accessibility/ -m a11y --alluredir=allure-results || true
+
+      - name: Run Performance tests
+        if: ${{ inputs.suite == 'all' || inputs.suite == 'performance' }}
+        run: pytest tests/performance/ -m performance --alluredir=allure-results || true
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-${{ github.run_id }}
+          path: allure-results/
