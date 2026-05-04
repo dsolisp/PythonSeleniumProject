@@ -23,7 +23,7 @@ import os
 import shlex
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from utils.test_data_manager import DataManager
@@ -53,8 +53,8 @@ def run_command(command, description):
             print(result.stderr, file=sys.stderr)
         print(f"✅ {description} - PASSED")
     except subprocess.CalledProcessError as e:
-        print(e.stdout if e.stdout else "")
-        print(e.stderr if e.stderr else "", file=sys.stderr)
+        print(e.stdout or "")
+        print(e.stderr or "", file=sys.stderr)
         print(f"❌ {description} - FAILED with exit code {e.returncode}")
         return False, e
     else:
@@ -84,14 +84,14 @@ def export_test_results(*, test_type: str, success: bool, duration: float):
             "failed": "N/A",
             "success": success,
             "duration": duration,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "environment": os.getenv("TEST_ENV", "local"),
             "python_version": sys.version.split()[0],
             "platform": sys.platform,
         }
 
         # Export to YAML
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         filename = f"test_run_{test_type}_{timestamp}.yml"
         yaml_file = manager.save_test_results_yaml(results, filename=filename)
 
@@ -163,7 +163,7 @@ Test Counts:
     args = parser.parse_args()
 
     # Track start time
-    start_time = datetime.now(timezone.utc)
+    start_time = datetime.now(UTC)
 
     # Build base command
     base_cmd = "python -m pytest"
@@ -259,7 +259,7 @@ Test Counts:
             test_runs.append((test_type, success_result))
 
     # Calculate duration
-    duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+    duration = (datetime.now(UTC) - start_time).total_seconds()
 
     # Export results (unless disabled)
     if not args.no_export:

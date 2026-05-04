@@ -5,15 +5,14 @@ Design principles:
 - Simple, readable exception formatting
 - Minimal abstraction, maximum clarity
 - Works with any exception type
+- Zero external dependencies for retry logic
 """
 
 import logging
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-
-import psutil
-from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
 
@@ -158,33 +157,50 @@ class SmartErrorHandler:
 
         return False  # No automatic recovery
 
-    def monitor_memory_usage(self):
-        """Return process memory/CPU usage."""
-        p = psutil.Process()
-        mem = p.memory_info()
-        return {
-            "current_memory_mb": mem.rss / (1024 * 1024),
-            "memory_percent": p.memory_percent(),
-            "cpu_percent": p.cpu_percent(interval=0.1),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
-
     def execute_with_retry(
         self,
         operation,
         *args,
         max_attempts=3,
         retry_exceptions=None,
+        initial_delay=1.0,
         **kwargs,
     ):
-        """Execute operation with tenacity retry."""
-        retry_exceptions = retry_exceptions or (Exception,)
-        wait = wait_exponential(multiplier=1, min=1, max=10)
+        """
+        Execute operation with exponential backoff retry.
 
-        for attempt in Retrying(
-            stop=stop_after_attempt(max_attempts),
-            wait=wait,
-        ):
-            with attempt:
+        Uses stdlib only - no external dependencies.
+
+        Args:
+            operation: Callable to execute
+            max_attempts: Maximum retry attempts (default: 3)
+            retry_exceptions: Tuple of exceptions to retry on (default: all)
+            initial_delay: Initial delay in seconds, doubles each retry
+
+        Returns:
+            Result of operation, or None if all attempts fail
+        """
+        retry_exceptions = retry_exceptions or (Exception,)
+        last_error = None
+
+        for attempt in range(max_attempts):
+            try:
                 return operation(*args, **kwargs)
+            except retry_exceptions as e:
+                last_error = e
+                if attempt < max_attempts - 1:
+                    # Exponential backoff: 1s, 2s, 4s, ...
+                    delay = initial_delay * (2**attempt)
+                    delay = min(delay, 10.0)  # Cap at 10 seconds
+                    logger.debug(
+                        "Retry %d/%d after %.1fs: %s",
+                        attempt + 1,
+                        max_attempts,
+                        delay,
+                        e,
+                    )
+                    time.sleep(delay)
+
+        if last_error:
+            logger.warning("All %d attempts failed: %s", max_attempts, last_error)
         return None

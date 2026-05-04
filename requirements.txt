@@ -28,20 +28,11 @@ Pillow>=10.0.0                  # Image processing
 pixelmatch>=0.3.0               # Pixel-level image comparison
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# DATA & ANALYTICS
-# ═══════════════════════════════════════════════════════════════════════════════
-numpy>=1.24.0                   # Numerical computing
-pandas>=2.0.0                   # Data analysis & test result processing
-
-# ═══════════════════════════════════════════════════════════════════════════════
 # UTILITIES
 # ═══════════════════════════════════════════════════════════════════════════════
 requests>=2.31.0                # HTTP client for API testing
 PyYAML>=6.0.1                   # YAML config/data loading
 python-dotenv>=1.0.0            # Environment configuration
-structlog>=23.2.0               # Structured JSON logging
-psutil>=5.9.0                   # System/performance monitoring
-tenacity>=8.2.0                 # Retry logic with backoff
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # LOAD TESTING

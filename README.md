@@ -4,7 +4,7 @@
 [![Selenium](https://img.shields.io/badge/Selenium-4.27-green.svg)](https://selenium.dev)
 [![Playwright](https://img.shields.io/badge/Playwright-1.49-blueviolet.svg)](https://playwright.dev)
 [![Pytest](https://img.shields.io/badge/Pytest-8.x-orange.svg)](https://pytest.org)
-[![Tests](https://img.shields.io/badge/Tests-263-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-223-brightgreen.svg)](tests/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Enterprise-grade test automation portfolio demonstrating modern QA engineering** 🚀
@@ -29,13 +29,13 @@
 | **Real CI/CD Integration** | 607-line GitHub Actions workflow with matrix testing |
 | **Flaky Test Detection** | pytest-history tracks test reliability over time |
 | **Visual Regression Testing** | Multiple approaches (pixelmatch, playwright-visual) |
-| **Performance Monitoring** | Real-time metrics with psutil + load testing with Locust |
-| **Self-Healing Tests** | Smart error recovery with retry logic |
+| **Load Testing** | Performance testing with Locust |
+| **Self-Healing Tests** | Smart error recovery with stdlib retry logic |
 | **Clean Architecture** | Page Object Model, modular utilities, clear docstrings |
 
 ### Project Metrics
 - **~10,000 lines** of production-quality Python
-- **263 tests** (205 unit + 58 integration/web/api/performance)
+- **223 tests** (162 unit + 61 integration/web/api/performance)
 - **Simple, readable code** with clear docstrings over complex type hints
 - **Zero linter warnings** (ruff/bandit compliant)
 

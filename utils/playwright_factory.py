@@ -6,7 +6,7 @@ Provides sync browser automation capabilities alongside existing Selenium suppor
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import sync_playwright
 
-from config.constants import USER_AGENT_CHROME
+from config.constants import USER_AGENTS
 from config.settings import settings
 
 # Constants
@@ -82,7 +82,7 @@ class PlaywrightFactory:
         # Set realistic user agent and headers to avoid bot detection
         context_options = {
             "viewport": {"width": 1920, "height": 1080},
-            "user_agent": USER_AGENT_CHROME,
+            "user_agent": USER_AGENTS.CHROME,
             "extra_http_headers": {
                 "Accept": (
                     "text/html,application/xhtml+xml,application/xml;q=0.9,"

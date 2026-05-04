@@ -6,6 +6,8 @@ Basic improvements to the original framework without breaking changes.
 import os
 from pathlib import Path
 
+from config.constants import PATHS, URLS
+
 # Import dotenv at module level so it can be mocked in tests
 try:
     from dotenv import load_dotenv
@@ -33,12 +35,12 @@ class Settings:
         )
 
         # URLs
-        self.BASE_URL = os.getenv("BASE_URL", "https://www.bing.com")
-        self.API_BASE_URL = os.getenv(
-            "API_BASE_URL",
-            "https://jsonplaceholder.typicode.com",
-        )
-        self.SEARCH_URL = os.getenv("SEARCH_URL", "https://www.bing.com/search?q=test")
+        self.BASE_URL = os.getenv("BASE_URL", URLS.SAUCE_DEMO)
+        self.SAUCE_DEMO_URL = os.getenv("SAUCE_DEMO_URL", URLS.SAUCE_DEMO)
+        self.PRACTICE_BASE_URL = os.getenv("PRACTICE_BASE_URL", URLS.PRACTICE_APP)
+        self.API_BASE_URL = os.getenv("API_BASE_URL", URLS.JSON_PLACEHOLDER)
+        self.SWAPI_BASE_URL = os.getenv("SWAPI_BASE_URL", URLS.SWAPI)
+        self.SEARCH_URL = os.getenv("SEARCH_URL", "https://duckduckgo.com/?q=test")
 
         # Test URLs for different testing scenarios
         self.TEST_API_URL = os.getenv("TEST_API_URL", "https://httpbin.org/json")
@@ -74,7 +76,7 @@ class Settings:
         self.SEARCH_TERMS_LIST = [term.strip() for term in search_terms_str.split(",")]
 
         # Database
-        self.DB_PATH = os.getenv("DB_PATH", "resources/chinook.db")
+        self.DB_PATH = os.getenv("DB_PATH", PATHS.DB)
 
         # Test configuration
         self.ENVIRONMENT = os.getenv("ENVIRONMENT", "local")

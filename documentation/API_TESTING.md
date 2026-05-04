@@ -191,66 +191,6 @@ assert_that(response_time, all_of(
 assert_that(user['email'], matches_regexp(r'^[\w\.-]+@[\w\.-]+\.\w+$'))
 ```
 
-## 📊 Structured Logging
-
-### API Request Logging
-
-```python
-from utils.structured_logger import get_logger
-
-logger = get_logger("APITests")
-
-# Log API request
-response = session.get(url)
-logger.api_request(
-    method="GET",
-    url=url,
-    status_code=response.status_code,
-    response_time=response.elapsed.total_seconds() * 1000
-)
-
-# Output (JSON):
-{
-    "event_type": "api_request",
-    "method": "GET",
-    "url": "https://api.example.com/users",
-    "status_code": 200,
-    "response_time": 245.5,
-    "timestamp": "2025-10-08T10:30:15.123Z",
-    "level": "info"
-}
-```
-
-### Test Execution Logging
-
-```python
-from utils.structured_logger import get_test_logger
-
-test_logger = get_test_logger("test_create_user")
-
-# Start test
-test_logger.start_test(
-    test_type="API",
-    test_suite="User Management",
-    framework="requests"
-)
-
-# Log steps
-test_logger.log_step("Send POST request", "api_call")
-test_logger.log_step("Validate response", "assertion")
-
-# Log assertions
-test_logger.log_assertion(
-    "Status code is 201",
-    response.status_code == 201,
-    expected=201,
-    actual=response.status_code
-)
-
-# End test
-test_logger.end_test("PASS")
-```
-
 ## 🎯 Real-World Examples
 
 ### Example 1: CRUD Operations

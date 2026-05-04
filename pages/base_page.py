@@ -18,11 +18,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from config.constants import TIMEOUTS
 from utils.error_handler import format_error
-
-# Timeout constants - centralized for consistency
-TIMEOUT_DEFAULT = 20  # Standard operations (element visibility, clicks, etc.)
-TIMEOUT_SLOW = 45  # Slow-loading elements (page loads, complex operations)
 
 
 class BasePage:
@@ -34,7 +31,7 @@ class BasePage:
     def __init__(self, driver):
         """Initialize base page with WebDriver instance."""
         self.driver = driver
-        self.wait = WebDriverWait(self.driver, TIMEOUT_DEFAULT)
+        self.wait = WebDriverWait(self.driver, TIMEOUTS.DEFAULT / 1000)
         self.logger = logging.getLogger(__name__)
 
     # === ELEMENT INTERACTION METHODS ===
@@ -57,7 +54,7 @@ class BasePage:
     def wait_for_element(self, locator):
         """Wait for element to be visible. Returns WebElement or None."""
         try:
-            return WebDriverWait(self.driver, TIMEOUT_DEFAULT).until(
+            return WebDriverWait(self.driver, TIMEOUTS.DEFAULT / 1000).until(
                 EC.visibility_of_element_located(locator)
             )
         except TimeoutException:
@@ -66,7 +63,7 @@ class BasePage:
     def wait_for_element_slow(self, locator):
         """Wait for slow-loading element. Returns WebElement or None."""
         try:
-            return WebDriverWait(self.driver, TIMEOUT_SLOW).until(
+            return WebDriverWait(self.driver, TIMEOUTS.LONG / 1000).until(
                 EC.visibility_of_element_located(locator)
             )
         except TimeoutException:
@@ -75,7 +72,7 @@ class BasePage:
     def wait_for_clickable(self, locator):
         """Wait for element to be clickable. Returns WebElement or None."""
         try:
-            return WebDriverWait(self.driver, TIMEOUT_DEFAULT).until(
+            return WebDriverWait(self.driver, TIMEOUTS.DEFAULT / 1000).until(
                 EC.element_to_be_clickable(locator)
             )
         except TimeoutException:
@@ -216,7 +213,7 @@ class BasePage:
     def wait_for_page_load(self):
         """Wait for page to fully load. Returns True on success."""
         try:
-            WebDriverWait(self.driver, TIMEOUT_SLOW).until(
+            WebDriverWait(self.driver, TIMEOUTS.LONG / 1000).until(
                 lambda d: d.execute_script("return document.readyState") == "complete"
             )
             return True

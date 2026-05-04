@@ -1,42 +1,38 @@
-# Error Recovery and System Monitoring
+# Error Recovery
 
 ## Unified Workflow
 
-> **Recommended:** Use the integrated workflow script for all error recovery and monitoring. All error handling, retries, and system monitoring are now automatically triggered by running:
+> **Recommended:** Use the integrated workflow script for error recovery:
 >
 > ```bash
 > python run_full_workflow.py
 > ```
 >
-> This script runs all tests, applies error recovery strategies, and monitors system resources—no manual steps required.
+> This script runs all tests and applies error recovery strategies automatically.
 
 ## Overview
 
-Error recovery and system monitoring are now fully automated as part of the unified workflow. The framework uses **Tenacity** (retry mechanisms) and **Psutil** (system monitoring) to ensure reliability, all orchestrated by `run_full_workflow.py`.
+Error recovery is automated as part of the unified workflow. The framework uses a **stdlib-based retry mechanism** with exponential backoff—zero external dependencies.
 
 ## 🎯 When to Use
 
-- **After running the workflow script**: All error recovery and monitoring are applied automatically
 - **Flaky tests**: Automatic retry for unstable elements
 - **Network issues**: Handle transient failures gracefully
-- **Performance monitoring**: Track memory/CPU during execution
-- **Resource management**: Detect resource exhaustion
 - **Production reliability**: Self-healing test execution
 
-## 🔧 Key Components (Automated)
+## 🔧 Key Components
 
-### 1. SmartErrorHandler (`utils/error_handler.py`)
+### SmartErrorHandler (`utils/error_handler.py`)
 
-**Purpose**: Intelligent error classification and automatic recovery
+**Purpose**: Clean error formatting and retry logic
 
 **Features**:
-- Exception-specific retry strategies
 - Exponential backoff with configurable delays
-- System resource monitoring
-- Recovery success tracking
-- Multiple recovery strategies (retry/refresh/restart)
+- Exception-specific retry control
+- Clean, human-readable error output
+- Screenshot capture on failure
 
-## 🔄 Retry Mechanisms (Tenacity)
+## 🔄 Retry Mechanisms (stdlib)
 
 ### Basic Retry
 
@@ -49,130 +45,67 @@ handler = SmartErrorHandler()
 def unstable_operation():
     return driver.find_element(By.ID, "dynamic-element")
 
-result = handler.execute_with_tenacity_retry(
+result = handler.execute_with_retry(
     unstable_operation,
     max_attempts=3,
-    wait_strategy="exponential"
+    initial_delay=1.0  # exponential: 1s, 2s, 4s...
 )
 ```
 
-### Advanced Retry Configuration
+### Retry for Specific Exceptions
 
 ```python
-from tenacity import (
-    Retrying,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type
-)
+from selenium.common.exceptions import StaleElementReferenceException
 
-# Retry only for specific exceptions
-retry_strategy = Retrying(
-    stop=stop_after_attempt(5),
-    wait=wait_exponential(multiplier=1, min=2, max=10),
-    retry=retry_if_exception_type(ElementNotInteractableException),
-    reraise=True
-)
+handler = SmartErrorHandler()
 
-for attempt in retry_strategy:
-    with attempt:
-        element.click()  # Will retry on ElementNotInteractableException
+result = handler.execute_with_retry(
+    click_element,
+    max_attempts=5,
+    retry_exceptions=(StaleElementReferenceException,),
+    initial_delay=0.5
+)
 ```
 
-### Decorator Pattern
+### How It Works
+
+The retry mechanism uses exponential backoff:
+
+1. **Attempt 1**: Execute immediately
+2. **Attempt 2**: Wait 1s, then execute
+3. **Attempt 3**: Wait 2s, then execute
+4. **Attempt 4**: Wait 4s, then execute
+5. Maximum delay capped at 10 seconds
 
 ```python
-from tenacity import retry, stop_after_attempt, wait_fixed
-
-@retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
-def flaky_api_call():
-    response = requests.get("https://api.example.com/data")
-    response.raise_for_status()
-    return response.json()
-
-# Automatically retries up to 3 times with 2-second wait
-data = flaky_api_call()
+# Implementation (stdlib only, no external deps)
+for attempt in range(max_attempts):
+    try:
+        return operation(*args, **kwargs)
+    except retry_exceptions as e:
+        if attempt < max_attempts - 1:
+            delay = initial_delay * (2 ** attempt)
+            delay = min(delay, 10.0)  # Cap at 10s
+            time.sleep(delay)
 ```
 
-## 📊 System Monitoring (Psutil)
+## 🛠️ Recovery Strategies
 
-### Memory Monitoring
+### Strategy 1: Retry with Handler
+
+**Use case**: Transient failures, timing issues
 
 ```python
 from utils.error_handler import SmartErrorHandler
 
 handler = SmartErrorHandler()
 
-# Real-time memory usage
-memory_data = handler.monitor_memory_usage()
+def click_element():
+    element = driver.find_element(By.ID, "button")
+    element.click()
 
-print(f"Current memory: {memory_data['current_memory_mb']} MB")
-print(f"Peak memory: {memory_data['peak_memory_mb']} MB")
-print(f"Available memory: {memory_data['available_memory_mb']} MB")
-print(f"Memory percent: {memory_data['memory_percent']}%")
-print(f"CPU percent: {memory_data['cpu_percent']}%")
-```
-
-### Performance Tracking During Tests
-
-```python
-import psutil
-
-# Before test execution
-process = psutil.Process()
-memory_before = process.memory_info().rss / 1024 / 1024  # MB
-cpu_before = psutil.cpu_percent(interval=1)
-
-# Run test
-execute_test()
-
-# After test execution
-memory_after = process.memory_info().rss / 1024 / 1024
-cpu_after = psutil.cpu_percent(interval=1)
-
-print(f"Memory used: {memory_after - memory_before:.2f} MB")
-print(f"CPU usage: {cpu_after:.1f}%")
-```
-
-### System Health Check
-
-```python
-import psutil
-
-# System specifications
-total_memory = psutil.virtual_memory().total / (1024**3)  # GB
-cpu_count = psutil.cpu_count()
-disk_usage = psutil.disk_usage('/').percent
-
-print(f"System: {cpu_count} CPUs, {total_memory:.1f} GB RAM")
-print(f"Disk usage: {disk_usage}%")
-
-# Resource availability check
-if psutil.virtual_memory().percent > 90:
-    print("⚠️ Warning: Low memory available")
-if psutil.cpu_percent(interval=1) > 80:
-    print("⚠️ Warning: High CPU usage")
-```
-
-## 🛠️ Recovery Strategies
-
-### Strategy 1: Retry Action
-
-**Use case**: Transient failures, timing issues
-
-```python
-def retry_strategy(driver, element, error):
-    """Retry the same action up to 3 times."""
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            time.sleep(1)  # Brief wait
-            element.click()
-            return True
-        except Exception:
-            if attempt == max_retries - 1:
-                return False
-    return False
+# Retry up to 3 times with exponential backoff
+handler.execute_with_retry(click_element, max_attempts=3)
 ```
 
 ### Strategy 2: Refresh Page
@@ -180,245 +113,109 @@ def retry_strategy(driver, element, error):
 **Use case**: Stale elements, page state issues
 
 ```python
-def refresh_strategy(driver, element, error):
+def refresh_and_click(driver, locator):
     """Refresh page and retry."""
     driver.refresh()
     time.sleep(2)
-    try:
-        element = driver.find_element(*locator)
-        element.click()
-        return True
-    except Exception:
-        return False
-```
+    element = driver.find_element(*locator)
+    element.click()
 
-### Strategy 3: Restart Browser
-
-**Use case**: Browser crashes, memory leaks
-
-```python
-def restart_strategy(driver, element, error):
-    """Restart browser and retry."""
-    driver.quit()
-    driver = webdriver.Chrome()
-    driver.get(original_url)
-    time.sleep(3)
-    try:
-        element = driver.find_element(*locator)
-        element.click()
-        return True
-    except Exception:
-        return False
+handler.execute_with_retry(
+    lambda: refresh_and_click(driver, (By.ID, "button")),
+    max_attempts=2
+)
 ```
 
 ## 🎯 Real-World Usage
 
-### Example 1: Robust Element Interaction
+### Example: Robust Element Interaction
 
 ```python
-from tenacity import retry, stop_after_attempt, wait_exponential
+from utils.error_handler import SmartErrorHandler
+from selenium.common.exceptions import StaleElementReferenceException
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10)
-)
-def click_with_retry(driver, locator):
-    """Click element with automatic retry on failure."""
-    element = driver.find_element(*locator)
+handler = SmartErrorHandler()
+
+def click_submit(driver):
+    element = driver.find_element(By.ID, "submit-button")
     element.click()
 
-# Usage
-try:
-    click_with_retry(driver, (By.ID, "submit-button"))
-except Exception as e:
-    print(f"Failed after retries: {e}")
+# Retry only on stale element errors
+result = handler.execute_with_retry(
+    lambda: click_submit(driver),
+    max_attempts=3,
+    retry_exceptions=(StaleElementReferenceException,)
+)
 ```
 
-### Example 2: Memory-Aware Test Execution
+### Example 2: Network-Aware API Testing
 
 ```python
-import psutil
-
-def test_with_memory_monitoring():
-    """Test with automatic memory monitoring."""
-    initial_memory = psutil.virtual_memory().percent
-    
-    # Execute test
-    perform_heavy_operation()
-    
-    # Check memory usage
-    current_memory = psutil.virtual_memory().percent
-    memory_increase = current_memory - initial_memory
-    
-    if memory_increase > 20:
-        print(f"⚠️ High memory usage: +{memory_increase}%")
-        
-    # Cleanup if needed
-    if psutil.virtual_memory().percent > 85:
-        cleanup_resources()
-```
-
-### Example 3: Network-Aware API Testing
-
-```python
-from tenacity import retry, stop_after_delay, retry_if_exception_type
+from utils.error_handler import SmartErrorHandler
 import requests
 
-@retry(
-    stop=stop_after_delay(30),  # Retry for up to 30 seconds
-    retry=retry_if_exception_type((
-        requests.exceptions.ConnectionError,
-        requests.exceptions.Timeout
-    ))
-)
-def api_call_with_network_retry(url):
-    """API call with network failure retry."""
+handler = SmartErrorHandler()
+
+def api_call(url):
+    """API call that might fail on network issues."""
     response = requests.get(url, timeout=10)
     response.raise_for_status()
     return response.json()
 
-# Automatically retries on network errors
-data = api_call_with_network_retry("https://api.example.com/data")
-```
-
-### Example 4: Resource-Based Test Skipping
-
-```python
-import psutil
-import pytest
-
-def check_system_resources():
-    """Check if system has sufficient resources."""
-    memory_available = psutil.virtual_memory().available / (1024**3)  # GB
-    cpu_idle = 100 - psutil.cpu_percent(interval=1)
-    
-    return memory_available > 2 and cpu_idle > 20
-
-@pytest.mark.skipif(
-    not check_system_resources(),
-    reason="Insufficient system resources"
+# Retry on connection errors
+data = handler.execute_with_retry(
+    lambda: api_call("https://api.example.com/data"),
+    max_attempts=3,
+    retry_exceptions=(
+        requests.exceptions.ConnectionError,
+        requests.exceptions.Timeout,
+    )
 )
-def test_resource_intensive_operation():
-    """Test that requires significant resources."""
-    perform_heavy_computation()
 ```
 
-## 📈 Monitoring Integration
+## 📈 CI/CD Integration
 
-### CI/CD Resource Tracking
+### GitHub Actions Error Handling
 
 ```yaml
-# GitHub Actions - Track resource usage
-- name: Monitor Resources
+# GitHub Actions - Run tests with retry
+- name: Run Tests with Retry
   run: |
-    python -c "
-    import psutil
-    print(f'Memory: {psutil.virtual_memory().percent}%')
-    print(f'CPU: {psutil.cpu_percent()}%')
-    "
-
-- name: Run Tests with Monitoring
-  run: pytest tests/ --verbose
-  
-- name: Check Resource Usage After Tests
-  run: |
-    python -c "
-    import psutil
-    if psutil.virtual_memory().percent > 90:
-        print('::warning::High memory usage detected')
-    "
-```
-
-### Performance Alerts
-
-```python
-def monitor_test_performance(test_function):
-    """Decorator to monitor and alert on resource usage."""
-    def wrapper(*args, **kwargs):
-        # Before execution
-        memory_before = psutil.virtual_memory().percent
-        cpu_before = psutil.cpu_percent(interval=1)
-        
-        # Execute test
-        result = test_function(*args, **kwargs)
-        
-        # After execution
-        memory_after = psutil.virtual_memory().percent
-        cpu_after = psutil.cpu_percent(interval=1)
-        
-        # Alert if thresholds exceeded
-        if memory_after - memory_before > 20:
-            send_alert(f"High memory usage in {test_function.__name__}")
-        if cpu_after > 80:
-            send_alert(f"High CPU usage in {test_function.__name__}")
-            
-        return result
-    return wrapper
+    python -m pytest tests/ --reruns 2 --reruns-delay 1
 ```
 
 ## ⚙️ Configuration
 
-### Tenacity Configuration Options
+### Retry Configuration Options
 
 ```python
-from tenacity import (
-    Retrying,
-    stop_after_attempt,
-    stop_after_delay,
-    wait_fixed,
-    wait_exponential,
-    wait_random
+handler.execute_with_retry(
+    operation,
+    max_attempts=3,          # Maximum retry attempts
+    retry_exceptions=None,   # Tuple of exceptions to retry (default: all)
+    initial_delay=1.0,       # Initial delay in seconds
 )
-
-# Stop conditions
-stop_after_attempt(5)           # Stop after 5 attempts
-stop_after_delay(30)            # Stop after 30 seconds
-
-# Wait strategies
-wait_fixed(2)                   # Wait 2 seconds between attempts
-wait_exponential(multiplier=1)  # 1s, 2s, 4s, 8s, ...
-wait_random(min=1, max=5)       # Random wait 1-5 seconds
-```
-
-### Psutil Monitoring Options
-
-```python
-import psutil
-
-# Process-specific monitoring
-process = psutil.Process()
-process.cpu_percent(interval=1)
-process.memory_info()
-process.num_threads()
-
-# System-wide monitoring
-psutil.virtual_memory()
-psutil.cpu_percent(interval=1)
-psutil.disk_usage('/')
-psutil.net_io_counters()
+# Delay doubles each retry: 1s → 2s → 4s (capped at 10s)
 ```
 
 ## 💡 Best Practices
 
 1. **Use exponential backoff**: Prevents overwhelming services
 2. **Set maximum attempts**: Avoid infinite retry loops
-3. **Monitor memory**: Detect leaks early
-4. **Log retry attempts**: Track recovery patterns
-5. **Specific exceptions**: Only retry recoverable errors
-6. **Resource thresholds**: Skip tests when resources low
-7. **Cleanup on failure**: Release resources after errors
+3. **Log retry attempts**: Track recovery patterns
+4. **Specific exceptions**: Only retry recoverable errors
+5. **Cleanup on failure**: Release resources after errors
 
 ## 📚 Related Documentation
 
 - [Performance Monitoring](PERFORMANCE_MONITORING.md) - Performance benchmarking
 - [Test Data Management](TEST_DATA_MANAGEMENT.md) - Data-driven testing
-- [Analytics & Reporting](ANALYTICS_AND_REPORTING.md) - Execution analytics
 
 ## 🔗 File Locations
 
 - **Implementation**: `utils/error_handler.py`
-- **Tests**: `tests/unit/test_library_integrations.py` (Tenacity/Psutil tests)
+- **Tests**: `tests/unit/test_library_integrations.py`
 
 ---
 
-**Value Proposition**: Build self-healing, production-grade test automation with intelligent error recovery and comprehensive system monitoring - reducing flaky tests and improving reliability.
+**Value Proposition**: Build self-healing test automation with intelligent retry logic—using only Python stdlib for zero external dependencies.

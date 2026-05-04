@@ -6,7 +6,7 @@ Supports JSON/YAML/CSV loading with environment-based configs.
 import csv
 import json
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -106,12 +106,12 @@ class DataManager:
 
     def save_test_results_yaml(self, results, filename=None):
         """Save test results in YAML format. Returns path."""
-        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         path = self.data_dir / "results" / (filename or f"results_{ts}.yml")
         path.parent.mkdir(exist_ok=True)
         data = {
             "test_execution": {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "total_tests": results.get("total_tests", 0),
                 "passed": results.get("passed", 0),
                 "failed": results.get("failed", 0),
@@ -157,7 +157,7 @@ class DataManager:
                 "timeout": random.randint(10, 20),
                 "expected_title_contains": random.choice(terms).split()[0],
                 "generated": True,
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
             }
             for i in range(count)
         ]
@@ -166,16 +166,13 @@ class DataManager:
 
     def cleanup_old_results(self, days_to_keep=30):
         """Clean up result files older than specified days."""
-        cutoff = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
+        cutoff = datetime.now(UTC) - timedelta(days=days_to_keep)
         results_dir = self.data_dir / "results"
         if not results_dir.exists():
             return
         for path in results_dir.rglob("*.json"):
             try:
-                if (
-                    datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
-                    < cutoff
-                ):
+                if datetime.fromtimestamp(path.stat().st_mtime, tz=UTC) < cutoff:
                     path.unlink()
             except (OSError, ValueError):
                 continue
