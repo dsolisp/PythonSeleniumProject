@@ -36,6 +36,9 @@ jobs:
       - name: Typecheck
         run: mypy . --ignore-missing-imports
 
+      - name: Audit (Static Waits)
+        run: bash scripts/audit_static_waits.sh
+
       - name: Audit (Dependencies)
         run: safety scan || true
 

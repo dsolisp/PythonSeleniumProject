@@ -14,6 +14,7 @@ on:
           - advanced
           - database
           - backend
+          - pact
           - visual
           - a11y
           - performance
@@ -29,6 +30,10 @@ jobs:
     env:
       HEADLESS: true
       CI: 'true'
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+      OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+      PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+      PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -63,6 +68,20 @@ jobs:
         if: ${{ inputs.suite == 'all' || inputs.suite == 'backend' }}
         run: pytest tests/api/ tests/backend/ --alluredir=allure-results || true
 
+      - name: Run Pact consumer tests
+        if: ${{ inputs.suite == 'all' || inputs.suite == 'pact' }}
+        run: pytest tests/pact/ -m pact -n 0 -v --tb=short
+
+      - name: Publish Pact contracts to PactFlow
+        if: ${{ (inputs.suite == 'all' || inputs.suite == 'pact') && env.PACT_BROKER_BASE_URL != '' && env.PACT_BROKER_TOKEN != '' }}
+        uses: pactflow/actions/publish-pact-files@v2
+        with:
+          pactfiles: pacts
+          broker_url: ${{ env.PACT_BROKER_BASE_URL }}
+          token: ${{ env.PACT_BROKER_TOKEN }}
+          version: ${{ github.sha }}
+          branch: ${{ github.ref_name }}
+
       - name: Run Visual tests
         if: ${{ inputs.suite == 'all' || inputs.suite == 'visual' }}
         run: pytest tests/ui/visual/ -m visual --alluredir=allure-results || true
@@ -81,6 +100,23 @@ jobs:
         with:
           name: allure-results-${{ github.run_id }}
           path: allure-results/
+
+      - name: Generate metrics summary.json
+        if: always()
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          TEST_SUITE: ${{ inputs.suite }}
+          ALLURE_RESULTS_DIR: allure-results
+        run: node scripts/generate_summary_json.js
+
+      - name: Upload summary.json to Cloudflare R2 (metrics)
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          aws s3 cp summary.json s3://qa-portfolio-metrics/${{ github.event.repository.name }}/${{ github.run_id }}.json --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
       - name: Generate Allure Report
         if: always()

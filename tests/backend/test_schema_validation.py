@@ -1,7 +1,8 @@
 """
-API Contract Testing Module.
-Equivalent to Cypress contract.cy.ts.
-Validates API schemas and contract stability for SWAPI.
+API Schema Validation Module.
+Formerly: test_contract.py
+
+Validates API schemas and schema stability for SWAPI.
 """
 
 import pytest
@@ -18,7 +19,7 @@ BASE_URL = URLS.SWAPI
 
 @pytest.mark.api
 @pytest.mark.contract
-class TestAPIContracts:
+class TestAPISchemaValidation:
     def setup_method(self):
         self.session = requests.Session()
         self.session.verify = False
@@ -127,3 +128,4 @@ class TestAPIContracts:
         assert_that(body["results"], instance_of(list))
         assert_that(body["results"][0], has_key("name"))
         assert_that(body["results"][0], has_key("height"))
+

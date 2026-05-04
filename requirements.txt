@@ -31,8 +31,16 @@ pixelmatch>=0.3.0               # Pixel-level image comparison
 # UTILITIES
 # ═══════════════════════════════════════════════════════════════════════════════
 requests>=2.31.0                # HTTP client for API testing
+pact-python>=3.2.0              # Consumer-driven contracts (Pact) — Phase 14
 PyYAML>=6.0.1                   # YAML config/data loading
 python-dotenv>=1.0.0            # Environment configuration
+testcontainers>=4.0.0           # Testcontainers for hermetic DB demo (Postgres)
+psycopg[binary]>=3.2.0          # Postgres driver for Testcontainers demo
+opentelemetry-api>=1.25.0       # Observability (Phase 13)
+opentelemetry-sdk>=1.25.0       # Observability (Phase 13)
+opentelemetry-exporter-otlp>=1.25.0  # OTLP exporter (Collector/Jaeger/Honeycomb)
+opentelemetry-instrumentation-requests>=0.46b0  # HTTP client spans (requests)
+opentelemetry-instrumentation-urllib3>=0.46b0   # HTTP client spans (urllib3)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # LOAD TESTING

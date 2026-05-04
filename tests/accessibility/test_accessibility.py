@@ -9,6 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 
+from config.constants import URLS
 from config.settings import settings
 from pages.sauce.inventory_page import InventoryPage
 from pages.sauce.login_page import LoginPage
@@ -30,7 +31,7 @@ def browser():
 class TestAccessibility:
     """Standard Accessibility Tests."""
 
-    def test_bing_homepage_no_critical_violations(self, browser):
+    def test_homepage_no_critical_violations(self, browser):
         """Should not have critical accessibility violations on homepage."""
         browser.get(settings.BASE_URL)
         axe = Axe(browser)
@@ -55,13 +56,13 @@ class TestAccessibility:
 
         assert len(violations) <= 10
 
-    def test_bing_search_form_accessible(self, browser):
-        """Should have accessible search form."""
+    def test_homepage_login_form_accessible(self, browser):
+        """Should have accessible login form labels on homepage."""
         browser.get(settings.BASE_URL)
         axe = Axe(browser)
         axe.inject()
         results = axe.run(
-            context={"include": [["#sb_form"]]},
+            context={"include": [["#login_button_container"]]},
             options={"runOnly": {"type": "tag", "values": ["wcag2a", "wcag2aa"]}},
         )
 
@@ -75,7 +76,7 @@ class TestAccessibility:
 
     def test_saucedemo_login_form_accessible(self, browser):
         """Should have accessible login form."""
-        browser.get("https://www.saucedemo.com")
+        browser.get(URLS.SAUCE_DEMO)
         axe = Axe(browser)
         axe.inject()
         results = axe.run(
@@ -88,7 +89,7 @@ class TestAccessibility:
 
     def test_saucedemo_inventory_page_accessible(self, browser):
         """Should have accessible inventory page."""
-        browser.get("https://www.saucedemo.com")
+        browser.get(URLS.SAUCE_DEMO)
         login_page = LoginPage(browser)
         login_page.login("standard_user", "secret_sauce")
 

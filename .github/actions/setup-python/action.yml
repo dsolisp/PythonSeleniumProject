@@ -1,0 +1,15 @@
+name: "Setup Python (cached)"
+description: "Setup Python and enable pip caching"
+inputs:
+  python-version:
+    description: "Python version to use"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: "pip"
+        cache-dependency-path: "requirements.txt"

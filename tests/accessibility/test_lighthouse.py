@@ -11,6 +11,7 @@ from axe_selenium_python import Axe
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
+from config.constants import URLS
 from config.settings import settings
 
 
@@ -74,8 +75,8 @@ def browser():
 class TestLighthouseAccessibility:
     """Lighthouse-style accessibility audit tests."""
 
-    def test_bing_homepage_accessibility_score(self, browser):
-        """Should have good accessibility score on Bing homepage."""
+    def test_homepage_accessibility_score(self, browser):
+        """Should have good accessibility score on homepage."""
         browser.get(settings.BASE_URL)
 
         axe = Axe(browser)
@@ -85,7 +86,7 @@ class TestLighthouseAccessibility:
         score_data = calculate_accessibility_score(results)
 
         print("\n=== Lighthouse-Style Accessibility Audit ===")
-        print(f"Bing Homepage Score: {score_data.score}%")
+        print(f"Homepage Score: {score_data.score}%")
         print(f"Passes: {score_data.passes}, Violations: {score_data.violations}")
         print(
             f"Critical: {score_data.critical_violations}, Serious: {score_data.serious_violations}"
@@ -96,7 +97,7 @@ class TestLighthouseAccessibility:
 
     def test_saucedemo_login_accessibility_score(self, browser):
         """Should have good accessibility score on SauceDemo login."""
-        browser.get("https://www.saucedemo.com")
+        browser.get(URLS.SAUCE_DEMO)
 
         axe = Axe(browser)
         axe.inject()

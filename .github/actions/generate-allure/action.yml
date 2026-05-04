@@ -1,0 +1,18 @@
+name: "Generate Allure report"
+description: "Generate Allure HTML report from results directory"
+inputs:
+  results-dir:
+    description: "Allure results directory"
+    required: true
+  report-dir:
+    description: "Allure report output directory"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Install Allure CLI
+      shell: bash
+      run: npm install -g allure-commandline
+    - name: Generate report
+      shell: bash
+      run: allure generate "${{ inputs.results-dir }}" --clean -o "${{ inputs.report-dir }}"
