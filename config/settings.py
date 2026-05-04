@@ -12,7 +12,7 @@ from config.constants import PATHS, URLS
 try:
     from dotenv import load_dotenv
 except ImportError:
-    load_dotenv = None
+    load_dotenv = None  # type: ignore
 
 
 class Settings:

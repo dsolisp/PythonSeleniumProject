@@ -1,5 +1,7 @@
 """Selector Playground page object for the Practice App (/selectors.html)."""
 
+from typing import Union
+
 from selenium.webdriver.support.ui import Select
 
 from config.settings import settings
@@ -107,7 +109,7 @@ class SelectorsPage(BasePage):
     def get_table_rows_count(self) -> int:
         return len(self.find_elements(SelectorsLocators.TABLE_ROW))
 
-    def get_table_row_name_cell_text(self, row_id: int | str) -> str:
+    def get_table_row_name_cell_text(self, row_id: Union[int, str]) -> str:
         return self.get_text(SelectorsLocators.table_row_name_cell(row_id))
 
     # ── Section 10 ────────────────────────────────────────────────────────

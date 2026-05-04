@@ -1,5 +1,7 @@
 """Locators for the Practice App Selector Playground (/selectors.html)."""
 
+from typing import Union
+
 from selenium.webdriver.common.by import By
 
 
@@ -54,7 +56,7 @@ class SelectorsLocators:
     TABLE_ROW = (By.CSS_SELECTOR, '[data-test="table-row"]')
 
     @staticmethod
-    def table_row_name_cell(row_id: int | str) -> tuple:
+    def table_row_name_cell(row_id: Union[int, str]) -> tuple:
         return (By.CSS_SELECTOR, f'[data-row-id="{row_id}"] [headers="col-name"]')
 
     # ── 10 · XPath targets ─────────────────────────────────────────────────
