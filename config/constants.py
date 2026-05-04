@@ -58,7 +58,4 @@ class VIEWPORTS:
 
 
 class PATHS:
-    DB = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-        "app.db",
-    )
+    DB = str(Path(__file__).resolve().parent.parent.parent / "app.db")
