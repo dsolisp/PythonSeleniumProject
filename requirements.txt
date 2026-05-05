@@ -19,6 +19,7 @@ pytest-json-report>=1.5.0       # JSON reports for test result export
 pytest-rerunfailures>=13.0      # Flaky test retry in current session
 pytest-history>=0.3.0           # Historical test tracking & flaky detection
 pytest-xdist>=3.5.0             # Parallel test execution
+allure-pytest>=2.13.0           # Allure reporting + conftest allure import (CI)
 PyHamcrest>=2.1.0               # Expressive assertions
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -31,8 +32,16 @@ pixelmatch>=0.3.0               # Pixel-level image comparison
 # UTILITIES
 # ═══════════════════════════════════════════════════════════════════════════════
 requests>=2.31.0                # HTTP client for API testing
+pact-python>=3.2.0              # Consumer-driven contracts (Pact) — Phase 14
 PyYAML>=6.0.1                   # YAML config/data loading
 python-dotenv>=1.0.0            # Environment configuration
+testcontainers>=4.0.0           # Testcontainers for hermetic DB demo (Postgres)
+psycopg[binary]>=3.2.0          # Postgres driver for Testcontainers demo
+opentelemetry-api>=1.25.0       # Observability (Phase 13)
+opentelemetry-sdk>=1.25.0       # Observability (Phase 13)
+opentelemetry-exporter-otlp>=1.25.0  # OTLP exporter (Collector/Jaeger/Honeycomb)
+opentelemetry-instrumentation-requests>=0.46b0  # HTTP client spans (requests)
+opentelemetry-instrumentation-urllib3>=0.46b0   # HTTP client spans (urllib3)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # LOAD TESTING
@@ -44,5 +53,6 @@ locust>=2.20.0                  # Load testing framework
 # ═══════════════════════════════════════════════════════════════════════════════
 ruff>=0.1.0                     # Fast linter & formatter
 mypy>=1.7.0                     # Static type checking
+types-requests>=2.31.0          # Stubs for requests (mypy import-untyped in CI)
 bandit>=1.7.0                   # Security vulnerability scanner
 pre-commit>=3.6.0               # Git hooks for code quality

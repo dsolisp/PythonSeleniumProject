@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-and-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint
+        run: ruff check --target-version=py39 .
+
+      - name: Format Check
+        run: ruff format --check --target-version=py39 .
+
+      - name: Typecheck
+        run: mypy . --ignore-missing-imports
+
+      - name: Audit (Static Waits)
+        run: bash scripts/audit_static_waits.sh
+
+      - name: Audit (Dependencies)
+        run: safety scan || true
+
+      - name: Run Unit Tests
+        run: pytest tests/unit/ -v --tb=short

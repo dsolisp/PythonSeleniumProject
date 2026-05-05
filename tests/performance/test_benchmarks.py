@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from config.constants import URLS
 from utils.webdriver_factory import WebDriverFactory
 
 """
@@ -21,7 +22,7 @@ class TestPerformance:
     def setup_method(self):
         self.factory = WebDriverFactory()
         self.driver = self.factory.create_chrome_driver(headless=True)
-        self.api_base_url = "https://jsonplaceholder.typicode.com"
+        self.api_base_url = URLS.JSON_PLACEHOLDER
 
     def teardown_method(self):
         if hasattr(self, "driver") and self.driver:
@@ -29,14 +30,14 @@ class TestPerformance:
 
     def test_homepage_should_load_within_acceptable_time(self):
         start_time = time.time()
-        self.driver.get("https://www.bing.com")
+        self.driver.get(URLS.SAUCE_DEMO)
         load_time = (time.time() - start_time) * 1000
         print(f"Homepage load time: {load_time}ms")
         assert_that(load_time, less_than(10000))
 
     def test_saucedemo_login_page_should_load_quickly(self):
         start_time = time.time()
-        self.driver.get("https://www.saucedemo.com")
+        self.driver.get(URLS.SAUCE_DEMO)
         load_time = (time.time() - start_time) * 1000
         print(f"SauceDemo load time: {load_time}ms")
         assert_that(load_time, less_than(3000))
@@ -46,7 +47,7 @@ class TestPerformance:
         assert True
 
     def test_should_measure_first_contentful_paint_fcp(self):
-        self.driver.get("https://www.saucedemo.com")
+        self.driver.get(URLS.SAUCE_DEMO)
         script = """
         var paintEntries = performance.getEntriesByType('paint');
         var fcp = paintEntries.find(e => e.name === 'first-contentful-paint');
@@ -59,7 +60,7 @@ class TestPerformance:
 
     def test_should_measure_time_to_interactive_approximation(self):
         start_time = time.time()
-        self.driver.get("https://www.saucedemo.com")
+        self.driver.get(URLS.SAUCE_DEMO)
         # Wait for interactive element
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.ID, "login-button"))
@@ -100,7 +101,7 @@ class TestPerformance:
         assert_that(total_time, less_than(3000))
 
     def test_should_not_have_excessive_resource_size(self):
-        self.driver.get("https://www.saucedemo.com")
+        self.driver.get(URLS.SAUCE_DEMO)
         script = """
         var resources = performance.getEntriesByType('resource');
         var totalSize = 0;

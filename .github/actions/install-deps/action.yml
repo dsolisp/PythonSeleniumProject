@@ -1,0 +1,10 @@
+name: "Install Python dependencies"
+description: "Install pip dependencies from requirements.txt"
+runs:
+  using: "composite"
+  steps:
+    - name: Install dependencies
+      shell: bash
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt

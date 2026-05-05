@@ -9,10 +9,12 @@ import time
 from collections.abc import Generator
 from pathlib import Path
 
+import allure
 import pytest
 from selenium import webdriver
 
 from config.settings import settings
+from utils.otel import configure_tracing, current_trace_id, get_tracer
 from utils.webdriver_factory import cleanup_driver_and_database, get_driver
 
 # ── Auth state cache (ADR-009) ────────────────────────────────────────────────
@@ -182,6 +184,7 @@ def pytest_runtest_makereport(item):
 
 def pytest_configure(config):
     """Register test markers."""
+    configure_tracing(service_name="PythonSeleniumProject")
     markers = [
         "ui: UI automation tests (tests/ui/)",
         "web: Legacy alias for ui tests",
@@ -200,6 +203,42 @@ def pytest_configure(config):
     ]
     for marker in markers:
         config.addinivalue_line("markers", marker)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_protocol(item, nextitem):
+    tracer = get_tracer("pytest")
+    test_name = item.nodeid
+    with tracer.start_as_current_span(
+        "test",
+        attributes={
+            "test.name": item.name,
+            "test.nodeid": test_name,
+            "test.file": str(getattr(item, "path", "")),
+        },
+    ):
+        yield
+
+    trace_id = current_trace_id()
+    if not trace_id:
+        return
+
+    # Best-effort: if allure is installed and enabled, attach the trace id for drill-down.
+    if getattr(settings, "ENABLE_ALLURE", False):
+        try:
+            jaeger_ui = os.getenv("JAEGER_UI_URL")  # e.g. http://localhost:16686
+            if jaeger_ui:
+                allure.dynamic.link(
+                    f"{jaeger_ui.rstrip('/')}/trace/{trace_id}", name="Jaeger trace"
+                )
+            allure.attach(
+                trace_id,
+                name="otel.trace_id",
+                attachment_type=allure.attachment_type.TEXT,
+            )
+        except Exception:
+            # Allure is optional in this repo; ignore if not installed/configured.
+            pass
 
 
 # === PLAYWRIGHT CONFIGURATION ===

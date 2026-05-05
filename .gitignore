@@ -25,6 +25,7 @@ test_reports/
 allure-results/
 allure-report/
 playwright-report/
+pacts/
 .pytest_cache/
 .coverage
 htmlcov/
