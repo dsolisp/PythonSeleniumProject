@@ -228,7 +228,9 @@ def pytest_runtest_protocol(item, nextitem):
         try:
             jaeger_ui = os.getenv("JAEGER_UI_URL")  # e.g. http://localhost:16686
             if jaeger_ui:
-                allure.dynamic.link(f"{jaeger_ui.rstrip('/')}/trace/{trace_id}", name="Jaeger trace")
+                allure.dynamic.link(
+                    f"{jaeger_ui.rstrip('/')}/trace/{trace_id}", name="Jaeger trace"
+                )
             allure.attach(
                 trace_id,
                 name="otel.trace_id",

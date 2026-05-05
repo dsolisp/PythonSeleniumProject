@@ -128,4 +128,3 @@ class TestAPISchemaValidation:
         assert_that(body["results"], instance_of(list))
         assert_that(body["results"][0], has_key("name"))
         assert_that(body["results"][0], has_key("height"))
-

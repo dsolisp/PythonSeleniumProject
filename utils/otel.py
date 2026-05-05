@@ -51,7 +51,9 @@ def configure_tracing(service_name: str) -> None:
     if otlp_endpoint:
         headers = _parse_otlp_headers(os.getenv("OTEL_EXPORTER_OTLP_HEADERS"))
         provider.add_span_processor(
-            BatchSpanProcessor(OTLPSpanExporter(endpoint=otlp_endpoint, headers=headers or None))
+            BatchSpanProcessor(
+                OTLPSpanExporter(endpoint=otlp_endpoint, headers=headers or None)
+            )
         )
     else:
         provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
@@ -81,4 +83,3 @@ def current_trace_id() -> str | None:
     if not ctx or not ctx.is_valid:
         return None
     return format(ctx.trace_id, "032x")
-

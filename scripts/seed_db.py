@@ -19,7 +19,9 @@ def seed(conn) -> None:
     cursor.execute(
         "INSERT INTO users (id, username, role) VALUES (1, 'standard_user', 'customer')"
     )
-    cursor.execute("INSERT INTO users (id, username, role) VALUES (2, 'admin_user', 'admin')")
+    cursor.execute(
+        "INSERT INTO users (id, username, role) VALUES (2, 'admin_user', 'admin')"
+    )
 
     cursor.execute("CREATE TABLE products (id INT, name TEXT, price REAL)")
     cursor.execute(
