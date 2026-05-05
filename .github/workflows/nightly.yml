@@ -465,8 +465,9 @@ jobs:
     - name: Upload Allure report (Artifact)
       uses: actions/upload-artifact@v4
       with:
-        name: allure-report
+        name: allure-report-${{ github.run_id }}
         path: allure-report/
+        if-no-files-found: warn
 
     - name: Upload Report to Cloudflare R2
       if: always()
@@ -479,9 +480,24 @@ jobs:
 
     - name: Add Report URL to Summary
       if: always()
+      env:
+        R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
       run: |
-        echo "### 📊 Allure Report" >> $GITHUB_STEP_SUMMARY
-        echo "[View Full Report](${{ secrets.R2_PUBLIC_URL }}/${{ github.event.repository.name }}/${{ github.run_id }}/index.html)" >> $GITHUB_STEP_SUMMARY
+        {
+          echo "### Allure report"
+          echo ""
+          echo "GitHub **does not** expose artifact files at a browsable \`github.com/.../index.html\` URL (those links always 404)."
+          echo "Use the **allure-report-${{ github.run_id }}** artifact: download, unzip, open \`index.html\` locally."
+          echo ""
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        if [ -n "$R2_PUBLIC_URL" ] && [[ "$R2_PUBLIC_URL" != *"github.com"* ]]; then
+          echo "Hosted copy (R2): [index.html](${R2_PUBLIC_URL}/${{ github.event.repository.name }}/${{ github.run_id }}/index.html)" >> "$GITHUB_STEP_SUMMARY"
+        elif [ -n "$R2_PUBLIC_URL" ]; then
+          echo "⚠️ **R2_PUBLIC_URL** must be the **public** base URL for bucket \`qa-portfolio-allure\` (R2 custom domain or \`*.r2.dev\`), not a \`github.com\` link. Fix it under **Settings → Secrets and variables**." >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "Optional: set **R2_PUBLIC_URL** to that public base URL to get a hosted link above." >> "$GITHUB_STEP_SUMMARY"
+        fi
     
     - name: Deploy to GitHub Pages
       if: github.ref == 'refs/heads/main'
