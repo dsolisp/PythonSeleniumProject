@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import requests
 from pact import Pact, match
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 @pytest.fixture

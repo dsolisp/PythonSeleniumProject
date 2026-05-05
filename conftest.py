@@ -9,6 +9,7 @@ import time
 from collections.abc import Generator
 from pathlib import Path
 
+import allure
 import pytest
 from selenium import webdriver
 
@@ -215,7 +216,7 @@ def pytest_runtest_protocol(item, nextitem):
             "test.nodeid": test_name,
             "test.file": str(getattr(item, "path", "")),
         },
-    ) as span:
+    ):
         yield
 
     trace_id = current_trace_id()
@@ -225,8 +226,6 @@ def pytest_runtest_protocol(item, nextitem):
     # Best-effort: if allure is installed and enabled, attach the trace id for drill-down.
     if getattr(settings, "ENABLE_ALLURE", False):
         try:
-            import allure  # type: ignore
-
             jaeger_ui = os.getenv("JAEGER_UI_URL")  # e.g. http://localhost:16686
             if jaeger_ui:
                 allure.dynamic.link(f"{jaeger_ui.rstrip('/')}/trace/{trace_id}", name="Jaeger trace")

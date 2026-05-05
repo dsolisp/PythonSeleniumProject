@@ -4,7 +4,17 @@ Equivalent to Cypress database.cy.ts.
 Demonstrates 5 patterns for combining UI automation with a local SQLite database.
 """
 
+import os
+import sqlite3
+
 import pytest
+
+try:
+    import psycopg
+    from testcontainers.postgres import PostgresContainer
+except ImportError:  # pragma: no cover
+    PostgresContainer = None
+    psycopg = None
 
 from components.header_component import HeaderComponent
 from pages.sauce.inventory_page import InventoryPage
@@ -25,31 +35,27 @@ class TestDatabase:
     def db_connection(self):
         # Showcase tier (L3): ephemeral Postgres via Testcontainers.
         # If Docker isn't available (or you want local SQLite), set USE_TESTCONTAINERS=0.
-        import os
-
         use_testcontainers = os.getenv("USE_TESTCONTAINERS", "1") != "0"
         if not use_testcontainers:
-            import sqlite3
-
             conn = sqlite3.connect(":memory:")
             seed(conn)
             yield conn
             conn.close()
             return
 
+        if PostgresContainer is None or psycopg is None:
+            pytest.skip("Testcontainers/Postgres not installed")  # pragma: no cover
+
         try:
-            from testcontainers.postgres import PostgresContainer
-            import psycopg
+            with PostgresContainer("postgres:16-alpine") as pg:
+                conn = psycopg.connect(pg.get_connection_url())
+                try:
+                    seed(conn)
+                    yield conn
+                finally:
+                    conn.close()
         except Exception as e:  # pragma: no cover
             pytest.skip(f"Testcontainers/Postgres not available: {e}")
-
-        with PostgresContainer("postgres:16-alpine") as pg:
-            conn = psycopg.connect(pg.get_connection_url())
-            try:
-                seed(conn)
-                yield conn
-            finally:
-                conn.close()
 
     # ── Example 1: Seed → Login (Precondition) ──────────────────────────
     def test_example_1_seeds_user_then_login(self, selenium_driver, db_connection):
