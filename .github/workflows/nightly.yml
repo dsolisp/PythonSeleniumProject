@@ -439,6 +439,23 @@ jobs:
         mkdir -p allure-results
         find . -name "allure-results" -type d -exec cp -r {}/* allure-results/ \;
 
+    - name: Generate metrics summary.json
+      if: always()
+      env:
+        REPO_NAME: ${{ github.event.repository.name }}
+        TEST_SUITE: nightly
+        ALLURE_RESULTS_DIR: allure-results
+      run: node scripts/generate_summary_json.js
+
+    - name: Upload summary.json to Cloudflare R2 (metrics)
+      if: always()
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: auto
+      run: |
+        aws s3 cp summary.json s3://qa-portfolio-metrics/${{ github.event.repository.name }}/${{ github.run_id }}.json --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+
     - name: Generate Allure report (HTML)
       uses: ./.github/actions/generate-allure
       with:
