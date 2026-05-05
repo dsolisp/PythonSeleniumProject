@@ -52,5 +52,6 @@ locust>=2.20.0                  # Load testing framework
 # ═══════════════════════════════════════════════════════════════════════════════
 ruff>=0.1.0                     # Fast linter & formatter
 mypy>=1.7.0                     # Static type checking
+types-requests>=2.31.0          # Stubs for requests (mypy import-untyped in CI)
 bandit>=1.7.0                   # Security vulnerability scanner
 pre-commit>=3.6.0               # Git hooks for code quality

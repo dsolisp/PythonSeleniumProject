@@ -4,23 +4,32 @@ Equivalent to Cypress database.cy.ts.
 Demonstrates 5 patterns for combining UI automation with a local SQLite database.
 """
 
+import importlib
 import os
 import sqlite3
+from typing import Any
 
 import pytest
-
-try:
-    import psycopg
-    from testcontainers.postgres import PostgresContainer
-except ImportError:  # pragma: no cover
-    PostgresContainer = None
-    psycopg = None
 
 from components.header_component import HeaderComponent
 from pages.sauce.inventory_page import InventoryPage
 from pages.sauce.login_page import LoginPage
 from scripts.seed_db import seed
 from utils.builders.user_builder import UserBuilder
+
+psycopg: Any = None
+PostgresContainer: Any = None
+try:
+    psycopg = importlib.import_module("psycopg")
+except ImportError:  # pragma: no cover
+    pass
+
+try:
+    PostgresContainer = importlib.import_module(
+        "testcontainers.postgres"
+    ).PostgresContainer
+except (ImportError, AttributeError):  # pragma: no cover
+    pass
 
 
 @pytest.mark.database

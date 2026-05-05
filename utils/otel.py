@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+from typing import Any
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -9,12 +10,16 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 
+_requests_instrumentor: Any = None
+_urllib3_instrumentor: Any = None
 try:
-    from opentelemetry.instrumentation.requests import RequestsInstrumentor
-    from opentelemetry.instrumentation.urllib3 import URLLib3Instrumentor
+    from opentelemetry.instrumentation.requests import RequestsInstrumentor as _ReqInst
+    from opentelemetry.instrumentation.urllib3 import URLLib3Instrumentor as _UrlInst
 except ImportError:  # pragma: no cover
-    RequestsInstrumentor = None
-    URLLib3Instrumentor = None
+    pass
+else:
+    _requests_instrumentor = _ReqInst
+    _urllib3_instrumentor = _UrlInst
 
 _CONFIGURED: list[bool] = [False]
 
@@ -62,13 +67,13 @@ def configure_tracing(service_name: str) -> None:
 
     # Auto-instrumentation (best-effort). This makes outbound HTTP calls show up
     # as child spans under the per-test parent span.
-    if RequestsInstrumentor is not None:
+    if _requests_instrumentor is not None:
         with contextlib.suppress(Exception):
-            RequestsInstrumentor().instrument()
+            _requests_instrumentor().instrument()
 
-    if URLLib3Instrumentor is not None:
+    if _urllib3_instrumentor is not None:
         with contextlib.suppress(Exception):
-            URLLib3Instrumentor().instrument()
+            _urllib3_instrumentor().instrument()
 
     _CONFIGURED[0] = True
 

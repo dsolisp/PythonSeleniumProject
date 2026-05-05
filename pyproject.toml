@@ -39,6 +39,7 @@ dependencies = [
 dev = [
     "ruff>=0.7.0",
     "lefthook>=1.7.0",
+    "types-requests>=2.31.0",
 ]
 
 [tool.uv]
