@@ -19,6 +19,7 @@ pytest-json-report>=1.5.0       # JSON reports for test result export
 pytest-rerunfailures>=13.0      # Flaky test retry in current session
 pytest-history>=0.3.0           # Historical test tracking & flaky detection
 pytest-xdist>=3.5.0             # Parallel test execution
+allure-pytest>=2.13.0           # Allure reporting + conftest allure import (CI)
 PyHamcrest>=2.1.0               # Expressive assertions
 
 # ═══════════════════════════════════════════════════════════════════════════════
