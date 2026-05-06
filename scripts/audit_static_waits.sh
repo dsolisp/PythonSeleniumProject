@@ -46,6 +46,7 @@ done < <(
     --exclude-dir=bin \
     --exclude-dir=obj \
     --exclude-dir=.venv \
+    --exclude-dir=.venv-ci \
     --exclude-dir=venv \
     --exclude-dir=venv-enhanced \
     --exclude-dir=.pytest_cache \
