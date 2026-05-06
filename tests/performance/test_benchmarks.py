@@ -16,6 +16,9 @@ Aligned to have exactly 8 tests across all stacks.
 """
 
 
+pytestmark = [pytest.mark.performance]
+
+
 class TestPerformance:
     """Performance Tests"""
 

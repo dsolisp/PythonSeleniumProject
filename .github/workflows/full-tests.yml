@@ -32,7 +32,7 @@ jobs:
       OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -51,19 +51,19 @@ jobs:
 
       - name: Run Smoke tests
         if: ${{ inputs.suite == 'all' || inputs.suite == 'smoke' }}
-        run: pytest tests/web/ -m smoke --alluredir=allure-results || true
+        run: pytest tests/ui/practice/ -m smoke --alluredir=allure-results || true
 
       - name: Run Advanced tests
         if: ${{ inputs.suite == 'all' || inputs.suite == 'advanced' }}
-        run: pytest tests/web/ -m advanced --alluredir=allure-results || true
+        run: pytest tests/ui/practice/ -m advanced --alluredir=allure-results || true
 
       - name: Run Database UI tests
         if: ${{ inputs.suite == 'all' || inputs.suite == 'database' }}
-        run: pytest tests/web/ -m database --alluredir=allure-results || true
+        run: pytest tests/backend/ -m database --alluredir=allure-results || true
 
       - name: Run Backend/API tests
         if: ${{ inputs.suite == 'all' || inputs.suite == 'backend' }}
-        run: pytest tests/api/ tests/backend/ --alluredir=allure-results || true
+        run: pytest tests/backend/ -m "api and not contract and not database" --alluredir=allure-results || true
 
       - name: Run Visual tests
         if: ${{ inputs.suite == 'all' || inputs.suite == 'visual' }}
@@ -71,7 +71,7 @@ jobs:
 
       - name: Run Accessibility tests
         if: ${{ inputs.suite == 'all' || inputs.suite == 'a11y' }}
-        run: pytest tests/ui/accessibility/ -m a11y --alluredir=allure-results || true
+        run: pytest tests/accessibility/ -m accessibility --alluredir=allure-results || true
 
       - name: Run Performance tests
         if: ${{ inputs.suite == 'all' || inputs.suite == 'performance' }}

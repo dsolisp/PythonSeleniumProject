@@ -15,6 +15,9 @@ from config.constants import URLS
 from config.settings import settings
 
 
+pytestmark = [pytest.mark.accessibility]
+
+
 @dataclass
 class AccessibilityScore:
     """Lighthouse-style accessibility score data."""

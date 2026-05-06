@@ -9,6 +9,7 @@ from pages.practice.selectors_page import SelectorsPage
 
 
 @pytest.mark.practice
+@pytest.mark.advanced
 @pytest.mark.selectors
 class TestSelectors:
     """Demonstrates all 10 selector strategies via the /selectors.html page."""
