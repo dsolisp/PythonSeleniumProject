@@ -116,7 +116,9 @@ jobs:
     
     - name: Install code quality tools
       run: |
-        pip install ruff mypy bandit safety
+        # Install the same deps CI uses, including type stubs (e.g. types-requests)
+        pip install -r requirements.txt
+        pip install safety
     
     - name: Check code formatting and linting with Ruff
       run: |

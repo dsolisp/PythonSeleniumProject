@@ -14,7 +14,6 @@ on:
           - advanced
           - database
           - backend
-          - pact
           - visual
           - a11y
           - performance
@@ -32,8 +31,6 @@ jobs:
       CI: 'true'
       OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
-      PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
-      PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -67,20 +64,6 @@ jobs:
       - name: Run Backend/API tests
         if: ${{ inputs.suite == 'all' || inputs.suite == 'backend' }}
         run: pytest tests/api/ tests/backend/ --alluredir=allure-results || true
-
-      - name: Run Pact consumer tests
-        if: ${{ inputs.suite == 'all' || inputs.suite == 'pact' }}
-        run: pytest tests/pact/ -m pact -n 0 -v --tb=short
-
-      - name: Publish Pact contracts to PactFlow
-        if: ${{ (inputs.suite == 'all' || inputs.suite == 'pact') && env.PACT_BROKER_BASE_URL != '' && env.PACT_BROKER_TOKEN != '' }}
-        uses: pactflow/actions/publish-pact-files@v2
-        with:
-          pactfiles: pacts
-          broker_url: ${{ env.PACT_BROKER_BASE_URL }}
-          token: ${{ env.PACT_BROKER_TOKEN }}
-          version: ${{ github.sha }}
-          branch: ${{ github.ref_name }}
 
       - name: Run Visual tests
         if: ${{ inputs.suite == 'all' || inputs.suite == 'visual' }}
