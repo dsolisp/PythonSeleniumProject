@@ -1,7 +1,10 @@
 """Inventory page object for SauceDemo."""
 
+from __future__ import annotations
+
 from selenium.webdriver.support.ui import Select
 
+from config.constants import URLS
 from locators.sauce.inventory_locators import InventoryLocators
 from pages.base_page import BasePage
 
@@ -12,6 +15,15 @@ class InventoryPage(BasePage):
     Responsibilities: read product list, sort, add items to cart.
     No assertions (Law 2). Inherits BasePage only (Law 4).
     """
+
+    def open(self) -> InventoryPage:
+        """Navigate to the inventory page and return self for chaining."""
+        self.navigate_to(f"{URLS.SAUCE_DEMO}/inventory.html")
+        return self
+
+    def is_loaded(self) -> bool:
+        """Return True when the inventory list is visible."""
+        return self.wait_for_element(InventoryLocators.INVENTORY_LIST) is not None
 
     def get_items(self) -> list:
         """Return list of inventory item WebElements."""

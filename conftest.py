@@ -124,6 +124,19 @@ def authenticated_driver(test_config) -> Generator[webdriver.Chrome]:
         login = LoginPage(drv)
         login.login(_SAUCE_USERNAME, _SAUCE_PASSWORD)
 
+        # Ensure we're authenticated before continuing (inventory should be visible).
+        drv.get(f"{_SAUCE_URL}inventory.html")
+        from selenium.webdriver.support import expected_conditions as EC  # noqa: PLC0415
+        from selenium.webdriver.support.ui import WebDriverWait  # noqa: PLC0415
+
+        from locators.sauce.inventory_locators import (  # noqa: PLC0415
+            InventoryLocators,
+        )
+
+        WebDriverWait(drv, 10).until(
+            EC.visibility_of_element_located(InventoryLocators.INVENTORY_LIST)
+        )
+
         # Persist auth state
         if use_cache:
             _auth_file.parent.mkdir(parents=True, exist_ok=True)
