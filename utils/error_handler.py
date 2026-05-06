@@ -11,7 +11,7 @@ Design principles:
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -117,7 +117,7 @@ class ScreenshotService:
 
     def capture(self, driver, test_name, prefix="error"):
         """Capture screenshot. Returns path or None on failure."""
-        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         path = self.screenshots_dir / f"{prefix}_{test_name}_{ts}.png"
         try:
             driver.save_screenshot(str(path))
