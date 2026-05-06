@@ -32,7 +32,6 @@ pixelmatch>=0.3.0               # Pixel-level image comparison
 # UTILITIES
 # ═══════════════════════════════════════════════════════════════════════════════
 requests>=2.31.0                # HTTP client for API testing
-pact-python>=3.2.0              # Consumer-driven contracts (Pact) — Phase 14
 PyYAML>=6.0.1                   # YAML config/data loading
 python-dotenv>=1.0.0            # Environment configuration
 testcontainers>=4.0.0           # Testcontainers for hermetic DB demo (Postgres)
