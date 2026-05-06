@@ -14,7 +14,6 @@ from selenium.webdriver.chrome.options import Options
 from config.constants import URLS
 from config.settings import settings
 
-
 pytestmark = [pytest.mark.accessibility]
 
 
