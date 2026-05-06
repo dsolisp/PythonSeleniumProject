@@ -36,10 +36,8 @@ htmlcov/
 screenshots/
 screenshots_diff/
 custom_screenshots/
-*.png
-*.mp4
-*.webm
-*.trace.zip
+# NOTE: Visual baselines must be committed for true regression testing.
+# Generated media is expected to live under the ignored output folders above.
 
 # ── Reports ───────────────────────────────────────────────────────────────────
 reports/
