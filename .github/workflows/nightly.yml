@@ -58,7 +58,7 @@ jobs:
       python-version: ${{ steps.setup-python.outputs.python-version }}
       run-ui-tests: ${{ steps.ui-flag.outputs.value }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up Python
       id: setup-python
@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up Python
       uses: ./.github/actions/setup-python
@@ -107,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up Python
       uses: ./.github/actions/setup-python
@@ -137,7 +137,7 @@ jobs:
       matrix:
         python-version: ['3.9', '3.10', '3.11']
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: ./.github/actions/setup-python
@@ -180,7 +180,7 @@ jobs:
         python-version: ['3.9', '3.10', '3.11']
         test-suite: [smoke, advanced, database]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: ./.github/actions/setup-python
@@ -202,7 +202,7 @@ jobs:
       env:
         HEADLESS: true
       run: |
-        pytest tests/web/ tests/api/ -v --tb=short \
+        pytest tests/ui/practice/ tests/backend/ -v --tb=short \
           --cov=pages --cov=utils \
           --cov-report=html:reports/coverage/e2e-html \
           --cov-report=xml:reports/coverage/e2e-coverage.xml \
@@ -247,7 +247,7 @@ jobs:
         options: --shm-size=2gb
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up Python
       uses: ./.github/actions/setup-python
@@ -301,7 +301,7 @@ jobs:
     if: ${{ needs.setup.outputs.run-ui-tests == 'true' && github.event_name != 'schedule' }}
     needs: [setup, e2e-tests]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up Python
       uses: ./.github/actions/setup-python
@@ -357,7 +357,7 @@ jobs:
     if: ${{ needs.setup.outputs.run-ui-tests == 'true' && (github.ref == 'refs/heads/main' || github.event_name == 'schedule') }}
     needs: [setup, e2e-tests]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up Python
       uses: ./.github/actions/setup-python
@@ -388,7 +388,7 @@ jobs:
     needs: [setup, unit-tests, e2e-tests]
     if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up Python
       uses: ./.github/actions/setup-python
@@ -426,13 +426,13 @@ jobs:
     needs: [setup, unit-tests, e2e-tests, grid-integration-tests, visual-tests, combined-coverage]
     if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Download all artifacts
       uses: actions/download-artifact@v4
     
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v5
       with:
         node-version: ${{ env.NODE_VERSION }}
     

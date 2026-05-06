@@ -31,6 +31,8 @@ def browser():
 class TestAccessibility:
     """Standard Accessibility Tests."""
 
+    pytestmark = [pytest.mark.accessibility]
+
     def test_homepage_no_critical_violations(self, browser):
         """Should not have critical accessibility violations on homepage."""
         browser.get(settings.BASE_URL)
