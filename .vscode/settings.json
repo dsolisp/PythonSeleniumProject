@@ -1,17 +1,10 @@
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv-ci/bin/python",
-  "python.analysis.extraPaths": [
-    "${workspaceFolder}"
-  ]
-}
-
-{
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "java.debug.settings.onBuildFailureProceed": true,
-    "java.compile.nullAnalysis.mode": "automatic"
+  "python.analysis.extraPaths": ["${workspaceFolder}"],
+  "python.analysis.venvPath": "${workspaceFolder}",
+  "python.analysis.venv": ".venv-ci",
+  "python.terminal.activateEnvironment": true,
+  "python.testing.pytestArgs": ["tests"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }
