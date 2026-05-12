@@ -46,7 +46,7 @@ Files under `pages/`, `locators/`, and `components/` directories (all stacks) mu
 def get_error_message(self) -> str:
     return self.driver.find_element(*self.locators.ERROR_MESSAGE).text
 
-# tests/web/test_sauce.py — assertion belongs here
+# tests/ui/sauce/test_sauce.py — assertion belongs here
 def test_invalid_login_shows_error(login_page):
     login_page.login("invalid_user", "wrong_pass")
     assert_that(login_page.get_error_message(), contains_string("Username and password do not match"))

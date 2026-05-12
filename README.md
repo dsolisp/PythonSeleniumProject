@@ -25,11 +25,11 @@
 
 | Feature | Why It Matters |
 |---------|----------------|
-| **Dual Framework Support** | Selenium AND Playwright - shows versatility |
+| **Dual framework** | Selenium drives most UI tests; Playwright (`utils/playwright_factory.py`, sample under `tests/ui/playwright/`) for extension and CI parity |
 | **Real CI/CD Integration** | GitHub Actions (`.github/workflows/ci.yml`, `full-tests.yml`, `nightly.yml`) |
 | **Flaky Test Detection** | pytest-history tracks test reliability over time |
 | **Visual Regression Testing** | Selenium screenshots + Pillow + pixelmatch (`utils/diff_handler.py`), baselines in `baselines/` |
-| **Load Testing** | Performance testing with Locust |
+| **Load + perf** | `pytest-benchmark` in `tests/performance/`; Locust file `tests/performance/locustfile.py` for HTTP load demos |
 | **Retries & failures** | `SmartErrorHandler.execute_with_retry` (stdlib backoff) + failure screenshots via `conftest` / settings |
 | **Clean Architecture** | Page Object Model, modular utilities, clear docstrings |
 
@@ -59,13 +59,13 @@ That's it! Runs tests, generates reports, and checks for flaky tests automatical
 ## ✨ Key Features
 
 ### 🧪 Testing Capabilities
-- **Web Automation**: Selenium + Playwright with Page Object Model
+- **Web automation**: Selenium + Page Object Model for most UI tests; Playwright factory + smoke test for second stack
 - **API Testing**: REST validation with conditional Allure reporting
 - **Visual regression**: Pillow + pixelmatch (`utils/diff_handler.py`); baselines under `baselines/`
 - **Cross-Browser**: Chrome, Firefox, Edge, Safari support
 - **Database Testing**: SQLite integration with test data management
 - **Security Testing**: SSL verification and security-focused test markers
-- **Load Testing**: Locust integration for performance under load
+- **Load testing**: Locust (`tests/performance/locustfile.py`) plus `pytest-benchmark` in the same folder
 
 ### 📊 Intelligence & analytics
 - **Flaky history**: `pytest-history` (SQLite `.test-results.db`) — see [docs/guides/TEST_ANALYTICS.md](docs/guides/TEST_ANALYTICS.md)
@@ -75,7 +75,6 @@ That's it! Runs tests, generates reports, and checks for flaky tests automatical
 
 ### 🔧 Reliability & performance
 - **Retries**: stdlib exponential backoff in `utils/error_handler.py` (`execute_with_retry`)
-- **Load testing**: Locust (`tests/performance/locustfile.py`)
 - **Data Management**: Multi-format support (JSON/YAML/CSV)
 - **Parallel Execution**: pytest-xdist support for faster test runs
 - **Code Quality**: Integrated ruff, mypy, bandit, and safety tools
@@ -93,16 +92,16 @@ PythonSeleniumProject/
 ├── 📁 tests/                        # pytest suites (markers in pytest.ini)
 │   ├── unit/
 │   ├── integration/
-│   ├── api/
-│   ├── web/                         # Selenium + Playwright UI tests
-│   ├── ui/visual/                   # SauceDemo visual regression (baselines/)
-│   ├── backend/                     # e.g. schema / API shape checks
-│   └── performance/                 # Locust + pytest-benchmark
-├── 📁 pages/                        # 📄 Page Object Model implementations
-│   ├── base_page.py                 # Base page with common functionality
-│   ├── search_engine_page.py        # Search engine page objects
-│   ├── playwright_search_engine_page.py  # Playwright-specific pages
-│   └── playwright_base_page.py      # Playwright base page
+│   ├── accessibility/
+│   ├── ui/                          # Selenium UI (practice app, SauceDemo, visual, …)
+│   │   ├── playwright/              # Playwright smoke (sync API via factory)
+│   │   └── visual/                  # SauceDemo visual regression (baselines/)
+│   ├── backend/                     # API / schema helpers
+│   └── performance/               # pytest-benchmark + locustfile.py
+├── 📁 pages/                        # 📄 Page Object Model (Selenium)
+│   ├── base_page.py
+│   ├── practice/                    # qa-practice-app flows
+│   └── sauce/                       # SauceDemo cart, checkout, inventory, login
 ├── 📁 utils/                        # 🔧 Framework utilities (see each module)
 │   ├── webdriver_factory.py         # Selenium driver lifecycle + cleanup
 │   ├── playwright_factory.py        # Playwright browser lifecycle
@@ -117,11 +116,11 @@ PythonSeleniumProject/
 │   ├── local.yaml                   # Local development settings
 │   ├── ci.yaml                      # CI/CD environment settings
 │   └── capabilities.json            # Browser capabilities
-├── 📁 locators/                     # 🎯 Element locators & selectors
-│   ├── search_engine_locators.py    # Search page locators
-│   ├── playwright_search_engine_locators.py  # Playwright locators
-│   ├── result_page_locators.py      # Results page locators
-│   └── test_framework_locators.py   # Framework-specific locators
+├── 📁 locators/                     # 🎯 Element locators (Selenium)
+│   ├── components/
+│   ├── practice/
+│   ├── sauce/
+│   └── test_framework_locators.py
 ├── 📁 scripts/                      # 🛠️ Automation & utility scripts
 │   ├── run_full_workflow.py         # 🚀 Complete QA automation pipeline
 │   ├── run_tests.py                 # Test runner (by suite type, optional export)
@@ -152,7 +151,7 @@ python scripts/run_full_workflow.py  # Complete pipeline: tests + reporting + an
 ```bash
 # Clean development runs (minimal output)
 pytest tests/
-pytest tests/web/test_playwright_search_engine.py::test_playwright_search_basic
+pytest tests/ui/playwright/test_playwright_smoke.py -m playwright -v
 
 # Full reporting for CI/CD (detailed output)
 pytest tests/ --cov-report=html
@@ -210,7 +209,7 @@ pytest -m database tests/
 
 ## 🏆 What you get in the repo today
 
-- **Layered tests**: unit, web (Selenium + Playwright), API, integration, visual, performance, backend helpers — see `tests/` and `pytest.ini` markers
+- **Layered tests**: unit, integration, UI (Selenium-heavy + Playwright smoke), accessibility, visual, performance, backend — see `tests/` and `pytest.ini` markers
 - **Auth reuse for SauceDemo**: session fixture + `.auth/sauce.json` (see `conftest.py`, ADR-009)
 - **Tracing**: OpenTelemetry hooks from `conftest.py` → `utils/otel.py`
 - **Parallel runs**: `pytest-xdist` (`pytest -n …`)

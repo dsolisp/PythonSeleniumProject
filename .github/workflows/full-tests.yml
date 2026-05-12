@@ -46,6 +46,10 @@ jobs:
       - name: Install Playwright browsers
         run: playwright install --with-deps chromium firefox webkit
 
+      - name: Run Playwright smoke test
+        if: ${{ inputs.suite == 'all' || inputs.suite == 'smoke' }}
+        run: pytest tests/ui/playwright/test_playwright_smoke.py -m playwright -v --tb=short -n 1
+
       - name: Run Unit Tests
         run: pytest tests/unit/ -v --tb=short
 

@@ -58,10 +58,9 @@ Complete documentation for the Python Selenium Test Automation Framework.
   - No separate “error classifier” layer and no CPU/RAM monitoring (no psutil-style resource tracking in this repo)
   
 - **[Performance Monitoring](guides/PERFORMANCE_MONITORING.md)** - Performance testing
-  - Real-time performance tracking
-  - Locust load testing
-  - Pytest-benchmark integration
-  - Performance regression detection
+  - Pytest-benchmark suites under `tests/performance/`
+  - Locust (`tests/performance/locustfile.py`) for HTTP load scenarios
+  - Historical sections referencing a removed `PerformanceMonitor` module are labeled as legacy
 
 ## 🗺️ Feature Integration Map
 

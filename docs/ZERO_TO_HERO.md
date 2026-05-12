@@ -147,22 +147,22 @@ The Page Object Model separates test logic from page interactions:
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                     TEST FILE                            │
-│   test_search.py                                        │
+│   tests/ui/sauce/test_sauce.py                          │
 │   └── Uses page objects, doesn't know about locators   │
 └─────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────┐
 │                   PAGE OBJECT                            │
-│   search_engine_page.py                                 │
-│   └── Provides actions: search(), get_results()        │
+│   pages/sauce/login_page.py                             │
+│   └── Provides actions: login(), get_error_message()   │
 └─────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────┐
 │                    LOCATORS                              │
-│   search_engine_locators.py                             │
-│   └── Defines elements: SEARCH_BOX, RESULT_ITEMS       │
+│   locators/sauce/login_locators.py                      │
+│   └── Defines elements: USERNAME_FIELD, LOGIN_BUTTON   │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -336,7 +336,7 @@ class ExamplePage(BasePage):
 
 ### Step 3: Write Your First Test
 
-Create `tests/web/test_example.py`:
+Create `tests/ui/test_example.py`:
 
 ```python
 """Example test demonstrating Page Object usage."""
@@ -373,11 +373,11 @@ class TestExample:
 
 **Run the test**:
 ```bash
-pytest tests/web/test_example.py -v
+pytest tests/ui/test_example.py -v
 
 # Expected output:
-# tests/web/test_example.py::TestExample::test_homepage_loads PASSED
-# tests/web/test_example.py::TestExample::test_more_info_link_works PASSED
+# tests/ui/test_example.py::TestExample::test_homepage_loads PASSED
+# tests/ui/test_example.py::TestExample::test_more_info_link_works PASSED
 ```
 
 ### Step 4: Add Data-Driven Testing
@@ -494,7 +494,7 @@ pytest-history flakes
 
 ```bash
 # Run with all reporting and flaky summary
-python scripts/run_tests.py --type unit --flaky
+python run_tests.py --type unit --flaky
 
 # Output includes:
 # ✅ Test results
@@ -509,7 +509,7 @@ python scripts/run_tests.py --type unit --flaky
 ### Step 7: Visual Testing with Playwright
 
 ```python
-# tests/web/test_visual.py
+# tests/ui/visual/test_visual_regression.py (conceptual; see repo for real markers/fixtures)
 import pytest
 from playwright.sync_api import Page, expect
 
@@ -621,7 +621,7 @@ jobs:
       - uses: actions/setup-python@v4
       - run: pip install -r requirements.txt
       - run: playwright install chromium
-      - run: pytest tests/web/ -v --headless
+      - run: pytest tests/ui/ -v --headless
 ```
 
 ### Key CI/CD Concepts
@@ -733,20 +733,23 @@ pytest-history flakes
 PythonSeleniumProject/
 ├── pages/                 # Page objects
 │   ├── base_page.py       # Common Selenium methods
-│   └── search_engine_page.py
+│   └── sauce/             # SauceDemo flows (login, inventory, cart, checkout)
 ├── locators/              # Element locators
-│   └── search_engine_locators.py
+│   ├── sauce/             # e.g. login_locators.py
+│   ├── practice/
+│   └── components/
 ├── utils/                 # Utilities
 │   ├── test_data_manager.py
 │   ├── error_handler.py
+│   ├── playwright_factory.py
 │   └── webdriver_factory.py
 ├── tests/                 # Test files
 │   ├── unit/              # Fast, no browser
-│   ├── web/               # Browser tests
-│   ├── api/               # API tests
-│   └── performance/       # Benchmarks
+│   ├── ui/                # Selenium UI (sauce/, practice/, visual/) + playwright/
+│   ├── backend/           # API / DB-backed tests
+│   └── performance/       # Benchmarks + locustfile.py
 ├── data/                  # Test data (JSON/YAML)
-├── reports/               # Generated reports
+├── var/                   # Generated logs, reports, exports
 └── conftest.py            # Pytest fixtures
 ```
 
@@ -762,7 +765,7 @@ pytest tests/ui/ -v
 pytest tests/backend/test_api.py -m api -v
 
 # Run with reporting
-python scripts/run_tests.py --type unit --flaky
+python run_tests.py --type unit --flaky
 
 # Check flaky tests
 pytest-history flakes
@@ -777,18 +780,17 @@ ruff format .
 ## Next Steps
 
 1. **Explore existing tests** in `tests/` to see real examples
-2. **Read the guides** in [`docs/guides/`](guides/) for deep dives
-3. **Run the full workflow** with `python scripts/run_full_workflow.py`
-4. **Check the cheat sheet** at [PYTHON_AUTOMATION_CHEAT_SHEET.md](guides/PYTHON_AUTOMATION_CHEAT_SHEET.md)
+2. **Read the documentation** in `docs/` (especially `docs/guides/`) for deep dives
+3. **Run the full workflow** with `python run_full_workflow.py`
+4. **Check the cheat sheet** at [PYTHON_AUTOMATION_CHEAT_SHEET.md](PYTHON_AUTOMATION_CHEAT_SHEET.md)
 
 ---
 
 ## Related Documentation
 
-- [Analytics & Reporting](guides/ANALYTICS_AND_REPORTING.md)
-- [Test Analytics (Flaky Detection)](guides/TEST_ANALYTICS.md)
-- [Playwright Integration](guides/PLAYWRIGHT_INTEGRATION.md)
-- [Error Recovery & Monitoring](guides/ERROR_RECOVERY_AND_MONITORING.md)
-- [Performance Monitoring](guides/PERFORMANCE_MONITORING.md)
-
+- [Analytics & Reporting](ANALYTICS_AND_REPORTING.md)
+- [Test Analytics (Flaky Detection)](TEST_ANALYTICS.md)
+- [Playwright Integration](PLAYWRIGHT_INTEGRATION.md)
+- [Error Recovery & Monitoring](ERROR_RECOVERY_AND_MONITORING.md)
+- [Performance Monitoring](PERFORMANCE_MONITORING.md)
 

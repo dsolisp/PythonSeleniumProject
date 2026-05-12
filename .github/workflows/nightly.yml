@@ -6,7 +6,7 @@ permissions:
 
 # Test Strategy:
 # 1. unit-tests: Fast tests with no external dependencies (tests/unit/)
-# 2. e2e-tests: UI automation with Selenium/Playwright (tests/web/, tests/api/)
+# 2. e2e-tests: UI automation with Selenium/Playwright (`tests/ui/`, `tests/backend/`)
 # 3. grid-integration-tests: Distributed testing with Selenium Grid
 # 4. visual-tests: Visual regression testing (screenshot comparison)
 # 5. performance-tests: Load and performance testing

@@ -4,7 +4,7 @@
 ```bash
 # Clean, minimal output for development (warnings disabled)
 pytest tests/
-pytest tests/web/test_playwright_search_engine.py::test_playwright_search_basic
+pytest tests/ui/playwright/test_playwright_smoke.py -m playwright -v
 ```
 
 ## Full Reporting for CI/CD
@@ -17,7 +17,7 @@ pytest -c pytest-ci.ini --cov-report=html tests/
 ## Common Development Options
 ```bash
 # Run specific test with verbose output
-pytest -v tests/web/test_playwright_search_engine.py::test_playwright_search_basic
+pytest -v tests/ui/playwright/test_playwright_smoke.py -m playwright
 
 # Run tests with coverage (one-time)
 pytest --cov=pages --cov-report=html tests/
