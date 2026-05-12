@@ -16,6 +16,7 @@ __pycache__/
 venv/
 venv-enhanced/
 .venv/
+.venv-ci/
 env/
 ENV/
 
@@ -26,6 +27,8 @@ allure-results/
 allure-report/
 playwright-report/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 
@@ -33,10 +36,8 @@ htmlcov/
 screenshots/
 screenshots_diff/
 custom_screenshots/
-*.png
-*.mp4
-*.webm
-*.trace.zip
+# NOTE: Visual baselines must be committed for true regression testing.
+# Generated media is expected to live under the ignored output folders above.
 
 # ── Reports ───────────────────────────────────────────────────────────────────
 reports/
@@ -57,6 +58,9 @@ data/results/
 *.db
 *.sqlite
 .test-results.db
+
+# ── Legacy contract-testing outputs (Pact removed) ────────────────────────────
+pacts/
 
 # ── Build & distribution ──────────────────────────────────────────────────────
 dist/
@@ -81,5 +85,7 @@ Thumbs.db
 # ── IDE files ─────────────────────────────────────────────────────────────────
 .idea/
 .vscode/
+!.vscode/
+!.vscode/settings.json
 *.swp
 *~

@@ -23,15 +23,14 @@ Use a **dual-target strategy** controlled by the `PRACTICE_BASE_URL` environment
 
 | Environment | Value | Notes |
 |-------------|-------|-------|
-| Local development (default) | `http://localhost:8080` | `qa-practice-app/` running via Docker |
+| Local development (default) | `http://localhost:8080` | `qa-practice-app/` at monorepo root, via Docker |
 | CI (primary) | `http://localhost:8080` | Started via `docker compose up -d` in CI step |
 | CI (fallback / smoke) | `https://the-internet.herokuapp.com` | Used only if Docker is unavailable |
 | Manual | any URL | Developer can point to any compatible host |
 
 ### `qa-practice-app/` specification
 
-A **Dockerized nginx-alpine application** at `qa-practice-app/` in the Python repo (reference
-implementation; other stacks read the same app via `PRACTICE_BASE_URL`):
+A **Dockerized nginx-alpine application** in the top-level `qa-practice-app/` folder (sibling to the stack repos in the Personal workspace). Intended to be **extractable into its own Git repository**; stacks only need `PRACTICE_BASE_URL` pointing at wherever it runs.
 
 | Route | Scenario covered | Notes |
 |-------|-----------------|-------|
@@ -72,7 +71,7 @@ var BASE_URL = Environment.GetEnvironmentVariable("PRACTICE_BASE_URL") ?? "http:
 
 `qa-practice-app/` routes are designed to match the Heroku equivalents:
 
-| qa-practice-app route | Heroku equivalent |
+| Local route | Heroku equivalent |
 |-----------------------|-------------------|
 | `/dropdown.html` | `/dropdown` |
 | `/iframes.html` | `/iframe` + `/nested_frames` |

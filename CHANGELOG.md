@@ -22,7 +22,7 @@ This release replaces the custom test analytics implementation with `pytest-hist
 - **run_tests.py** - Added `--flaky` argument for pytest-history integration
 - **run_full_workflow.py** - Uses pytest-history instead of custom analytics
 - **pytest.ini** - Added pytest-history configuration comments
-- **requirements.txt** - Updated pytest to >=8.0.0, added pytest-history
+- **requirements.txt** - Kept pytest pinned for pytest-history compatibility, added pytest-history
 
 ### Documentation Updated
 - **TEST_ANALYTICS.md** - Complete rewrite for pytest-history

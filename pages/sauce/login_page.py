@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from config.constants import URLS
 from locators.sauce.inventory_locators import InventoryLocators
 from locators.sauce.login_locators import LoginLocators
 from pages.base_page import BasePage
-
-URL = "https://www.saucedemo.com/"
 
 
 class LoginPage(BasePage):
@@ -19,8 +18,12 @@ class LoginPage(BasePage):
 
     def open(self) -> LoginPage:
         """Navigate to the login page and return self for chaining."""
-        self.navigate_to(URL)
+        self.navigate_to(f"{URLS.SAUCE_DEMO}/")
         return self
+
+    def is_loaded(self) -> bool:
+        """Return True when the login form is visible."""
+        return self.wait_for_element(LoginLocators.USERNAME_INPUT) is not None
 
     def login(self, username: str, password: str) -> None:
         """Enter credentials and submit the login form."""

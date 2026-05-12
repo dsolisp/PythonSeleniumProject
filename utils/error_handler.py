@@ -11,7 +11,7 @@ Design principles:
 import logging
 import time
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -117,7 +117,7 @@ class ScreenshotService:
 
     def capture(self, driver, test_name, prefix="error"):
         """Capture screenshot. Returns path or None on failure."""
-        ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         path = self.screenshots_dir / f"{prefix}_{test_name}_{ts}.png"
         try:
             driver.save_screenshot(str(path))
@@ -136,7 +136,7 @@ class SmartErrorHandler:
 
     Removed over-engineering:
     - No ErrorClassifier (use Selenium's native exception types)
-    - No RecoveryManager (use tenacity for retries)
+    - No RecoveryManager (use `execute_with_retry` for stdlib backoff retries)
     - No complex recovery strategies
     """
 
@@ -147,7 +147,7 @@ class SmartErrorHandler:
     def handle_error(self, error, driver, test_name, custom_recovery=None):  # noqa: ARG002
         """
         Log error with clean formatting and capture screenshot.
-        Returns False (no automatic recovery - use tenacity instead).
+        Returns False (no automatic recovery — use `execute_with_retry` for retries).
         """
         clean_error = format_error(error)
         logger.error("Test '%s' failed: %s", test_name, clean_error)

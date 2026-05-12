@@ -135,7 +135,8 @@ jobs:
     needs: [setup, security-scan, code-quality]
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11']
+        # Single version to match ci.yml / env.PYTHON_VERSION (was 3.9–3.11 matrix).
+        python-version: ['3.11']
     steps:
     - uses: actions/checkout@v5
     
@@ -177,7 +178,7 @@ jobs:
     needs: [setup, unit-tests]
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11']
+        python-version: ['3.11']
         test-suite: [smoke, advanced, database]
     steps:
     - uses: actions/checkout@v5

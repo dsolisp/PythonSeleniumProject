@@ -1,8 +1,10 @@
 # Performance Monitoring and Load Testing
 
+> **Note (current codebase):** `utils/performance_monitor.py` is **not present** in this repository anymore. Performance work today is driven by **`tests/performance/`** (pytest-benchmark, Locust, etc.) and standard pytest timing. The sections below that import `PerformanceMonitor` are **historical**; treat Locust + pytest-benchmark sections as the maintained path, or delete/replace those examples when you next edit this guide.
+
 ## Overview
 
-Real-time performance monitoring and load testing capabilities powered by **pytest-benchmark**, **Locust**, and custom performance monitors.
+Load testing and benchmarking are implemented with **pytest-benchmark** and **Locust** under `tests/performance/`. Any “custom monitor” narrative below refers to a **removed** module unless you reintroduce it.
 
 ## 🎯 When to Use
 

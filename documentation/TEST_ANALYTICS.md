@@ -41,7 +41,7 @@ pytest-history flakes
 
 # Example output:
 # tests/web/test_search.py::test_search_results - flaky (passed: 7, failed: 3)
-# tests/api/test_api.py::test_network_call - flaky (passed: 5, failed: 2)
+# tests/backend/test_api.py::TestSwapiAPI::test_example_1_fetches_specific_person - flaky (example)
 ```
 
 ### 3. Historical Run Analysis

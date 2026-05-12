@@ -2,10 +2,11 @@
 Visual Regression Tests (Python / Selenium)
 
 Equivalent to:
-- Cypress: cypress/e2e/ui/visual/visual-regression.cy.ts
+- Cypress: cypress/ui/visual (and related Cypress visual specs)
 - Playwright: tests/ui/visual/visual-regression.spec.ts
 
-Uses pytest-playwright-snapshot for visual assertion parity.
+Implementation: Selenium screenshots + Pillow + pixelmatch via `utils.diff_handler.compare_images`.
+Baselines live under `baselines/`; actuals and diffs under `screenshots/actual` and `screenshots/diff`.
 """
 
 import shutil

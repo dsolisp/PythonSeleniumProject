@@ -1,5 +1,7 @@
 # Playwright Integration Guide
 
+> **Scope:** **`requirements.txt` includes `playwright`**, but day-to-day UI coverage in this repo is **Selenium + pytest** under `tests/ui/`, `tests/integration/`, etc. Treat this page as a **stack extension / reference** for teams adding `pytest-playwright` or hybrid checks—not as a map of checked-in Playwright tests unless you add them.
+
 ## Overview
 
 Modern async browser automation with **Playwright** for cross-browser testing, mobile emulation, and network interception.

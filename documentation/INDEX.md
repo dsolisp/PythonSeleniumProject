@@ -19,10 +19,11 @@ Complete documentation for the Python Selenium Test Automation Framework.
   - Cross-browser testing (Chromium, Firefox, WebKit)
   - Performance metrics and Core Web Vitals
   
-- **[Selenium Web Testing](../pages/README.md)** - Traditional Selenium automation
+- **Selenium Web Testing** - Traditional Selenium automation
   - Page Object Model
   - Element interactions
   - Visual testing
+  - (See `pages/` and `tests/ui/` in this repo for concrete examples)
 
 #### API Testing
 - **[API Testing Guide](API_TESTING.md)** - REST API automation
@@ -52,10 +53,9 @@ Complete documentation for the Python Selenium Test Automation Framework.
   - Dynamic data generation
   
 - **[Error Recovery & Monitoring](ERROR_RECOVERY_AND_MONITORING.md)** - Reliability features
-  - Tenacity retry mechanisms
-  - Psutil system monitoring
-  - Smart error classification
-  - Resource usage tracking
+  - Clean error formatting (`format_error` / `ErrorInfo`) and optional screenshots on failure
+  - Stdlib-only exponential backoff retries (`SmartErrorHandler.execute_with_retry`)
+  - No separate “error classifier” layer and no CPU/RAM monitoring (no psutil-style resource tracking in this repo)
   
 - **[Performance Monitoring](PERFORMANCE_MONITORING.md)** - Performance testing
   - Real-time performance tracking
@@ -69,12 +69,12 @@ Complete documentation for the Python Selenium Test Automation Framework.
 Test Execution
     │
     ├─ Web UI Tests
-    │   ├─ Selenium (pages/)
-    │   └─ Playwright (tests/web/test_playwright_*.py)
+    │   ├─ Selenium (`pages/`, `tests/ui/`)
+    │   └─ Playwright (optional; see PLAYWRIGHT_INTEGRATION.md — not a separate `tests/web/` tree)
     │
-    ├─ API Tests (tests/api/)
-    │   ├─ REST validation
-    │   └─ Conditional Allure reporting
+    ├─ API Tests (`tests/backend/test_api.py`)
+    │   ├─ REST validation (SWAPI sample)
+    │   └─ Optional Allure when you add steps/decorators
     │
     ├─ Performance Tests (tests/performance/)
     │   ├─ Benchmarking
@@ -95,7 +95,7 @@ Results & History
 Monitoring & Recovery
     │
     └─ Error Handler (utils/error_handler.py)
-        └─ Tenacity retry
+        └─ Dependency-free retry patterns
 ```
 
 ## 📖 Usage Workflows
@@ -104,13 +104,13 @@ Monitoring & Recovery
 ```
 1. Define test data → data/test_data.json
 2. Load data → DataManager.load_test_data()
-3. Execute tests → pytest tests/web/
+3. Execute tests → pytest tests/ui/
 4. Results tracked automatically → .test-results.db
 ```
 
 ### Workflow 2: API Testing with Reporting
 ```
-1. Write API tests → tests/api/test_api.py
+1. Write API tests → tests/backend/test_api.py (or add modules alongside it)
 2. Run with Allure → pytest --alluredir=reports/allure-results
 3. Generate report → allure serve reports/allure-results
 4. View structured logs → Check JSON logs in console
@@ -149,8 +149,8 @@ Monitoring & Recovery
 
 ```bash
 # Run tests
-pytest tests/web/ -v                    # Selenium web tests
-pytest tests/api/ -v                    # API tests
+pytest tests/ui/ -v                     # Selenium UI tests
+pytest tests/backend/test_api.py -m api -v   # API (SWAPI) tests
 python run_tests.py --type unit         # Unit tests via runner
 
 # Flaky test detection
