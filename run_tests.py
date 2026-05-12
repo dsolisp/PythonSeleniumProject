@@ -196,28 +196,28 @@ Test Counts:
         test_runs.append(("integration", success_result))
 
     elif args.type == "regression":
-        # Quick regression check
+        # Quick regression check (core unit / framework smoke)
         success_result, _ = run_command(
-            f"{base_cmd} tests/unit/test_regression_protection.py",
-            "Regression Protection Tests (quick smoke test)",
+            f"{base_cmd} tests/unit/test_core_framework_unit.py",
+            "Core framework unit tests (quick smoke)",
         )
         success &= success_result
         test_runs.append(("regression", success_result))
 
     elif args.type == "api":
-        # Run API tests (5 tests with conditional Allure)
+        # Run API tests (SWAPI suite — requests + Hamcrest; see tests/backend/test_api.py)
         success_result, _ = run_command(
-            f"{base_cmd} tests/api/test_api.py",
-            "API Tests (5 tests: GET, POST, performance with conditional Allure)",
+            f"{base_cmd} tests/backend/test_api.py",
+            "API tests (SWAPI: positive, negative, schema, SLA)",
         )
         success &= success_result
         test_runs.append(("api", success_result))
 
     elif args.type == "web":
-        # Run web UI tests
+        # Run web UI tests (Selenium under tests/ui/)
         success_result, _ = run_command(
-            f"{base_cmd} tests/web/",
-            "Web UI Tests (Selenium & Playwright: search engine, sauce demo)",
+            f"{base_cmd} tests/ui/",
+            "Web UI tests (Selenium: sauce, practice, visual, …)",
         )
         success &= success_result
         test_runs.append(("web", success_result))
@@ -237,7 +237,7 @@ Test Counts:
         print("   This will take several minutes...\n")
 
         for test_type, cmd, desc in [
-            ("api", f"{base_cmd} tests/api/test_api.py", "API Tests (5)"),
+            ("api", f"{base_cmd} tests/backend/test_api.py", "API tests (SWAPI)"),
             (
                 "unit",
                 f"{base_cmd} tests/unit/ --maxfail=10",

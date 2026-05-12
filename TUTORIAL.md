@@ -162,29 +162,29 @@ class WebDriverFactory:
 
 ### 3.3 Error Handler (`utils/error_handler.py`)
 
-**Purpose**: Smart error recovery with retry logic.
+**Purpose**: Readable failures, optional screenshots, and **stdlib-only** retries (no extra retry library in `requirements.txt`).
 
-**Design Pattern**: Strategy pattern for different recovery approaches.
+**What’s in the file today**: `format_error` / `CleanException`, `ScreenshotService`, and `SmartErrorHandler.handle_error` plus `execute_with_retry` (loop + `time.sleep`, capped backoff).
 
 ```python
-from tenacity import retry, stop_after_attempt, wait_exponential
+from utils.error_handler import SmartErrorHandler
 
-class SmartErrorHandler:
-    """Handles errors with intelligent retry logic."""
+handler = SmartErrorHandler()
 
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10)
-    )
-    def click_with_retry(self, element):
-        """Click element with automatic retry on failure."""
-        element.click()
+def unstable_operation():
+    ...
+
+result = handler.execute_with_retry(
+    unstable_operation,
+    max_attempts=3,
+    initial_delay=1.0,
+)
 ```
 
-**Why tenacity?**
-- Configurable retry strategies (exponential backoff, fixed delay)
-- Decorators for clean code
-- Exception filtering
+**Why stdlib retries?**
+- No extra dependency to pin or audit
+- Explicit backoff and logging
+- Easy to reason about in CI
 
 ## Step 4: Page Objects
 
@@ -439,7 +439,7 @@ python run_full_workflow.py
 |---------|------------|---------|
 | **Page Object Model** | `pages/*.py` | Separates UI locators from test logic |
 | **Factory Pattern** | `webdriver_factory.py` | Encapsulates driver creation |
-| **Strategy Pattern** | `error_handler.py` | Different recovery strategies |
+| **Retry helper** | `error_handler.py` | Stdlib exponential backoff (`execute_with_retry`) |
 | **Template Method** | `base_page.py` | Common functionality for pages |
 | **Singleton** | `structured_logger.py` | Single logger instance |
 

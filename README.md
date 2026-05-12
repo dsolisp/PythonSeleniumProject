@@ -3,8 +3,8 @@
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://python.org)
 [![Selenium](https://img.shields.io/badge/Selenium-4.27-green.svg)](https://selenium.dev)
 [![Playwright](https://img.shields.io/badge/Playwright-1.49-blueviolet.svg)](https://playwright.dev)
-[![Pytest](https://img.shields.io/badge/Pytest-8.x-orange.svg)](https://pytest.org)
-[![Tests](https://img.shields.io/badge/Tests-223-brightgreen.svg)](tests/)
+[![Pytest](https://img.shields.io/badge/Pytest-7.x-orange.svg)](https://pytest.org)
+[![Tests](https://img.shields.io/badge/Tests-200%2B-brightgreen.svg)](tests/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Enterprise-grade test automation portfolio demonstrating modern QA engineering** 🚀
@@ -15,7 +15,7 @@
 
 | Resource | Description |
 |----------|-------------|
-| 📖 **[Zero-to-Hero Tutorial](documentation/ZERO_TO_HERO_TUTORIAL.md)** | Complete guide to building this framework from scratch |
+| 📖 **[Zero-to-Hero Tutorial](docs/ZERO_TO_HERO.md)** | Complete guide to building this framework from scratch |
 | 📋 **[Cheat Sheet](documentation/PYTHON_AUTOMATION_CHEAT_SHEET.md)** | Quick reference for pytest, Selenium, Playwright commands |
 | 📑 **[Full Documentation](documentation/INDEX.md)** | All documentation in one place |
 
@@ -26,18 +26,18 @@
 | Feature | Why It Matters |
 |---------|----------------|
 | **Dual Framework Support** | Selenium AND Playwright - shows versatility |
-| **Real CI/CD Integration** | 607-line GitHub Actions workflow with matrix testing |
+| **Real CI/CD Integration** | GitHub Actions (`.github/workflows/ci.yml`, `full-tests.yml`, `nightly.yml`) |
 | **Flaky Test Detection** | pytest-history tracks test reliability over time |
-| **Visual Regression Testing** | Multiple approaches (pixelmatch, playwright-visual) |
+| **Visual Regression Testing** | Selenium screenshots + Pillow + pixelmatch (`utils/diff_handler.py`), baselines in `baselines/` |
 | **Load Testing** | Performance testing with Locust |
-| **Self-Healing Tests** | Smart error recovery with stdlib retry logic |
+| **Retries & failures** | `SmartErrorHandler.execute_with_retry` (stdlib backoff) + failure screenshots via `conftest` / settings |
 | **Clean Architecture** | Page Object Model, modular utilities, clear docstrings |
 
-### Project Metrics
-- **~10,000 lines** of production-quality Python
-- **223 tests** (162 unit + 61 integration/web/api/performance)
-- **Simple, readable code** with clear docstrings over complex type hints
-- **Zero linter warnings** (ruff/bandit compliant)
+### Project metrics (approximate; verify locally)
+- **Large Python surface** across `pages/`, `tests/`, and `utils/`
+- **200+ tests** across unit, web, API, integration, performance, and markers
+- **Readable style** — docstrings and straightforward control flow
+- **Quality gates** — `ruff`, `mypy`, `bandit` (see `scripts/run_ci_checks.sh` and CI)
 
 ## 📋 Prerequisites
 
@@ -61,21 +61,21 @@ That's it! Runs tests, generates reports, and checks for flaky tests automatical
 ### 🧪 Testing Capabilities
 - **Web Automation**: Selenium + Playwright with Page Object Model
 - **API Testing**: REST validation with conditional Allure reporting
-- **Visual Regression**: Multiple approaches (pytest-playwright-visual, pixelmatch, Applitools)
+- **Visual regression**: Pillow + pixelmatch (`utils/diff_handler.py`); baselines under `baselines/`
 - **Cross-Browser**: Chrome, Firefox, Edge, Safari support
 - **Database Testing**: SQLite integration with test data management
 - **Security Testing**: SSL verification and security-focused test markers
 - **Load Testing**: Locust integration for performance under load
 
-### 📊 Intelligence & Analytics
-- **Statistical Analysis**: Flaky test detection and reliability scoring
-- **Advanced Analytics**: Pandas-powered test result analysis
-- **Smart Reporting**: HTML dashboards, CSV exports, Allure integration
-- **Benchmarking**: pytest-benchmark integration for performance tracking
+### 📊 Intelligence & analytics
+- **Flaky history**: `pytest-history` (SQLite `.test-results.db`) — see `documentation/TEST_ANALYTICS.md`
+- **Workflow output**: `run_full_workflow.py` writes CSV/JSON under `data/results` and reports under `reports/`
+- **Reporting**: Allure (`allure-pytest`), pytest-html, pytest-json-report where configured
+- **Benchmarking**: `pytest-benchmark` under `tests/performance/`
 
-### 🔧 Enterprise Features
-- **Self-Healing**: Automatic retry with intelligent error recovery
-- **Performance Monitoring**: Real-time metrics and load testing
+### 🔧 Reliability & performance
+- **Retries**: stdlib exponential backoff in `utils/error_handler.py` (`execute_with_retry`)
+- **Load testing**: Locust (`tests/performance/locustfile.py`)
 - **Data Management**: Multi-format support (JSON/YAML/CSV)
 - **Parallel Execution**: pytest-xdist support for faster test runs
 - **Code Quality**: Integrated ruff, mypy, bandit, and safety tools
@@ -98,25 +98,28 @@ PythonSeleniumProject/
 │   ├── ERROR_RECOVERY_AND_MONITORING.md  # Self-healing & monitoring
 │   ├── PERFORMANCE_MONITORING.md    # Load testing & benchmarking
 │   └── RECOMMENDATIONS.md           # Framework usage patterns
-├── 📁 tests/                        # 🧪 260+ tests across categories
-│   ├── unit/                        # 211 fast, isolated unit tests
-│   ├── integration/                 # End-to-end & visual regression tests
-│   ├── api/                         # REST API validation tests
-│   ├── web/                         # UI automation tests (Selenium/Playwright)
-│   └── performance/                 # Load & performance benchmarking
+├── 📁 tests/                        # pytest suites (markers in pytest.ini)
+│   ├── unit/
+│   ├── integration/
+│   ├── api/
+│   ├── web/                         # Selenium + Playwright UI tests
+│   ├── ui/visual/                   # SauceDemo visual regression (baselines/)
+│   ├── backend/                     # e.g. schema / API shape checks
+│   └── performance/                 # Locust + pytest-benchmark
 ├── 📁 pages/                        # 📄 Page Object Model implementations
 │   ├── base_page.py                 # Base page with common functionality
 │   ├── search_engine_page.py        # Search engine page objects
 │   ├── playwright_search_engine_page.py  # Playwright-specific pages
 │   └── playwright_base_page.py      # Playwright base page
-├── 📁 utils/                        # 🔧 Core framework utilities (~2,500 lines)
-│   ├── error_handler.py             # Self-healing error recovery (487 lines)
-│   ├── performance_monitor.py       # Real-time performance tracking (457 lines)
-│   ├── webdriver_factory.py         # Selenium driver management (297 lines)
-│   ├── test_data_manager.py         # Multi-format data loading (285 lines)
-│   ├── playwright_factory.py        # Playwright browser management (282 lines)
-│   ├── structured_logger.py         # JSON structured logging (266 lines)
-│   └── sql_connection.py            # SQLite utilities (165 lines)
+├── 📁 utils/                        # 🔧 Framework utilities (see each module)
+│   ├── webdriver_factory.py         # Selenium driver lifecycle + cleanup
+│   ├── playwright_factory.py        # Playwright browser lifecycle
+│   ├── error_handler.py             # Clean errors, screenshots, stdlib retries
+│   ├── diff_handler.py              # Pillow + pixelmatch image compare
+│   ├── otel.py                      # OpenTelemetry wiring used from conftest
+│   ├── test_data_manager.py         # JSON/YAML/CSV test data
+│   ├── structured_logger.py         # Structured logging helpers
+│   └── sql_connection.py            # SQLite helpers
 ├── 📁 config/                       # ⚙️ Environment configurations
 │   ├── settings.py                  # Core configuration management
 │   ├── local.yaml                   # Local development settings
@@ -141,12 +144,11 @@ PythonSeleniumProject/
 │   ├── html/                        # HTML test reports
 │   ├── json/                        # JSON test data
 │   ├── allure-results/              # Allure reporting data
-│   ├── analytics/                   # ML analytics & trends
+│   ├── analytics/                   # Analytics outputs & summaries
 │   ├── trends/                      # Performance trend analysis
 │   └── coverage_html/               # Code coverage reports
-├── 📁 screenshots/                  # 📸 Visual testing artifacts
-│   ├── visual-baselines/            # Baseline screenshots
-│   └── [test-screenshots]/          # Test execution screenshots
+├── 📁 baselines/                    # 📸 Committed visual baselines (SauceDemo UI)
+├── 📁 screenshots/                # Actuals, diffs, failure screenshots
 ├── 📁 screenshots_diff/             # 🔍 Visual comparison differences
 ├── 📁 logs/                         # 📝 Test execution logs
 ├── 📁 drivers/                      # 🚗 WebDriver executables
@@ -160,7 +162,7 @@ PythonSeleniumProject/
 
 ### Unified Workflow (Recommended)
 ```bash
-python run_full_workflow.py  # Complete pipeline: tests + analytics + ML
+python run_full_workflow.py  # Complete pipeline: tests + reporting + analytics
 ```
 
 ### Manual Execution
@@ -176,9 +178,8 @@ pytest -c pytest-ci.ini tests/ --cov-report=html
 pytest -c pytest-ci.ini tests/ --alluredir=reports/allure-results
 allure serve reports/allure-results
 
-# Visual regression testing
-pytest tests/integration/test_playwright_visual_pytest_plugin.py -v
-pytest tests/integration/test_image_diff.py -v
+# Visual regression (Selenium + pixelmatch)
+pytest tests/ui/visual/test_visual_regression.py -v
 
 # Load testing
 locust -f tests/performance/locustfile.py
@@ -204,12 +205,12 @@ pytest -m database tests/
 |---------|----------|-------------|
 | **Local Development** | [🛠️ Local Dev Guide](documentation/LOCAL_DEV_GUIDE.md) | Development tools & local setup |
 | **Pytest Configuration** | [🧪 Pytest Guide](documentation/PYTEST_README.md) | Testing framework setup & options |
-| **Analytics** | [📊 Analytics Guide](documentation/ANALYTICS_AND_REPORTING.md) | Pandas analytics & dashboards |
+| **Analytics** | [📊 Analytics Guide](documentation/ANALYTICS_AND_REPORTING.md) | Reports, exports, and workflow output |
 | **Test Analytics** | [📈 Analytics Engine](documentation/TEST_ANALYTICS.md) | Flaky detection & reliability scoring |
 | **API Testing** | [🔗 API Guide](documentation/API_TESTING.md) | REST automation with Allure |
 | **Playwright** | [🎭 Playwright Guide](documentation/PLAYWRIGHT_INTEGRATION.md) | Modern browser automation |
 | **Performance** | [⚡ Performance Guide](documentation/PERFORMANCE_MONITORING.md) | Load testing & benchmarking |
-| **Error Recovery** | [🔄 Recovery Guide](documentation/ERROR_RECOVERY_AND_MONITORING.md) | Self-healing & monitoring |
+| **Error Recovery** | [🔄 Recovery Guide](documentation/ERROR_RECOVERY_AND_MONITORING.md) | Retries, logging, screenshots (see `utils/error_handler.py`) |
 | **Data Management** | [💾 Data Guide](documentation/TEST_DATA_MANAGEMENT.md) | Test data & configurations |
 | **Recommendations** | [💡 Best Practices](documentation/RECOMMENDATIONS.md) | Framework usage patterns |
 | **All Docs** | [📖 Index](documentation/INDEX.md) | Complete documentation |
@@ -224,43 +225,24 @@ pytest -m database tests/
 | **Quality Checks** | Code validation | `bash scripts/run_ci_checks.sh` |
 | **Test Runner** | Custom test execution | `python run_tests.py` |
 
-## 🏆 Framework Stats
+## 🏆 What you get in the repo today
 
-- ✅ **263 Tests** across all categories (unit, integration, performance)
-- ✅ **7 Major Features** fully integrated (web, API, visual, analytics, performance)
-- ✅ **22 Package Dependencies** (streamlined from 34, all actively used)
-- ✅ **Multiple Test Types** (smoke, regression, visual, security, database)
-- ✅ **Production-Ready** enterprise capabilities
-- ✅ **Statistical Analytics** for flaky test detection and reliability scoring
-- ✅ **Parallel Execution** support for faster testing
-- ✅ **Code Quality** integrated (ruff, mypy, bandit)
+- **Layered tests**: unit, web (Selenium + Playwright), API, integration, visual, performance, backend helpers — see `tests/` and `pytest.ini` markers
+- **Auth reuse for SauceDemo**: session fixture + `.auth/sauce.json` (see `conftest.py`, ADR-009)
+- **Tracing**: OpenTelemetry hooks from `conftest.py` → `utils/otel.py`
+- **Parallel runs**: `pytest-xdist` (`pytest -n …`)
+- **Quality**: `ruff`, `mypy`, `bandit`, `safety` in CI scripts where enabled
 
 ## 🚀 CI/CD Integration
 
-```yaml
-# .github/workflows/test.yml
-name: QA Automation
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: ./setup_env.sh
-      - run: python run_full_workflow.py
-      - uses: actions/upload-artifact@v3
-        with:
-          name: reports
-          path: reports/
-```
+CI is defined under `.github/workflows/` (for example `ci.yml` for PR checks, `full-tests.yml` and `nightly.yml` for broader suites). Open those files for the exact jobs, Python version, and commands.
 
 ## 💡 Best Practices
 
 1. **Use the unified workflow** - `python run_full_workflow.py` for complete automation
 2. **Check the tutorials** - See `documentation/` for feature guides  
 3. **Run quality checks** - Use `bash scripts/run_ci_checks.sh` before committing
-4. **Monitor analytics** - Review ML predictions and performance trends
+4. **Monitor analytics** - Review flaky summaries and performance trends
 5. **Use appropriate test markers** - Leverage pytest markers for targeted test runs
 6. **Enable parallel execution** - Use `pytest -n 4` for faster test runs in CI/CD
 7. **Configure environments** - Use `config/local.yaml` for local development
@@ -287,13 +269,13 @@ playwright install
 webdriver-manager update
 ```
 
-**❌ Visual Regression Setup**
+**❌ Visual regression setup**
 ```bash
-# Install visual testing dependencies
-pip install pixelmatch pytest-playwright-visual
+# Pixelmatch + Pillow are in requirements.txt — reinstall if needed
+pip install -r requirements.txt
 
-# Set up baseline screenshots
-pytest tests/integration/test_playwright_visual_pytest_plugin.py --snapshot-update
+# Run visual tests (creates baselines under baselines/ if missing — commit intentionally)
+pytest tests/ui/visual/test_visual_regression.py -v
 ```
 
 **❌ Allure Reporting Issues**

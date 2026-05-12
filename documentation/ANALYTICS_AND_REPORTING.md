@@ -1,5 +1,7 @@
 # Analytics and Reporting
 
+> **Scope:** Reporting commands below target the **default pytest layout** (`pytest tests/`, `reports/`). This repository’s tests live under `tests/ui/`, `tests/backend/`, `tests/integration/`, etc.—adjust paths (for example `pytest tests/backend/ …`) while keeping the same flags.
+
 ## Overview
 
 The framework provides comprehensive reporting capabilities using **pytest plugins** and **pytest-history** for flaky test detection. These tools transform raw test execution data into actionable insights.

@@ -4,6 +4,8 @@
 
 ## Table of Contents
 
+> **Source of truth:** Retry and failure formatting live in `utils/error_handler.py` (`SmartErrorHandler`, `execute_with_retry`, `format_error`, `ScreenshotService`). This tutorial matches that implementation (stdlib only — no `tenacity` in `requirements.txt`).
+
 1. [Introduction](#introduction)
 2. [Prerequisites](#prerequisites)
 3. [Project Philosophy](#project-philosophy)
@@ -26,7 +28,7 @@ This test automation framework provides:
 - **Visual Testing**: Catch UI regressions with screenshot comparison
 - **Performance Testing**: Benchmark operations with pytest-benchmark and Locust
 - **Flaky Test Detection**: Track test reliability over time with pytest-history
-- **Self-Healing Tests**: Smart retry logic for handling transient failures
+- **Retries & resilience**: stdlib backoff + logging + screenshots (see `utils/error_handler.py` and `conftest.py`)
 
 ### Why It's Valuable
 
@@ -204,31 +206,43 @@ search_term = data['scenarios']['basic_search']['query']
 - Always clean up (quit driver) to prevent memory leaks
 - Use `WebDriverFactory` for consistent configuration
 
-### 4. Error Recovery & Retry Logic
+### 4. Error recovery and retry logic
 
-Use `tenacity` for smart retries:
+The repo uses **`SmartErrorHandler.execute_with_retry`** in `utils/error_handler.py`: a plain `for` loop, exponential backoff via `time.sleep`, and an optional `retry_exceptions` tuple. No third-party retry library.
 
 ```python
-from tenacity import retry, stop_after_attempt, wait_exponential
+from selenium.common.exceptions import StaleElementReferenceException
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=1, max=10)
+from utils.error_handler import SmartErrorHandler
+
+handler = SmartErrorHandler()
+
+
+def click_element(driver, locator):
+    el = driver.find_element(*locator)
+    el.click()
+
+
+# Example: retry only on stale element (narrower is better than retrying everything)
+handler.execute_with_retry(
+    click_element,
+    driver,
+    locator,
+    max_attempts=3,
+    initial_delay=0.5,
+    retry_exceptions=(StaleElementReferenceException,),
 )
-def click_with_retry(self, locator):
-    """Click element with automatic retry on failure."""
-    element = self.wait_for_clickable(locator)
-    element.click()
 ```
 
-**When to retry**:
-- Stale element exceptions
-- Element not clickable
-- Network timeouts
+**When to retry**
 
-**When NOT to retry**:
-- Element doesn't exist (test failure)
-- Logic errors
+- Transient DOM issues (e.g. `StaleElementReferenceException`)
+- Short-lived timing glitches you can reproduce rarely
+
+**When not to retry**
+
+- Assertions / wrong expected state (fix the test or app)
+- Missing elements that indicate a real bug (narrow `retry_exceptions`; do not blanket-retry `Exception` in every test)
 
 ### 5. Flaky Test Detection
 
@@ -272,9 +286,10 @@ pytest --version
 python -c "from selenium import webdriver; print('Selenium OK')"
 ```
 
-**Expected Output**:
+**Expected Output** (versions depend on `requirements.txt`; pytest is pinned to 7.x for `pytest-history` compatibility):
+
 ```
-pytest 8.x.x
+pytest 7.x.x
 Selenium OK
 ```
 
@@ -406,25 +421,38 @@ class TestDataDriven:
         assert any(scenario['expected_in_results'] in r.lower() for r in results)
 ```
 
-### Step 5: Add Error Handling
+### Step 5: Add error handling
 
-Enhance your page with retry logic:
+Use the framework’s **`SmartErrorHandler`** (same module as `format_error`) for stdlib retries instead of decorators from an extra library:
 
 ```python
-from tenacity import retry, stop_after_attempt, wait_fixed
-from utils.error_handler import format_error
+from selenium.common.exceptions import StaleElementReferenceException
+
+from utils.error_handler import SmartErrorHandler, format_error
+
 
 class RobustPage(BasePage):
-    """Page with error handling."""
+    """Page with explicit retry via SmartErrorHandler."""
 
-    @retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
+    def __init__(self, driver):
+        super().__init__(driver)
+        self._errors = SmartErrorHandler()
+
     def click_with_retry(self, locator) -> bool:
-        """Click element with automatic retry."""
-        try:
+        """Click with bounded retries on likely-transient failures."""
+
+        def _click():
             return self.click(locator)
-        except Exception as e:
-            self.logger.warning(f"Click failed: {format_error(e)}, retrying...")
-            raise  # Tenacity will retry
+
+        return (
+            self._errors.execute_with_retry(
+                _click,
+                max_attempts=3,
+                initial_delay=0.5,
+                retry_exceptions=(StaleElementReferenceException,),
+            )
+            is not None
+        )
 
     def safe_get_text(self, locator) -> str:
         """Get text with fallback to empty string."""
@@ -432,7 +460,7 @@ class RobustPage(BasePage):
             element = self.find_element(locator)
             return element.text if element else ""
         except Exception as e:
-            self.logger.debug(f"Could not get text: {format_error(e)}")
+            self.logger.debug("Could not get text: %s", format_error(e))
             return ""
 ```
 
@@ -501,7 +529,7 @@ def test_homepage_visual(page: Page):
 ### API Testing
 
 ```python
-# tests/api/test_api_example.py
+# Example pattern; canonical SWAPI suite: tests/backend/test_api.py
 import pytest
 import requests
 
@@ -642,11 +670,27 @@ element = driver.find_element(*locator)
 # Error: StaleElementReferenceException
 
 # Cause: Element was modified after finding it
-# Solution: Re-find the element or use retry logic
-@retry(stop=stop_after_attempt(3))
-def click_element(self, locator):
-    element = self.find_element(locator)  # Fresh reference
-    element.click()
+# Solution: Re-find the element on each attempt, or wrap the action in SmartErrorHandler.execute_with_retry
+from selenium.common.exceptions import StaleElementReferenceException
+
+from utils.error_handler import SmartErrorHandler
+
+handler = SmartErrorHandler()
+
+
+def click_fresh(driver, locator):
+    el = driver.find_element(*locator)  # fresh reference each attempt
+    el.click()
+
+
+handler.execute_with_retry(
+    click_fresh,
+    driver,
+    locator,
+    max_attempts=3,
+    initial_delay=0.3,
+    retry_exceptions=(StaleElementReferenceException,),
+)
 ```
 
 #### 4. Tests Pass Locally, Fail in CI
@@ -674,7 +718,7 @@ pytest-history flakes
 
 # Fix strategies:
 # 1. Add explicit waits for dynamic elements
-# 2. Use retry decorator for transient failures
+# 2. For transient failures only: SmartErrorHandler.execute_with_retry with a narrow retry_exceptions tuple
 # 3. Isolate test data (each test gets fresh data)
 # 4. Check for race conditions
 ```
@@ -714,8 +758,8 @@ pytest tests/
 
 # Run specific test type
 pytest tests/unit/ -v
-pytest tests/web/ -v
-pytest tests/api/ -v
+pytest tests/ui/ -v
+pytest tests/backend/test_api.py -m api -v
 
 # Run with reporting
 python run_tests.py --type unit --flaky

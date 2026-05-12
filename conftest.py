@@ -126,7 +126,9 @@ def authenticated_driver(test_config) -> Generator[webdriver.Chrome]:
 
         # Ensure we're authenticated before continuing (inventory should be visible).
         drv.get(f"{_SAUCE_URL}inventory.html")
-        from selenium.webdriver.support import expected_conditions as EC  # noqa: PLC0415
+        from selenium.webdriver.support import (  # noqa: PLC0415
+            expected_conditions as EC,
+        )
         from selenium.webdriver.support.ui import WebDriverWait  # noqa: PLC0415
 
         from locators.sauce.inventory_locators import (  # noqa: PLC0415
@@ -201,8 +203,8 @@ def pytest_configure(config):
     markers = [
         "ui: UI automation tests (tests/ui/)",
         "web: Legacy alias for ui tests",
-        "api: API tests (tests/api/)",
-        "database: Database tests (tests/api/test_database.py)",
+        "api: API tests (tests/backend/test_api.py)",
+        "database: Database tests (tests/backend/test_database.py)",
         "framework: Framework functionality tests",
         "visual: Visual regression tests (tests/ui/visual/)",
         "playwright: Playwright-based tests",

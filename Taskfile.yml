@@ -9,6 +9,7 @@ vars:
   ALLURE_RESULTS: allure-results
   ALLURE_REPORT:  allure-report
   AUTH_FILE:      .auth/sauce.json
+  QA_PRACTICE_APP: ../qa-practice-app
 
 tasks:
 
@@ -24,17 +25,17 @@ tasks:
   test:sauce:
     desc: "Run SauceDemo E2E tests only"
     cmds:
-      - uv run pytest tests/web/ -m sauce --alluredir={{.ALLURE_RESULTS}} -v
+      - uv run pytest tests/ui/sauce/ -m sauce --alluredir={{.ALLURE_RESULTS}} -v
 
   test:advanced:
-    desc: "Run Advanced Interactions tests (E1-E9)"
+    desc: "Run practice-app tests marked advanced (selectors showcase)"
     cmds:
-      - uv run pytest tests/web/advanced/ --alluredir={{.ALLURE_RESULTS}} -v
+      - uv run pytest tests/ui/practice/ -m advanced --alluredir={{.ALLURE_RESULTS}} -v
 
   test:api:
     desc: "Run API tests"
     cmds:
-      - uv run pytest tests/api/ --alluredir={{.ALLURE_RESULTS}} -v
+      - uv run pytest tests/backend/test_api.py -m api --alluredir={{.ALLURE_RESULTS}} -v
 
   test:a11y:
     desc: "Run Accessibility tests"
@@ -78,13 +79,13 @@ tasks:
   practice:up:
     desc: "Start qa-practice-app on localhost:8080"
     cmds:
-      - docker compose -f qa-practice-app/docker-compose.yml up -d
+      - docker compose -f {{.QA_PRACTICE_APP}}/docker-compose.yml up -d
       - echo "Practice app running at http://localhost:8080"
 
   practice:down:
     desc: "Stop qa-practice-app"
     cmds:
-      - docker compose -f qa-practice-app/docker-compose.yml down
+      - docker compose -f {{.QA_PRACTICE_APP}}/docker-compose.yml down
 
   # ── Auth ──────────────────────────────────────────────────────────────────
 
