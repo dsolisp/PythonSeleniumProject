@@ -86,7 +86,7 @@ Test Execution
 
 Results & History
     │
-    ├─ JSON/YAML export (data/results/)
+    ├─ JSON/YAML export (var/data/results/)
     └─ Test history (.test-results.db)
         └─ pytest-history plugin
             ├─ Flaky test detection
