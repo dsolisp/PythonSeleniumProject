@@ -217,7 +217,8 @@ def test_performance_metrics(page: Page):
 ### Example 1: Google Search
 
 ```python
-# tests/web/test_playwright_search_engine.py
+# Conceptual example (requires pytest-playwright and a `page` fixture).
+# This repo ships a small factory-based smoke test: tests/ui/playwright/test_playwright_smoke.py
 import pytest
 from playwright.sync_api import Page, expect
 
@@ -335,24 +336,18 @@ def test_with_mocked_api(page: Page):
 ## 🏃 Running Playwright Tests
 
 ```bash
-# Run all Playwright tests
-pytest tests/web/test_playwright_*.py -v
+# Smoke test included in this repo (PlaywrightFactory + sync API)
+pytest tests/ui/playwright/test_playwright_smoke.py -m playwright -v
 
-# Run specific test
-pytest tests/web/test_playwright_search_engine.py::test_google_search_basic -v
+# Optional: if you add pytest-playwright and tests under tests/ui/playwright/
+pytest tests/ui/playwright/ -m playwright -v
 
-# Run in headed mode (see browser)
-pytest tests/web/test_playwright_search_engine.py --headed
-
-# Run with specific browser
-pytest tests/web/test_playwright_search_engine.py --browser firefox
-pytest tests/web/test_playwright_search_engine.py --browser webkit
-
-# Run with slow motion (for debugging)
-pytest tests/web/test_playwright_search_engine.py --headed --slowmo 1000
-
-# Generate trace for debugging
-pytest tests/web/test_playwright_search_engine.py --tracing on
+# Optional pytest-playwright flags (only when the plugin/fixtures are installed)
+pytest tests/ui/playwright/ -m playwright --headed
+pytest tests/ui/playwright/ -m playwright --browser firefox
+pytest tests/ui/playwright/ -m playwright --browser webkit
+pytest tests/ui/playwright/ -m playwright --headed --slowmo 1000
+pytest tests/ui/playwright/ -m playwright --tracing on
 ```
 
 ## 🔧 Configuration
@@ -433,11 +428,11 @@ def authenticated_page(page):
 
 ## 🔗 File Locations
 
-- **Tests**: `tests/web/test_playwright_*.py`
+- **Tests**: `tests/ui/playwright/` (smoke + any Playwright tests you add)
 - **Factory**: `utils/playwright_factory.py`
-- **Locators**: `locators/playwright_search_engine_locators.py`
-- **Screenshots**: `screenshots/`
-- **Videos**: `videos/`
+- **Selenium locators** (separate stack): `locators/sauce/`, `locators/practice/`, `locators/components/`
+- **Screenshots**: `screenshots/` (if used by your flows)
+- **Videos**: `videos/` (if you enable recording in your own fixtures)
 
 ---
 

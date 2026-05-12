@@ -158,7 +158,7 @@ pip install locust
 
 ### Basic Load Test Configuration
 
-Create `tests/performance/locustfile.py`:
+This repository includes a minimal **`tests/performance/locustfile.py`** (JSONPlaceholder `HttpUser`). Extend or replace it for your own hosts and tasks:
 
 ```python
 from locust import HttpUser, task, between

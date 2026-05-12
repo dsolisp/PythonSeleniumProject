@@ -40,7 +40,7 @@ Identify tests with inconsistent pass/fail behavior:
 pytest-history flakes
 
 # Example output:
-# tests/web/test_search.py::test_search_results - flaky (passed: 7, failed: 3)
+# tests/ui/sauce/test_sauce.py::test_standard_user_login - flaky (passed: 7, failed: 3)
 # tests/backend/test_api.py::TestSwapiAPI::test_example_1_fetches_specific_person - flaky (example)
 ```
 
@@ -89,7 +89,7 @@ python run_tests.py --type unit --flaky
 # ============================================================
 # 🔍 FLAKY TEST ANALYSIS (pytest-history)
 # ============================================================
-# tests/web/test_search.py::test_flaky_example - flaky (passed: 3, failed: 2)
+# tests/ui/practice/test_alerts.py::test_flaky_example - flaky (passed: 3, failed: 2)
 ```
 
 ### Custom Database Location
