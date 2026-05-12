@@ -225,25 +225,20 @@ class BasePage:
         element.send_keys(text)
 ```
 
-### Search Engine Page (`pages/search_engine_page.py`)
+### SauceDemo Login Page (`pages/sauce/login_page.py`)
 
-**Purpose**: Interact with search engines (Google, DuckDuckGo, Bing).
+**Purpose**: Encapsulate the SauceDemo login flow (this repo’s primary Selenium UI example).
 
 ```python
-from selenium.webdriver.common.by import By
-from pages.base_page import BasePage
+from pages.sauce.login_page import LoginPage
+from utils.builders.user_builder import UserBuilder
 
-class SearchEnginePage(BasePage):
-    """Page object for search engines."""
-
-    # Locators (keep together for easy maintenance)
-    SEARCH_INPUT = (By.NAME, "q")
-    SEARCH_BUTTON = (By.NAME, "btnK")
-
-    def search(self, query: str):
-        """Perform a search."""
-        self.type_text(self.SEARCH_INPUT, query)
-        self.click(self.SEARCH_BUTTON)
+# Typical usage inside a test (see tests/ui/sauce/test_sauce.py):
+def test_login(selenium_driver):
+    creds = UserBuilder().standard().build()
+    login = LoginPage(selenium_driver).open()
+    login.login(creds.username, creds.password)
+    assert login.is_logged_in()
 ```
 
 ## Step 5: Write Tests
@@ -271,29 +266,27 @@ class TestWebDriverFactory:
             WebDriverFactory.create_driver("safari")
 ```
 
-### 5.2 Web Tests (`tests/web/`)
+### 5.2 Web Tests (`tests/ui/`)
 
-**Purpose**: End-to-end browser tests.
+**Purpose**: End-to-end browser tests (Selenium), grouped by app (`sauce/`, `practice/`, `visual/`) plus optional Playwright smoke under `tests/ui/playwright/`.
 
 ```python
-# tests/web/test_search.py
+# tests/ui/sauce/test_sauce.py (pattern)
 import pytest
-from pages.search_engine_page import SearchEnginePage
+from hamcrest import assert_that, is_
 
-class TestSearch:
-    """Search functionality tests."""
+from pages.sauce.login_page import LoginPage
+from utils.builders.user_builder import UserBuilder
 
-    @pytest.fixture
-    def search_page(self, driver):
-        """Create search page instance."""
-        page = SearchEnginePage(driver)
-        page.driver.get("https://www.google.com")
-        return page
 
-    def test_search_returns_results(self, search_page):
-        """Verify search returns results."""
-        search_page.search("Python Selenium")
-        assert "Python" in search_page.driver.title
+@pytest.mark.web
+@pytest.mark.sauce
+class TestSauceDemoLogin:
+    def test_standard_user_login(self, selenium_driver):
+        creds = UserBuilder().standard().build()
+        login = LoginPage(selenium_driver).open()
+        login.login(creds.username, creds.password)
+        assert_that(login.is_logged_in(), is_(True))
 ```
 
 ### 5.3 Run Tests
