@@ -28,6 +28,8 @@ from pathlib import Path
 
 from utils.test_data_manager import DataManager
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 
 def run_command(command, description):
     """Run a command and handle errors."""
@@ -44,7 +46,7 @@ def run_command(command, description):
             command_list,
             shell=False,  # Security: Avoid shell injection
             check=True,
-            cwd=Path.cwd(),
+            cwd=str(PROJECT_ROOT),
             capture_output=True,
             text=True,
         )
@@ -72,7 +74,7 @@ def export_test_results(*, test_type: str, success: bool, duration: float):
     """
     try:
         # Import here to avoid dependency issues
-        sys.path.insert(0, str(Path.cwd()))
+        sys.path.insert(0, str(PROJECT_ROOT))
 
         manager = DataManager()
 
@@ -109,10 +111,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python run_tests.py --type api -v              # Run API tests with verbose output
-  python run_tests.py --type unit --coverage     # Run unit tests with coverage
-  python run_tests.py --type all                 # Run all test suites (~256 tests)
-  python run_tests.py --type regression          # Quick smoke test
+  python scripts/run_tests.py --type api -v              # Run API tests with verbose output
+  python scripts/run_tests.py --type unit --coverage     # Run unit tests with coverage
+  python scripts/run_tests.py --type all                 # Run all test suites (~256 tests)
+  python scripts/run_tests.py --type regression          # Quick smoke test
 
 Test Counts:
   api         : 5 tests (REST API with conditional Allure)

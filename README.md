@@ -16,8 +16,8 @@
 | Resource | Description |
 |----------|-------------|
 | 📖 **[Zero-to-Hero Tutorial](docs/ZERO_TO_HERO.md)** | Complete guide to building this framework from scratch |
-| 📋 **[Cheat Sheet](documentation/PYTHON_AUTOMATION_CHEAT_SHEET.md)** | Quick reference for pytest, Selenium, Playwright commands |
-| 📑 **[Full Documentation](documentation/INDEX.md)** | All documentation in one place |
+| 📋 **[Cheat Sheet](docs/guides/PYTHON_AUTOMATION_CHEAT_SHEET.md)** | Quick reference for pytest, Selenium, Playwright commands |
+| 📑 **[Full Documentation](docs/INDEX.md)** | All documentation in one place |
 
 ---
 
@@ -51,7 +51,7 @@
 
 ```bash
 # One-command setup and full QA pipeline
-./setup_env.sh && python run_full_workflow.py
+./setup_env.sh && python scripts/run_full_workflow.py
 ```
 
 That's it! Runs tests, generates reports, and checks for flaky tests automatically.
@@ -68,8 +68,8 @@ That's it! Runs tests, generates reports, and checks for flaky tests automatical
 - **Load Testing**: Locust integration for performance under load
 
 ### 📊 Intelligence & analytics
-- **Flaky history**: `pytest-history` (SQLite `.test-results.db`) — see `documentation/TEST_ANALYTICS.md`
-- **Workflow output**: `run_full_workflow.py` writes CSV/JSON under `data/results` and reports under `reports/`
+- **Flaky history**: `pytest-history` (SQLite `.test-results.db`) — see [docs/guides/TEST_ANALYTICS.md](docs/guides/TEST_ANALYTICS.md)
+- **Workflow output**: `scripts/run_full_workflow.py` writes CSV/JSON under `var/data/results` and reports under `var/reports/`
 - **Reporting**: Allure (`allure-pytest`), pytest-html, pytest-json-report where configured
 - **Benchmarking**: `pytest-benchmark` under `tests/performance/`
 
@@ -84,20 +84,12 @@ That's it! Runs tests, generates reports, and checks for flaky tests automatical
 
 ```
 PythonSeleniumProject/
-├── 🐍 run_full_workflow.py          # 🚀 Complete QA automation pipeline
 ├── 🐚 setup_env.sh                  # ⚙️ Auto environment setup
-├── 📁 documentation/                # 📚 Feature tutorials & guides
+├── 📁 docs/                         # 📚 Documentation index, ADRs, guides
 │   ├── INDEX.md                     # Complete documentation index
-│   ├── LOCAL_DEV_GUIDE.md           # Development tools guide
-│   ├── PYTEST_README.md             # Pytest configuration guide
-│   ├── ANALYTICS_AND_REPORTING.md   # Test analytics & reporting
-│   ├── TEST_ANALYTICS.md            # Flaky detection & reliability scoring
-│   ├── API_TESTING.md               # REST API automation
-│   ├── PLAYWRIGHT_INTEGRATION.md    # Modern browser automation
-│   ├── TEST_DATA_MANAGEMENT.md      # Data management & export
-│   ├── ERROR_RECOVERY_AND_MONITORING.md  # Self-healing & monitoring
-│   ├── PERFORMANCE_MONITORING.md    # Load testing & benchmarking
-│   └── RECOMMENDATIONS.md           # Framework usage patterns
+│   ├── ZERO_TO_HERO.md              # Build-this-framework tutorial
+│   ├── adr/                         # Architecture decision records
+│   └── guides/                      # Long-form feature guides (cheat sheet, analytics, …)
 ├── 📁 tests/                        # pytest suites (markers in pytest.ini)
 │   ├── unit/
 │   ├── integration/
@@ -131,38 +123,29 @@ PythonSeleniumProject/
 │   ├── result_page_locators.py      # Results page locators
 │   └── test_framework_locators.py   # Framework-specific locators
 ├── 📁 scripts/                      # 🛠️ Automation & utility scripts
+│   ├── run_full_workflow.py         # 🚀 Complete QA automation pipeline
+│   ├── run_tests.py                 # Test runner (by suite type, optional export)
 │   ├── run_ci_checks.sh             # Code quality validation
 │   ├── run_ci_checks_legacy.sh      # Legacy quality checks
 │   └── normalize_results.py         # Data processing utilities
-├── 📁 data/                         # 💾 Test data & results storage
-│   ├── configs/                     # Environment-specific configs
-│   └── results/                     # Test execution data for archiving
-│       ├── local/                   # Local environment results
-│       ├── staging/                 # Staging environment results
-│       └── production/              # Production environment results
-├── 📁 reports/                      # 📊 Generated test reports
-│   ├── html/                        # HTML test reports
-│   ├── json/                        # JSON test data
-│   ├── allure-results/              # Allure reporting data
-│   ├── analytics/                   # Analytics outputs & summaries
-│   ├── trends/                      # Performance trend analysis
-│   └── coverage_html/               # Code coverage reports
+├── 📁 data/                         # 💾 Committed test data & generated configs
+│   └── configs/                     # Environment-specific configs (YAML)
+├── 📁 var/                          # 📦 Generated outputs (gitignored): reports, logs, screenshots, …
 ├── 📁 baselines/                    # 📸 Committed visual baselines (SauceDemo UI)
-├── 📁 screenshots/                # Actuals, diffs, failure screenshots
-├── 📁 screenshots_diff/             # 🔍 Visual comparison differences
-├── 📁 logs/                         # 📝 Test execution logs
 ├── 📁 drivers/                      # 🚗 WebDriver executables
 ├── 📁 downloads/                    # 📥 Downloaded test artifacts
 ├── 📁 examples/                     # 💡 Usage examples & demos
 ├── 📁 resources/                    # 📦 Test resources & fixtures
-└── 📁 test_reports/                 # 📋 Legacy test report storage
+└── (conftest.py, pytest.ini, pyproject.toml, …)
 ```
+
+*(Committed fixtures live under `data/`; exported run history and reports default to `var/` — see `config/settings.py`.)*
 
 ## 🧪 Running Tests
 
 ### Unified Workflow (Recommended)
 ```bash
-python run_full_workflow.py  # Complete pipeline: tests + reporting + analytics
+python scripts/run_full_workflow.py  # Complete pipeline: tests + reporting + analytics
 ```
 
 ### Manual Execution
@@ -172,11 +155,11 @@ pytest tests/
 pytest tests/web/test_playwright_search_engine.py::test_playwright_search_basic
 
 # Full reporting for CI/CD (detailed output)
-pytest -c pytest-ci.ini tests/ --cov-report=html
+pytest tests/ --cov-report=html
 
 # With Allure reporting
-pytest -c pytest-ci.ini tests/ --alluredir=reports/allure-results
-allure serve reports/allure-results
+pytest tests/ --alluredir=var/allure-results
+allure serve var/allure-results
 
 # Visual regression (Selenium + pixelmatch)
 pytest tests/ui/visual/test_visual_regression.py -v
@@ -197,33 +180,33 @@ pytest -m security tests/
 pytest -m database tests/
 ```
 
-**Note**: Default pytest runs are now clean and minimal. Use `pytest-ci.ini` for detailed reporting with coverage, HTML reports, etc.
+**Note**: Tune reporting flags as needed (see `pytest.ini` and `docs/guides/PYTEST_README.md`).
 
 ## 📚 Documentation
 
 | Feature | Tutorial | Description |
 |---------|----------|-------------|
-| **Local Development** | [🛠️ Local Dev Guide](documentation/LOCAL_DEV_GUIDE.md) | Development tools & local setup |
-| **Pytest Configuration** | [🧪 Pytest Guide](documentation/PYTEST_README.md) | Testing framework setup & options |
-| **Analytics** | [📊 Analytics Guide](documentation/ANALYTICS_AND_REPORTING.md) | Reports, exports, and workflow output |
-| **Test Analytics** | [📈 Analytics Engine](documentation/TEST_ANALYTICS.md) | Flaky detection & reliability scoring |
-| **API Testing** | [🔗 API Guide](documentation/API_TESTING.md) | REST automation with Allure |
-| **Playwright** | [🎭 Playwright Guide](documentation/PLAYWRIGHT_INTEGRATION.md) | Modern browser automation |
-| **Performance** | [⚡ Performance Guide](documentation/PERFORMANCE_MONITORING.md) | Load testing & benchmarking |
-| **Error Recovery** | [🔄 Recovery Guide](documentation/ERROR_RECOVERY_AND_MONITORING.md) | Retries, logging, screenshots (see `utils/error_handler.py`) |
-| **Data Management** | [💾 Data Guide](documentation/TEST_DATA_MANAGEMENT.md) | Test data & configurations |
-| **Recommendations** | [💡 Best Practices](documentation/RECOMMENDATIONS.md) | Framework usage patterns |
-| **All Docs** | [📖 Index](documentation/INDEX.md) | Complete documentation |
+| **Local Development** | [🛠️ Local Dev Guide](docs/guides/LOCAL_DEV_GUIDE.md) | Development tools & local setup |
+| **Pytest Configuration** | [🧪 Pytest Guide](docs/guides/PYTEST_README.md) | Testing framework setup & options |
+| **Analytics** | [📊 Analytics Guide](docs/guides/ANALYTICS_AND_REPORTING.md) | Reports, exports, and workflow output |
+| **Test Analytics** | [📈 Analytics Engine](docs/guides/TEST_ANALYTICS.md) | Flaky detection & reliability scoring |
+| **API Testing** | [🔗 API Guide](docs/guides/API_TESTING.md) | REST automation with Allure |
+| **Playwright** | [🎭 Playwright Guide](docs/guides/PLAYWRIGHT_INTEGRATION.md) | Modern browser automation |
+| **Performance** | [⚡ Performance Guide](docs/guides/PERFORMANCE_MONITORING.md) | Load testing & benchmarking |
+| **Error Recovery** | [🔄 Recovery Guide](docs/guides/ERROR_RECOVERY_AND_MONITORING.md) | Retries, logging, screenshots (see `utils/error_handler.py`) |
+| **Data Management** | [💾 Data Guide](docs/guides/TEST_DATA_MANAGEMENT.md) | Test data & configurations |
+| **Recommendations** | [💡 Best Practices](docs/guides/RECOMMENDATIONS.md) | Framework usage patterns |
+| **All Docs** | [📖 Index](docs/INDEX.md) | Complete documentation |
 
 ## 🛠️ Automation Scripts
 
 | Script | Purpose | Command |
 |--------|---------|---------|
-| **Full Pipeline** | Complete QA workflow | `python run_full_workflow.py` |
+| **Full Pipeline** | Complete QA workflow | `python scripts/run_full_workflow.py` |
 | **Environment Setup** | Auto-setup venv & deps | `./setup_env.sh` |
 | **Result Normalization** | Data processing | `python scripts/normalize_results.py` |
 | **Quality Checks** | Code validation | `bash scripts/run_ci_checks.sh` |
-| **Test Runner** | Custom test execution | `python run_tests.py` |
+| **Test Runner** | Custom test execution | `python scripts/run_tests.py` |
 
 ## 🏆 What you get in the repo today
 
@@ -239,8 +222,8 @@ CI is defined under `.github/workflows/` (for example `ci.yml` for PR checks, `f
 
 ## 💡 Best Practices
 
-1. **Use the unified workflow** - `python run_full_workflow.py` for complete automation
-2. **Check the tutorials** - See `documentation/` for feature guides  
+1. **Use the unified workflow** - `python scripts/run_full_workflow.py` for complete automation
+2. **Check the tutorials** - See `docs/guides/` for feature guides  
 3. **Run quality checks** - Use `bash scripts/run_ci_checks.sh` before committing
 4. **Monitor analytics** - Review flaky summaries and performance trends
 5. **Use appropriate test markers** - Leverage pytest markers for targeted test runs
@@ -284,7 +267,7 @@ pytest tests/ui/visual/test_visual_regression.py -v
 brew install allure
 
 # Generate and serve report
-allure serve reports/allure-results
+allure serve var/allure-results
 ```
 
 **❌ Performance Testing**
@@ -318,7 +301,7 @@ mypy .
 
 1. Fork the repository
 2. Run quality checks: `bash scripts/run_ci_checks.sh`
-3. Make changes and test: `python run_full_workflow.py`
+3. Make changes and test: `python scripts/run_full_workflow.py`
 4. Follow the established patterns (Page Object Model, hamcrest assertions, etc.)
 5. Update documentation if adding new features
 6. Submit a pull request
@@ -335,11 +318,11 @@ pytest tests/unit/ -v --tb=short
 ruff check . && mypy .
 
 # Run full pipeline before committing
-python run_full_workflow.py
+python scripts/run_full_workflow.py
 ```
 
 ---
 
-**Ready to automate your testing?** Start with `python run_full_workflow.py` 🚀
+**Ready to automate your testing?** Start with `python scripts/run_full_workflow.py` 🚀
 
-**Need help?** Check [documentation/INDEX.md](documentation/INDEX.md) for detailed guides.
+**Need help?** Check [docs/INDEX.md](docs/INDEX.md) for detailed guides.

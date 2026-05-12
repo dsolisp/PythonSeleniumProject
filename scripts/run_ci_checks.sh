@@ -32,7 +32,7 @@ run_check() {
 INCLUDE_DIRS="pages tests utils config locators"
 
 # Exclude patterns for tools that support it
-EXCLUDE_CSV="venv,venv-enhanced,.venv,__pycache__,.pytest_cache,.git,build,dist,data/results,downloads,drivers,reports,test_reports,logs,screenshots,screenshots_diff,resources"
+EXCLUDE_CSV="venv,venv-enhanced,.venv,__pycache__,.pytest_cache,.git,build,dist,data/results,downloads,drivers,reports,test_reports,logs,screenshots,screenshots_diff,resources,var"
 
 # Auto-fix stage using Ruff (replaces black, isort, autoflake)
 echo

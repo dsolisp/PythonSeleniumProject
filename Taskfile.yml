@@ -6,7 +6,7 @@ version: "3"
 # ──────────────────────────────────────────────────────────────────────────────
 
 vars:
-  ALLURE_RESULTS: allure-results
+  ALLURE_RESULTS: var/allure-results
   ALLURE_REPORT:  allure-report
   AUTH_FILE:      .auth/sauce.json
   QA_PRACTICE_APP: ../qa-practice-app

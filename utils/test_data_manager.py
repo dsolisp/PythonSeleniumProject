@@ -58,6 +58,9 @@ class DataManager:
             else Path(__file__).parent.parent / "data"
         )
         self.data_dir.mkdir(parents=True, exist_ok=True)
+        self._results_output_dir = (
+            Path(__file__).parent.parent / "var" / "data" / "results"
+        )
         self._cache = {}
 
     def load_test_data(self, filename, environment="default"):
@@ -107,8 +110,8 @@ class DataManager:
     def save_test_results_yaml(self, results, filename=None):
         """Save test results in YAML format. Returns path."""
         ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        path = self.data_dir / "results" / (filename or f"results_{ts}.yml")
-        path.parent.mkdir(exist_ok=True)
+        path = self._results_output_dir / (filename or f"results_{ts}.yml")
+        path.parent.mkdir(parents=True, exist_ok=True)
         data = {
             "test_execution": {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -167,7 +170,7 @@ class DataManager:
     def cleanup_old_results(self, days_to_keep=30):
         """Clean up result files older than specified days."""
         cutoff = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
-        results_dir = self.data_dir / "results"
+        results_dir = self._results_output_dir
         if not results_dir.exists():
             return
         for path in results_dir.rglob("*.json"):

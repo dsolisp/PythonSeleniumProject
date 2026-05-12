@@ -112,7 +112,7 @@ class ScreenshotService:
     """Simple screenshot capture for error documentation."""
 
     def __init__(self, screenshots_dir=None):
-        self.screenshots_dir = Path(screenshots_dir or "screenshots")
+        self.screenshots_dir = Path(screenshots_dir or "var/screenshots")
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
 
     def capture(self, driver, test_name, prefix="error"):

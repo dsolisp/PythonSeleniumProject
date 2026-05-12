@@ -56,7 +56,7 @@ pytest-history flakes
 pytest-history list runs
 
 # Use via run_tests.py
-python run_tests.py --type unit --flaky
+python scripts/run_tests.py --type unit --flaky
 ```
 
 ## 📊 Report Types

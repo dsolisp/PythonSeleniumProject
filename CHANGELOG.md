@@ -2,6 +2,13 @@
 
 All notable changes to the Python Selenium Test Automation Framework.
 
+## [Unreleased]
+
+### Changed
+- **Documentation** — Single tree under `docs/` (`docs/guides/` for long-form guides); removed duplicate `documentation/` folder and legacy `ZERO-TO-HERO` stubs.
+- **Runners** — `run_tests.py` and `run_full_workflow.py` moved to `scripts/`; generated artifacts default under `var/` (see `config/settings.py`, `.gitignore`).
+- **Lint config** — Removed redundant `.flake8` and `.isort.cfg` (Ruff in `pyproject.toml` is canonical).
+
 ## [2.1.0] - 2025-12-04
 
 ### 🔄 Flaky Test Detection Overhaul
@@ -44,7 +51,7 @@ pytest-history flakes
 pytest-history list runs
 
 # Use via run_tests.py
-python run_tests.py --type unit --flaky
+python scripts/run_tests.py --type unit --flaky
 ```
 
 ---

@@ -59,7 +59,7 @@ pytest tests/backend/test_api.py -m api -v
 pytest tests/backend/test_api.py::TestSwapiAPI -v
 
 # Via runner (after run_tests.py points at this path)
-python run_tests.py --type api
+python scripts/run_tests.py --type api
 ```
 
 ### Allure (optional)
@@ -67,8 +67,8 @@ python run_tests.py --type api
 When `ENABLE_ALLURE=true` (default in `config/settings.py`), UI and other suites attach rich steps. For API-only runs you can still collect Allure results if you add decorators/steps to your tests:
 
 ```bash
-pytest tests/backend/test_api.py -m api -v --alluredir=reports/allure-results --clean-alluredir
-allure serve reports/allure-results
+pytest tests/backend/test_api.py -m api -v --alluredir=var/allure-results --clean-alluredir
+allure serve var/allure-results
 ```
 
 Fast console-only runs (no Allure steps in the SWAPI file today—this only affects suites that branch on `settings.ENABLE_ALLURE`):

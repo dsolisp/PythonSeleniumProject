@@ -92,12 +92,12 @@ class Settings:
 
         # Paths
         self.PROJECT_ROOT = Path(__file__).parent.parent
-        self.REPORTS_DIR = self.PROJECT_ROOT / os.getenv("REPORTS_DIR", "reports")
+        self.REPORTS_DIR = self.PROJECT_ROOT / os.getenv("REPORTS_DIR", "var/reports")
         self.SCREENSHOTS_DIR = self.PROJECT_ROOT / os.getenv(
             "SCREENSHOTS_DIR",
-            "screenshots",
+            "var/screenshots",
         )
-        self.LOGS_DIR = self.PROJECT_ROOT / os.getenv("LOGS_DIR", "logs")
+        self.LOGS_DIR = self.PROJECT_ROOT / os.getenv("LOGS_DIR", "var/logs")
 
         # Create directories
         self._create_directories()

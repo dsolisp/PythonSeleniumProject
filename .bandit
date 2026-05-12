@@ -6,6 +6,6 @@
 skips = B101,B105,B110,B112,B311,B404,B603
 
 # Directories and files to exclude from scanning (comma-separated)
-exclude = venv,venv-enhanced,.venv,__pycache__,.pytest_cache,.git,build,dist,data/results,downloads,drivers,reports,test_reports,logs,screenshots,screenshots_diff,resources
+exclude = venv,venv-enhanced,.venv,__pycache__,.pytest_cache,.git,build,dist,data/results,downloads,drivers,reports,test_reports,logs,screenshots,screenshots_diff,resources,var
 
 # Note: CI also uses CLI flags (e.g. --exclude) — keep this file for local runs.

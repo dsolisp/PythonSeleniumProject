@@ -50,7 +50,7 @@ package = false
 exclude = [
     "venv", "venv-enhanced", ".venv", "__pycache__", ".git",
     "build", "dist", "data/results", "reports", "test_reports",
-    "logs", "screenshots", "screenshots_diff", "resources",
+    "logs", "screenshots", "screenshots_diff", "resources", "var",
 ]
 line-length = 88
 indent-width = 4

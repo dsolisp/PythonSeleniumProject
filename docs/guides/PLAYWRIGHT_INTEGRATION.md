@@ -427,7 +427,7 @@ def authenticated_page(page):
 
 ## 📚 Related Documentation
 
-- [Web UI Testing](WEB_UI_TESTING.md) - Selenium-based tests
+- [Documentation index](../INDEX.md) — Selenium UI tests live under `tests/ui/`
 - [Performance Monitoring](PERFORMANCE_MONITORING.md) - Performance metrics
 - [API Testing](API_TESTING.md) - API automation
 

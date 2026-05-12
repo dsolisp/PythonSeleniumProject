@@ -28,7 +28,7 @@ Every test run is automatically recorded:
 # Just run tests normally - history is tracked automatically
 pytest tests/unit/
 pytest tests/integration/
-python run_tests.py --type all
+python scripts/run_tests.py --type all
 ```
 
 ### 2. Flaky Test Detection
@@ -83,7 +83,7 @@ pytest-history list results 5
 
 ```bash
 # Run tests with flaky analysis
-python run_tests.py --type unit --flaky
+python scripts/run_tests.py --type unit --flaky
 
 # Output includes:
 # ============================================================
@@ -173,7 +173,7 @@ WHERE (t1.outcome = 'passed' AND t2.outcome = 'failed')
 |------|---------|
 | `.test-results.db` | SQLite database with test history (auto-created) |
 | `pytest.ini` | Configuration comments for pytest-history |
-| `run_tests.py` | `--flaky` flag for flaky test summary |
+| `scripts/run_tests.py` | `--flaky` flag for flaky test summary |
 
 ## ⚠️ Notes
 
