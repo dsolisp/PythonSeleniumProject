@@ -21,6 +21,8 @@ env/
 ENV/
 
 # ── Test outputs ───────────────────────────────────────────────────────────────
+# Canonical local/CI outputs (see config/settings.py defaults)
+var/
 test-results/
 test_reports/
 allure-results/

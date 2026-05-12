@@ -28,7 +28,7 @@ source .venv/bin/activate
 .venv\Scripts\activate
 
 # Create directory structure
-mkdir -p pages utils tests/{unit,web,api,performance} data/{test_data,results} reports scripts documentation
+mkdir -p pages utils tests/{unit,web,api,performance} data/{test_data,results} reports scripts docs/guides docs/adr
 ```
 
 **Why this structure?**
@@ -54,7 +54,9 @@ PythonSeleniumProject/
 │   └── results/
 ├── reports/
 ├── scripts/
-└── documentation/
+└── docs/
+    ├── guides/
+    └── adr/
 ```
 
 ## Step 2: Install Dependencies
@@ -377,7 +379,7 @@ pytest-history flakes
 pytest-history list runs
 
 # Use via run_tests.py
-python run_tests.py --type unit --flaky
+python scripts/run_tests.py --type unit --flaky
 ```
 
 **How it works**:
@@ -410,7 +412,7 @@ locust -f tests/performance/locustfile.py --host=https://api.example.com
 
 ```bash
 # Complete pipeline: tests + analytics
-python run_full_workflow.py
+python scripts/run_full_workflow.py
 ```
 
 **Expected Output:**

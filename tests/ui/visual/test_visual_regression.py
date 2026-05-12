@@ -6,7 +6,7 @@ Equivalent to:
 - Playwright: tests/ui/visual/visual-regression.spec.ts
 
 Implementation: Selenium screenshots + Pillow + pixelmatch via `utils.diff_handler.compare_images`.
-Baselines live under `baselines/`; actuals and diffs under `screenshots/actual` and `screenshots/diff`.
+Baselines live under `baselines/`; actuals and diffs under `var/screenshots/actual` and `var/screenshots/diff`.
 """
 
 import shutil
@@ -28,8 +28,8 @@ class TestSauceDemoVisual:
 
     def _assert_visual_snapshot(self, driver, snapshot_name, threshold=None):
         baseline_dir = Path("baselines")
-        actual_dir = Path("screenshots/actual")
-        diff_dir = Path("screenshots/diff")
+        actual_dir = Path("var/screenshots/actual")
+        diff_dir = Path("var/screenshots/diff")
 
         baseline_dir.mkdir(exist_ok=True, parents=True)
         actual_dir.mkdir(exist_ok=True, parents=True)

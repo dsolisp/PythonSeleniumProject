@@ -33,7 +33,7 @@ run_check() {
 INCLUDE_DIRS="pages tests utils config locators scripts"
 
 # Exclude patterns for tools that support it
-EXCLUDE_CSV="venv,venv-enhanced,.venv,__pycache__,.pytest_cache,.git,build,dist,data/results,downloads,drivers,reports,test_reports,logs,screenshots,screenshots_diff,resources"
+EXCLUDE_CSV="venv,venv-enhanced,.venv,__pycache__,.pytest_cache,.git,build,dist,data/results,downloads,drivers,reports,test_reports,logs,screenshots,screenshots_diff,resources,var"
 
 
 # Auto-fix stage (run only on source dirs, always exclude venvs and non-source dirs)
@@ -206,9 +206,9 @@ if [ -d "$ROOT_DIR/venv-enhanced" ] && [ -z "${VIRTUAL_ENV-}" ]; then
   # Prefer using python -m so we don't rely on PATH-installed wrappers that may use different libs.
   run_tool black --check .
   run_tool isort --check-only . --skip-glob='venv*'
-  run_tool flake8 . --max-line-length=88 --exclude="venv,venv-enhanced,.venv,__pycache__,.pytest_cache,.git,build,dist,data/results,downloads,drivers,reports,test_reports,logs,screenshots,screenshots_diff,resources"
+  run_tool flake8 . --max-line-length=88 --exclude="venv,venv-enhanced,.venv,__pycache__,.pytest_cache,.git,build,dist,data/results,downloads,drivers,reports,test_reports,logs,screenshots,screenshots_diff,resources,var"
   run_tool mypy pages/ utils/ --ignore-missing-imports || true
-  run_tool bandit -r . --exclude "venv,venv-enhanced,.venv,__pycache__,.pytest_cache,.git,build,dist,data/results,downloads,drivers,reports,test_reports,logs,screenshots,screenshots_diff,resources"
+  run_tool bandit -r . --exclude "venv,venv-enhanced,.venv,__pycache__,.pytest_cache,.git,build,dist,data/results,downloads,drivers,reports,test_reports,logs,screenshots,screenshots_diff,resources,var"
 
   # Safety: only run if SAFETY_API_KEY present (non-interactive)
   if [ -n "${SAFETY_API_KEY-}" ]; then

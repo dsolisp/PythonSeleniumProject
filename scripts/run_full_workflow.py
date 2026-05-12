@@ -18,9 +18,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # --- VIRTUAL ENVIRONMENT DETECTION ---
-VENV_DIR = Path(__file__).parent / "venv-enhanced"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+VENV_DIR = PROJECT_ROOT / "venv-enhanced"
 VENV_PYTHON = VENV_DIR / "bin" / "python"
-SETUP_SCRIPT = Path(__file__).parent / "setup_env.sh"
+SETUP_SCRIPT = PROJECT_ROOT / "setup_env.sh"
 
 
 def ensure_venv():
@@ -33,7 +34,11 @@ def ensure_venv():
             print("[ERROR] setup_env.sh not found! Please create it.")
             sys.exit(1)
         # Run the setup script
-        result = subprocess.run(["bash", str(SETUP_SCRIPT)], check=False)
+        result = subprocess.run(
+            ["bash", str(SETUP_SCRIPT)],
+            check=False,
+            cwd=str(PROJECT_ROOT),
+        )
         if result.returncode != 0 or not VENV_PYTHON.exists():
             print("[ERROR] Failed to create virtual environment. Exiting.")
             sys.exit(1)
@@ -43,9 +48,8 @@ def ensure_venv():
 ensure_venv()
 
 # --- CONFIGURATION ---
-PROJECT_ROOT = Path(__file__).parent
-RESULTS_DIR = PROJECT_ROOT / "data" / "results"
-REPORTS_DIR = PROJECT_ROOT / "reports"
+RESULTS_DIR = PROJECT_ROOT / "var" / "data" / "results"
+REPORTS_DIR = PROJECT_ROOT / "var" / "reports"
 WEB_TESTS = PROJECT_ROOT / "tests" / "web"
 API_TESTS = PROJECT_ROOT / "tests" / "api"
 
@@ -53,7 +57,7 @@ API_TESTS = PROJECT_ROOT / "tests" / "api"
 # --- PRE-TEST: CLEANUP & SETUP ---
 def clean_results():
     print("[PRE] Cleaning old reports (not results)...")
-    # Do NOT delete data/results/ (preserve historical data)
+    # Do NOT delete var/data/results/ (preserve historical data)
     if not RESULTS_DIR.exists():
         RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     if REPORTS_DIR.exists():
@@ -110,6 +114,7 @@ def run_pytest(test_path, label):
             f"--json-report-file={json_file}",
         ],
         check=False,
+        cwd=str(PROJECT_ROOT),
     )
     if result.returncode != 0:
         print(f"[TEST] {label} tests failed. See output above.")
@@ -174,6 +179,7 @@ def run_flaky_detection():
         check=False,
         capture_output=True,
         text=True,
+        cwd=str(PROJECT_ROOT),
     )
     if result.stdout.strip():
         print(result.stdout)
@@ -206,8 +212,8 @@ def main():
     run_flaky_detection()
     archive_old_results(max_reports=30)
     print(
-        "\n[COMPLETE] Full workflow finished. See reports/ and "
-        "data/results/ for outputs.",
+        "\n[COMPLETE] Full workflow finished. See var/reports/ and "
+        "var/data/results/ for outputs.",
     )
 
 

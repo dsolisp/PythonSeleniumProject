@@ -1,13 +1,13 @@
 # Error Recovery
 
-> **Scope:** Retry and failure formatting are implemented in **`utils/error_handler.py`** (`SmartErrorHandler.execute_with_retry`, `handle_error`, `ScreenshotService`, `format_error`). The snippets below match that **stdlib-only** design (no extra retry package in `requirements.txt`). Orchestration: `run_full_workflow.py` / `run_tests.py`.
+> **Scope:** Retry and failure formatting are implemented in **`utils/error_handler.py`** (`SmartErrorHandler.execute_with_retry`, `handle_error`, `ScreenshotService`, `format_error`). The snippets below match that **stdlib-only** design (no extra retry package in `requirements.txt`). Orchestration: `scripts/run_full_workflow.py` / `scripts/run_tests.py`.
 
 ## Unified Workflow 
 
 > **Recommended:** Use the integrated workflow script for error recovery:
 >
 > ```bash
-> python run_full_workflow.py
+> python scripts/run_full_workflow.py
 > ```
 >
 > This script runs all tests and applies error recovery strategies automatically.

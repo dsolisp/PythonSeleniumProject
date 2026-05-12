@@ -153,7 +153,7 @@ pytest-history flakes
 pytest-history list results 1
 
 # Use via run_tests.py
-python run_tests.py --type unit --flaky
+python scripts/run_tests.py --type unit --flaky
 ```
 
 **How it works**: Every `pytest` run automatically stores results in `.test-results.db`.
@@ -721,7 +721,7 @@ bandit -r . -s B101,B105
 ║ pytest -m smoke               # Run smoke tests           ║
 ║ pytest --html=report.html     # HTML report               ║
 ║ pytest-history flakes         # Check flaky tests         ║
-║ python run_tests.py --flaky   # Run with flaky summary    ║
+║ python scripts/run_tests.py --flaky   # Run with flaky summary    ║
 ║ ruff check . && ruff format . # Lint & format             ║
 ╚═══════════════════════════════════════════════════════════╝
 ```
@@ -730,7 +730,7 @@ bandit -r . -s B101,B105
 
 ## Related Documentation
 
-- [Zero-to-Hero Tutorial](ZERO_TO_HERO_TUTORIAL.md) - Learn from scratch
+- [Zero-to-Hero Tutorial](../ZERO_TO_HERO.md) - Learn from scratch
 - [Test Analytics](TEST_ANALYTICS.md) - Flaky detection deep dive
 - [Playwright Integration](PLAYWRIGHT_INTEGRATION.md) - Playwright details
 - [Error Recovery](ERROR_RECOVERY_AND_MONITORING.md) - Retry logic

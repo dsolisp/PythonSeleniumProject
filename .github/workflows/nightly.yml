@@ -88,20 +88,20 @@ jobs:
     
     - name: Run Bandit security scan
       run: |
-        bandit -r . -s B101,B105,B110,B112,B311,B404,B603 -f json -o reports/bandit-report.json || true
+        bandit -r . -s B101,B105,B110,B112,B311,B404,B603 -f json -o var/reports/bandit-report.json || true
         bandit -r . -s B101,B105,B110,B112,B311,B404,B603 -f txt || true
     
     - name: Run Safety check
       run: |
-        mkdir -p reports
-        safety scan --output json > reports/safety-report.json || true
+        mkdir -p var/reports
+        safety scan --output json > var/reports/safety-report.json || true
         safety scan || true
     
     - name: Upload security reports
       uses: actions/upload-artifact@v4
       with:
         name: security-reports
-        path: reports/*-report.json
+        path: var/reports/*-report.json
 
   code-quality:
     runs-on: ubuntu-latest
@@ -150,17 +150,17 @@ jobs:
     
     - name: Create test directories
       run: |
-        mkdir -p reports/coverage reports/html reports/json logs screenshots
+        mkdir -p var/reports/coverage var/reports/html var/reports/json var/logs var/screenshots
     
     - name: Run unit tests (tests/unit/)
       run: |
         pytest tests/unit/ -v --tb=short \
           --cov=pages --cov=utils --cov=locators --cov=config \
-          --cov-report=html:reports/coverage/html \
-          --cov-report=xml:reports/coverage/coverage.xml \
+          --cov-report=html:var/reports/coverage/html \
+          --cov-report=xml:var/reports/coverage/coverage.xml \
           --cov-report=term-missing \
-          --html=reports/html/unit-tests.html \
-          --json-report --json-report-file=reports/json/unit-tests.json
+          --html=var/reports/html/unit-tests.html \
+          --json-report --json-report-file=var/reports/json/unit-tests.json
     
     - name: Upload test reports
       uses: actions/upload-artifact@v4
@@ -168,8 +168,8 @@ jobs:
       with:
         name: unit-test-reports-${{ matrix.python-version }}
         path: |
-          reports/
-          logs/
+          var/reports/
+          var/logs/
 
   # UI/E2E tests - Selenium & Playwright browser automation
   e2e-tests:
@@ -197,7 +197,7 @@ jobs:
     
     - name: Create test directories
       run: |
-        mkdir -p reports/coverage reports/html reports/json logs screenshots
+        mkdir -p var/reports/coverage var/reports/html var/reports/json var/logs var/screenshots
     
     - name: Run E2E tests (UI automation with browsers)
       env:
@@ -205,12 +205,12 @@ jobs:
       run: |
         pytest tests/ui/practice/ tests/backend/ -v --tb=short \
           --cov=pages --cov=utils \
-          --cov-report=html:reports/coverage/e2e-html \
-          --cov-report=xml:reports/coverage/e2e-coverage.xml \
+          --cov-report=html:var/reports/coverage/e2e-html \
+          --cov-report=xml:var/reports/coverage/e2e-coverage.xml \
           --cov-report=term-missing \
           --cov-fail-under=20 \
-          --html=reports/html/e2e-tests-${{ matrix.test-suite }}.html \
-          --json-report --json-report-file=reports/json/e2e-tests-${{ matrix.test-suite }}.json \
+          --html=var/reports/html/e2e-tests-${{ matrix.test-suite }}.html \
+          --json-report --json-report-file=var/reports/json/e2e-tests-${{ matrix.test-suite }}.json \
           -m "${{ matrix.test-suite }}"
     
     - name: Upload test reports
@@ -219,8 +219,8 @@ jobs:
       with:
         name: e2e-test-reports-${{ matrix.python-version }}-${{ matrix.test-suite }}
         path: |
-          reports/
-          logs/
+          var/reports/
+          var/logs/
 
   # Integration tests with Selenium Grid (distributed testing)
   grid-integration-tests:
@@ -264,7 +264,7 @@ jobs:
     
     - name: Create test directories
       run: |
-        mkdir -p reports/allure-results reports/html reports/json logs screenshots
+        mkdir -p var/reports/allure-results var/reports/html var/reports/json var/logs var/screenshots
     
     - name: Set up environment
       run: |
@@ -280,9 +280,9 @@ jobs:
       run: |
         pytest tests/ -v --tb=short \
           --browser=${{ matrix.browser }} \
-          --html=reports/html/${{ matrix.test-suite }}-${{ matrix.browser }}.html \
-          --json-report --json-report-file=reports/json/${{ matrix.test-suite }}-${{ matrix.browser }}.json \
-          --alluredir=reports/allure-results \
+          --html=var/reports/html/${{ matrix.test-suite }}-${{ matrix.browser }}.html \
+          --json-report --json-report-file=var/reports/json/${{ matrix.test-suite }}-${{ matrix.browser }}.json \
+          --alluredir=var/reports/allure-results \
           -m "${{ matrix.test-suite }}" \
           --maxfail=5
     
@@ -292,9 +292,9 @@ jobs:
       with:
         name: grid-integration-tests-${{ matrix.browser }}-${{ matrix.test-suite }}
         path: |
-          reports/
-          logs/
-          screenshots/
+          var/reports/
+          var/logs/
+          var/screenshots/
 
   # Visual regression tests - screenshot comparison
   visual-tests:
@@ -318,7 +318,7 @@ jobs:
     
     - name: Create test directories
       run: |
-        mkdir -p reports/allure-results reports/html reports/json logs screenshots screenshots_diff
+        mkdir -p var/reports/allure-results var/reports/html var/reports/json var/logs var/screenshots var/screenshots_diff
     
     - name: Set up Chrome
       uses: browser-actions/setup-chrome@latest
@@ -335,9 +335,9 @@ jobs:
         HEADLESS: true
       run: |
         pytest tests/ -v --tb=short \
-          --html=reports/html/visual-tests.html \
-          --json-report --json-report-file=reports/json/visual-tests.json \
-          --alluredir=reports/allure-results \
+          --html=var/reports/html/visual-tests.html \
+          --json-report --json-report-file=var/reports/json/visual-tests.json \
+          --alluredir=var/reports/allure-results \
           -m "visual" \
           --maxfail=3
     
@@ -347,10 +347,10 @@ jobs:
       with:
         name: visual-test-results
         path: |
-          reports/
-          logs/
-          screenshots/
-          screenshots_diff/
+          var/reports/
+          var/logs/
+          var/screenshots/
+          var/screenshots_diff/
 
   # Performance and load testing
   performance-tests:
@@ -371,17 +371,17 @@ jobs:
     - name: Run performance tests
       run: |
         pytest tests/ -v --tb=short \
-          --html=reports/html/performance-tests.html \
-          --json-report --json-report-file=reports/json/performance-tests.json \
+          --html=var/reports/html/performance-tests.html \
+          --json-report --json-report-file=var/reports/json/performance-tests.json \
           -m "performance" \
-          --benchmark-json=reports/json/benchmark.json
+          --benchmark-json=var/reports/json/benchmark.json
     
     - name: Upload performance test results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: performance-test-results
-        path: reports/
+        path: var/reports/
 
   # Check combined coverage from all test jobs
   combined-coverage:
@@ -409,9 +409,9 @@ jobs:
     - name: Combine coverage reports
       run: |
         # Find and combine all .coverage files
-        coverage combine reports/coverage/.coverage* 2>/dev/null || echo "No coverage data to combine"
+        coverage combine var/reports/coverage/.coverage* 2>/dev/null || echo "No coverage data to combine"
         coverage report --fail-under=80 || echo "Combined coverage below 80% - this is informational"
-        coverage html -d reports/combined-coverage
+        coverage html -d var/reports/combined-coverage
       continue-on-error: true
     
     - name: Upload combined coverage
@@ -419,7 +419,7 @@ jobs:
       if: always()
       with:
         name: combined-coverage-report
-        path: reports/combined-coverage/
+        path: var/reports/combined-coverage/
 
   # Aggregate all test reports
   generate-reports:
@@ -439,15 +439,15 @@ jobs:
     
     - name: Generate Allure report
       run: |
-        mkdir -p allure-results
-        find . -name "allure-results" -type d -exec cp -r {}/* allure-results/ \;
+        mkdir -p var/allure-results
+        find . -name "allure-results" -type d -exec cp -r {}/* var/allure-results/ \;
 
     - name: Generate metrics summary.json
       if: always()
       env:
         REPO_NAME: ${{ github.event.repository.name }}
         TEST_SUITE: nightly
-        ALLURE_RESULTS_DIR: allure-results
+        ALLURE_RESULTS_DIR: var/allure-results
       run: node scripts/generate_summary_json.js
 
     - name: Upload summary.json to Cloudflare R2 (metrics)
@@ -462,7 +462,7 @@ jobs:
     - name: Generate Allure report (HTML)
       uses: ./.github/actions/generate-allure
       with:
-        results-dir: allure-results
+        results-dir: var/allure-results
         report-dir: allure-report
     
     - name: Upload Allure report (Artifact)

@@ -55,7 +55,7 @@ const runId = process.env.GITHUB_RUN_ID || 'local';
 const timestamp = new Date().toISOString();
 const suite = process.env.TEST_SUITE || 'all';
 
-const allureDir = process.env.ALLURE_RESULTS_DIR || 'allure-results';
+const allureDir = process.env.ALLURE_RESULTS_DIR || 'var/allure-results';
 const metrics = computeFromAllureResults(allureDir);
 
 const out = {
