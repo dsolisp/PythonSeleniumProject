@@ -214,31 +214,28 @@ def test_performance_metrics(page: Page):
 
 ## 🎯 Real-World Examples
 
-### Example 1: Google Search
+### Example 1: SauceDemo smoke (factory pattern shipped in this repo)
+
+This matches **`tests/ui/playwright/test_playwright_smoke.py`**: Playwright via **`create_playwright_session()`** in `utils/playwright_factory.py` (no `pytest-playwright` `page` fixture required).
 
 ```python
-# Conceptual example (requires pytest-playwright and a `page` fixture).
-# This repo ships a small factory-based smoke test: tests/ui/playwright/test_playwright_smoke.py
 import pytest
-from playwright.sync_api import Page, expect
+from hamcrest import assert_that, equal_to
 
-def test_google_search_basic(page: Page):
-    """Basic Google search with Playwright."""
-    page.goto("https://www.google.com")
-    
-    # Handle cookie consent if present
+from config.constants import URLS
+from utils.playwright_factory import create_playwright_session
+
+
+@pytest.mark.playwright
+def test_playwright_opens_sauce_demo() -> None:
+    factory = None
     try:
-        page.click("button:has-text('Accept all')", timeout=3000)
-    except:
-        pass
-    
-    # Search
-    page.fill('textarea[name="q"]', "Playwright Python")
-    page.press('textarea[name="q"]', "Enter")
-    
-    # Verify results
-    expect(page.locator("#search")).to_be_visible()
-    expect(page.locator("h3").first).to_be_visible()
+        factory, page = create_playwright_session()
+        page.navigate_to(URLS.SAUCE_DEMO)
+        assert_that(page.get_title(), equal_to("Swag Labs"))
+    finally:
+        if factory is not None:
+            factory.safe_cleanup()
 ```
 
 ### Example 2: Form Testing
