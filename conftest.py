@@ -224,13 +224,22 @@ def pytest_configure(config):
 def pytest_runtest_protocol(item, nextitem):
     tracer = get_tracer("pytest")
     test_name = item.nodeid
+    browser = item.config.getoption("--selenium-browser", default="")
+    attrs = {
+        "test.name": item.name,
+        "test.nodeid": test_name,
+        "test.file": str(getattr(item, "path", "")),
+        "test.browser": browser,
+    }
+    sha = os.getenv("GITHUB_SHA", "").strip()
+    if sha:
+        attrs["git.sha"] = sha
+    suite = os.getenv("OTEL_TEST_SUITE", "").strip()
+    if suite:
+        attrs["test.suite"] = suite
     with tracer.start_as_current_span(
         "test",
-        attributes={
-            "test.name": item.name,
-            "test.nodeid": test_name,
-            "test.file": str(getattr(item, "path", "")),
-        },
+        attributes=attrs,
     ):
         yield
 

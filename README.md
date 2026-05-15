@@ -79,6 +79,15 @@ That's it! Runs tests, generates reports, and checks for flaky tests automatical
 - **Parallel Execution**: pytest-xdist support for faster test runs
 - **Code Quality**: Integrated ruff, mypy, bandit, and safety tools
 
+### Lighthouse-style vs Google Lighthouse CLI
+
+**Lighthouse-style** here means **axe-selenium-python** (Deque axe) with a **scoring-style** accessibility check — not the same as running Google’s **Lighthouse CLI** in CI. Load and timing story is **Locust** + **pytest-benchmark** + Selenium-driven paint/resource checks under `tests/performance/`.
+
+| Area | Location |
+|------|----------|
+| Accessibility / “Lighthouse” naming | [`tests/accessibility/test_lighthouse.py`](tests/accessibility/test_lighthouse.py) |
+| Performance + load | [`tests/performance/`](tests/performance/) (incl. [`locustfile.py`](tests/performance/locustfile.py)) |
+
 ## 🏗️ Project Structure
 
 ```
@@ -211,7 +220,7 @@ pytest -m database tests/
 
 - **Layered tests**: unit, integration, UI (Selenium-heavy + Playwright smoke), accessibility, visual, performance, backend — see `tests/` and `pytest.ini` markers
 - **Auth reuse for SauceDemo**: session fixture + `.auth/sauce.json` (see `conftest.py`, ADR-009)
-- **Tracing**: OpenTelemetry hooks from `conftest.py` → `utils/otel.py`
+- **Tracing**: OpenTelemetry hooks from `conftest.py` → `utils/otel.py` (minimal attribute contract: [`../shared-docs/docs/OTEL_TEST_RUN_ATTRIBUTES.md`](../shared-docs/docs/OTEL_TEST_RUN_ATTRIBUTES.md) when using the portfolio monorepo)
 - **Parallel runs**: `pytest-xdist` (`pytest -n …`)
 - **Quality**: `ruff`, `mypy`, `bandit`, `safety` in CI scripts where enabled
 

@@ -49,7 +49,15 @@ def configure_tracing(service_name: str) -> None:
     if _CONFIGURED[0]:
         return
 
-    resource = Resource.create({"service.name": service_name})
+    resource_attrs = {"service.name": service_name}
+    sha = (os.getenv("GITHUB_SHA") or os.getenv("GIT_SHA") or "").strip()
+    if sha:
+        resource_attrs["git.sha"] = sha
+    suite = (os.getenv("OTEL_TEST_SUITE") or "").strip()
+    if suite:
+        resource_attrs["test.suite"] = suite
+
+    resource = Resource.create(resource_attrs)
     provider = TracerProvider(resource=resource)
 
     otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
