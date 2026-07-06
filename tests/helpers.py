@@ -6,7 +6,86 @@ Functions here should be generic test utilities, not specific to particular
 frameworks or factories (those belong in their respective factory classes).
 """
 
+import contextlib
+from collections.abc import Iterator
+from typing import Optional
+
 import pytest
+
+
+class SoftAssert:
+    """Collects assertion failures and reports them together on context exit.
+
+    Mirrors the C# FluentAssertions ``AssertionScope`` and Java soft-assert
+    pattern: every check runs even if an earlier one failed, and all failures
+    are reported at once instead of stopping at the first.
+    """
+
+    def __init__(self) -> None:
+        self._failures: list[str] = []
+
+    def check(self, condition: object, message: str = "assertion failed") -> None:
+        """Record a failure when ``condition`` is falsy."""
+        if not condition:
+            self._failures.append(message)
+
+    def equal(
+        self,
+        actual: object,
+        expected: object,
+        message: Optional[str] = None,
+    ) -> None:
+        """Record a failure when ``actual`` does not equal ``expected``."""
+        if actual != expected:
+            self._failures.append(
+                message or f"expected {expected!r} but was {actual!r}",
+            )
+
+    def contains(
+        self,
+        container: object,
+        member: object,
+        message: Optional[str] = None,
+    ) -> None:
+        """Record a failure when ``member`` is not in ``container``."""
+        if member not in container:  # type: ignore[operator]
+            self._failures.append(
+                message or f"expected {container!r} to contain {member!r}",
+            )
+
+    def not_contains(
+        self,
+        container: object,
+        member: object,
+        message: Optional[str] = None,
+    ) -> None:
+        """Record a failure when ``member`` is in ``container``."""
+        if member in container:  # type: ignore[operator]
+            self._failures.append(
+                message or f"expected {container!r} not to contain {member!r}",
+            )
+
+    def assert_all(self) -> None:
+        """Raise an aggregated ``AssertionError`` if any check failed."""
+        if self._failures:
+            joined = "\n".join(f"  - {failure}" for failure in self._failures)
+            count = len(self._failures)
+            raise AssertionError(f"{count} soft assertion(s) failed:\n{joined}")
+
+
+@contextlib.contextmanager
+def soft_assert() -> Iterator[SoftAssert]:
+    """Yield a :class:`SoftAssert`; raise aggregated failures on block exit.
+
+    Example::
+
+        with soft_assert() as check:
+            check.check(page.is_visible(), "widget should be visible")
+            check.contains("Loaded", page.status())
+    """
+    checker = SoftAssert()
+    yield checker
+    checker.assert_all()
 
 
 def require_database_connection(driver):

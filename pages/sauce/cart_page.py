@@ -27,7 +27,7 @@ class CartPage(BasePage):
 
     def get_items(self) -> list:
         """Return list of cart item WebElements."""
-        return self.find_elements(CartLocators.CART_ITEM)
+        return self.get_elements(CartLocators.CART_ITEM)
 
     def remove_backpack(self) -> None:
         """Remove Sauce Labs Backpack from the cart."""

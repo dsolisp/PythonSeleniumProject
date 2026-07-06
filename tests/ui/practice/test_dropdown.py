@@ -1,11 +1,15 @@
 """
 Practice App — Dropdown (ADV-E1, ADV-E2).
 Law 3: all selectors accessed via POM methods — no raw By. in specs.
+
+Uses the class-scoped `shared_driver` fixture (one browser per class) and the
+`soft_assert` helper so multi-condition checks report every failure together.
 """
 
 import pytest
 
 from pages.practice.dropdown_page import DropdownPage
+from tests.helpers import soft_assert
 
 
 @pytest.mark.practice
@@ -14,45 +18,60 @@ class TestDropdown:
     """ADV-E1, ADV-E2 — Static and dynamic dropdown interactions."""
 
     @pytest.fixture(autouse=True)
-    def open_page(self, selenium_driver):
-        self.page = DropdownPage(selenium_driver)
+    def open_page(self, shared_driver):
+        self.page = DropdownPage(shared_driver)
         self.page.open()
 
     # ── ADV-E1: Static dropdown ───────────────────────────────────────────
 
-    def test_static_dropdown_is_visible(self):
-        """ADV-E1: static dropdown is present on page load."""
-        assert self.page.is_static_dropdown_visible()
+    def test_static_dropdown(self):
+        """ADV-E1: static dropdown visibility and selections."""
+        with soft_assert() as s:
+            s.check(
+                self.page.is_static_dropdown_visible(), "dropdown should be visible"
+            )
 
-    def test_select_option_1_updates_status(self):
-        """ADV-E1: selecting Option 1 shows it in the status."""
-        self.page.select_static("1")
-        assert "Option 1" in self.page.get_static_status()
+            self.page.select_static("1")
+            s.contains(self.page.get_static_status(), "Option 1")
 
-    def test_select_option_2_updates_status(self):
-        """ADV-E1: selecting Option 2 shows it in the status."""
-        self.page.select_static("2")
-        assert "Option 2" in self.page.get_static_status()
+            self.page.select_static("2")
+            s.contains(self.page.get_static_status(), "Option 2")
 
-    def test_select_option_3_updates_status(self):
-        """ADV-E1: selecting Option 3 shows it in the status."""
-        self.page.select_static("3")
-        assert "Option 3" in self.page.get_static_status()
+            self.page.select_static("3")
+            s.contains(self.page.get_static_status(), "Option 3")
 
     # ── ADV-E2: Dynamic dropdown ──────────────────────────────────────────
 
-    def test_dynamic_dropdown_starts_disabled(self):
-        """ADV-E2: the dynamic dropdown is disabled while options load."""
-        assert self.page.is_dynamic_dropdown_disabled()
-        assert "Fetching" in self.page.get_dynamic_status()
+    def test_dynamic_dropdown_loading_state(self):
+        """ADV-E2: the dynamic dropdown state while options load."""
+        with soft_assert() as check:
+            check.check(
+                self.page.is_dynamic_dropdown_disabled(),
+                "dynamic dropdown should be disabled while options load",
+            )
+            check.contains(
+                self.page.get_dynamic_status(),
+                "Fetching",
+                "status should show 'Fetching' while loading",
+            )
 
-    def test_dynamic_dropdown_becomes_enabled(self):
-        """ADV-E2: the dynamic dropdown becomes enabled after ~1.5 s."""
-        assert self.page.is_dynamic_dropdown_enabled()
-        assert "loaded" in self.page.get_dynamic_status()
+    def test_dynamic_dropdown_ready_state(self):
+        """ADV-E2: the dynamic dropdown state after options load."""
+        with soft_assert() as check:
+            check.check(
+                self.page.is_dynamic_dropdown_enabled(),
+                "dynamic dropdown should become enabled after load",
+            )
+            check.contains(
+                self.page.get_dynamic_status(),
+                "loaded",
+                "status should show 'loaded' after options arrive",
+            )
 
     def test_dynamic_dropdown_selection(self):
         """ADV-E2: selecting a dynamic option updates the status."""
+        # Wait for enabled state first
         assert self.page.is_dynamic_dropdown_enabled()
-        self.page.select_dynamic("1")
+        # API returns option values: selenium, playwright, cypress, appium
+        self.page.select_dynamic("selenium")
         assert "Fetching" not in self.page.get_dynamic_status()

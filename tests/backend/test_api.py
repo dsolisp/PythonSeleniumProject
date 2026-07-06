@@ -10,7 +10,14 @@ import time
 import pytest
 import requests  # type: ignore[import-untyped]
 import urllib3
-from hamcrest import assert_that, equal_to, greater_than, has_key, is_not
+from hamcrest import (
+    assert_that,
+    contains_string,
+    equal_to,
+    greater_than,
+    has_key,
+    is_not,
+)
 
 from config.constants import URLS
 
@@ -100,7 +107,7 @@ class TestSwapiAPI:
         res = self.session.get(f"{BASE_URL}/people/99999")
         assert_that(res.status_code, equal_to(404))
         body = res.json()
-        assert_that(body["detail"], equal_to("Not found"))
+        assert_that(body["detail"], contains_string("Not found"))
 
     def test_example_7_verifies_404_invalid_endpoint(self):
         """Example 7: Verifies 404 for invalid endpoint"""

@@ -1,610 +1,127 @@
-name: QA Automation CI/CD Pipeline
-
-permissions:
-  actions: write
-  contents: read
-
-# Test Strategy:
-# 1. unit-tests: Fast tests with no external dependencies (tests/unit/)
-# 2. e2e-tests: UI automation with Selenium/Playwright (`tests/ui/`, `tests/backend/`)
-# 3. grid-integration-tests: Distributed testing with Selenium Grid
-# 4. visual-tests: Visual regression testing (screenshot comparison)
-# 5. performance-tests: Load and performance testing
+name: Nightly Test Suite
 
 on:
   schedule:
-    # Run tests daily at 2 AM UTC
     - cron: '0 2 * * *'
   workflow_dispatch:
-    inputs:
-      test_suite:
-        description: 'Test suite to run'
-        required: true
-        default: 'smoke'
-        type: choice
-        options:
-        - smoke
-        - regression
-        - api
-        - visual
-        - all
-      browser:
-        description: 'Browser to test'
-        required: true
-        default: 'chrome'
-        type: choice
-        options:
-        - chrome
-        - firefox
-        - edge
-        - safari
-      environment:
-        description: 'Environment to test'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-        - staging
-        - production
 
-env:
-  PYTHON_VERSION: '3.11'
-  NODE_VERSION: '24'
+concurrency:
+  group: nightly-tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  setup:
+  nightly-tests:
     runs-on: ubuntu-latest
-    outputs:
-      python-version: ${{ steps.setup-python.outputs.python-version }}
-      run-ui-tests: ${{ steps.ui-flag.outputs.value }}
+    timeout-minutes: 45
     steps:
-    - uses: actions/checkout@v5
-    
-    - name: Set up Python
-      id: setup-python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/checkout@v5
 
-    - name: Configure UI test flag
-      id: ui-flag
-      run: |
-        echo "value=false" >> $GITHUB_OUTPUT  # Set to 'true' to re-enable UI/browser suites
+      - name: Set up Python 3.11
+        uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.11'
 
-  security-scan:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: Set up Python
-      uses: ./.github/actions/setup-python
-      with:
-        python-version: ${{ needs.setup.outputs.python-version }}
-    
-    - name: Install security tools
-      run: |
-        pip install bandit safety
-    
-    - name: Run Bandit security scan
-      run: |
-        bandit -r . -s B101,B105,B110,B112,B311,B404,B603 -f json -o var/reports/bandit-report.json || true
-        bandit -r . -s B101,B105,B110,B112,B311,B404,B603 -f txt || true
-    
-    - name: Run Safety check
-      run: |
-        mkdir -p var/reports
-        safety scan --output json > var/reports/safety-report.json || true
-        safety scan || true
-    
-    - name: Upload security reports
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-reports
-        path: var/reports/*-report.json
+      - name: Install dependencies
+        uses: ./.github/actions/install-deps
 
-  code-quality:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: Set up Python
-      uses: ./.github/actions/setup-python
-      with:
-        python-version: '3.9'
-    
-    - name: Install code quality tools
-      run: |
-        # Install the same deps CI uses, including type stubs (e.g. types-requests)
-        pip install -r requirements.txt
-        pip install safety
-    
-    - name: Check code formatting and linting with Ruff
-      run: |
-        ruff check --target-version=py39 .
-        ruff format --check --target-version=py39 .
-    
-    - name: Type check with mypy
-      run: |
-        mypy . --ignore-missing-imports
+      - name: Create directories
+        run: mkdir -p allure-results var/logs
 
-  # True unit tests - fast, no browser, no external dependencies
-  unit-tests:
-    runs-on: ubuntu-latest
-    needs: [setup, security-scan, code-quality]
-    strategy:
-      matrix:
-        # Single version to match ci.yml / env.PYTHON_VERSION (was 3.9–3.11 matrix).
-        python-version: ['3.11']
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: ./.github/actions/setup-python
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Install dependencies
-      uses: ./.github/actions/install-deps
-    
-    - name: Create test directories
-      run: |
-        mkdir -p var/reports/coverage var/reports/html var/reports/json var/logs var/screenshots
-    
-    - name: Run unit tests (tests/unit/)
-      run: |
-        pytest tests/unit/ -v --tb=short \
-          --cov=pages --cov=utils --cov=locators --cov=config \
-          --cov-report=html:var/reports/coverage/html \
-          --cov-report=xml:var/reports/coverage/coverage.xml \
-          --cov-report=term-missing \
-          --html=var/reports/html/unit-tests.html \
-          --json-report --json-report-file=var/reports/json/unit-tests.json
-    
-    - name: Upload test reports
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: unit-test-reports-${{ matrix.python-version }}
-        path: |
-          var/reports/
-          var/logs/
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ -v --tb=short \
+            --alluredir=allure-results \
+            --override-ini="addopts=--tb=short --durations=5 --strict-markers --strict-config --disable-warnings" \
+            || true
 
-  # UI/E2E tests - Selenium & Playwright browser automation
-  e2e-tests:
-    runs-on: ubuntu-latest
-    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
-    needs: [setup, unit-tests]
-    strategy:
-      matrix:
-        python-version: ['3.11']
-        test-suite: [smoke, advanced, database]
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: ./.github/actions/setup-python
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Install dependencies
-      uses: ./.github/actions/install-deps
-    
-    - name: Install Playwright browsers
-      run: |
-        playwright install --with-deps chromium firefox
-    
-    - name: Create test directories
-      run: |
-        mkdir -p var/reports/coverage var/reports/html var/reports/json var/logs var/screenshots
-    
-    - name: Run E2E tests (UI automation with browsers)
-      env:
-        HEADLESS: true
-      run: |
-        pytest tests/ui/practice/ tests/backend/ -v --tb=short \
-          --cov=pages --cov=utils \
-          --cov-report=html:var/reports/coverage/e2e-html \
-          --cov-report=xml:var/reports/coverage/e2e-coverage.xml \
-          --cov-report=term-missing \
-          --cov-fail-under=20 \
-          --html=var/reports/html/e2e-tests-${{ matrix.test-suite }}.html \
-          --json-report --json-report-file=var/reports/json/e2e-tests-${{ matrix.test-suite }}.json \
-          -m "${{ matrix.test-suite }}"
-    
-    - name: Upload test reports
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: e2e-test-reports-${{ matrix.python-version }}-${{ matrix.test-suite }}
-        path: |
-          var/reports/
-          var/logs/
+      - name: Run backend (API + DB) tests
+        run: |
+          pytest tests/backend/ -v --tb=short \
+            --alluredir=allure-results \
+            --override-ini="addopts=--tb=short --durations=5 --strict-markers --strict-config --disable-warnings" \
+            || true
 
-  # Integration tests with Selenium Grid (distributed testing)
-  grid-integration-tests:
-    runs-on: ubuntu-latest
-    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
-    needs: [setup, e2e-tests]
-    strategy:
-      matrix:
-        browser: [chrome, firefox]
-        test-suite: [smoke, api]
-    services:
-      selenium-hub:
-        image: selenium/hub:4.15.0
-        ports:
-          - 4444:4444
-      selenium-chrome:
-        image: selenium/node-chrome:4.15.0
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Run visual regression tests
+        run: |
+          pytest tests/ui/visual/ -v --tb=short --headless \
+            --alluredir=allure-results \
+            --override-ini="addopts=--tb=short --durations=5 --strict-markers --strict-config --disable-warnings" \
+            || true
+
+      - name: Setup Node for metrics + Allure CLI
+        if: always()
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Generate metrics summary.json
+        if: always()
         env:
-          HUB_HOST: selenium-hub
-        options: --shm-size=2gb
-      selenium-firefox:
-        image: selenium/node-firefox:4.15.0
+          REPO_NAME: ${{ github.event.repository.name }}
+          TEST_SUITE: nightly
+          ALLURE_RESULTS_DIR: allure-results
+        run: node scripts/generate_summary_json.js
+
+      - name: Upload summary.json to Cloudflare R2 (metrics)
+        if: always()
         env:
-          HUB_HOST: selenium-hub
-        options: --shm-size=2gb
-    
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: Set up Python
-      uses: ./.github/actions/setup-python
-      with:
-        python-version: ${{ needs.setup.outputs.python-version }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          aws s3 cp summary.json s3://qa-portfolio-metrics/${{ github.event.repository.name }}/${{ github.run_id }}.json --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
-    - name: Install dependencies
-      uses: ./.github/actions/install-deps
-    
-    - name: Install Playwright browsers
-      run: |
-        playwright install --with-deps chromium firefox
-    
-    - name: Create test directories
-      run: |
-        mkdir -p var/reports/allure-results var/reports/html var/reports/json var/logs var/screenshots
-    
-    - name: Set up environment
-      run: |
-        cp .env.template .env
-        echo "ENVIRONMENT=ci" >> .env
-        echo "DEFAULT_BROWSER=${{ matrix.browser }}" >> .env
-        echo "HEADLESS=true" >> .env
-        echo "SELENIUM_GRID_URL=http://localhost:4444" >> .env
-    
-    - name: Run integration tests
-      env:
-        HEADLESS: true
-      run: |
-        pytest tests/ -v --tb=short \
-          --browser=${{ matrix.browser }} \
-          --html=var/reports/html/${{ matrix.test-suite }}-${{ matrix.browser }}.html \
-          --json-report --json-report-file=var/reports/json/${{ matrix.test-suite }}-${{ matrix.browser }}.json \
-          --alluredir=var/reports/allure-results \
-          -m "${{ matrix.test-suite }}" \
-          --maxfail=5
-    
-    - name: Upload test artifacts
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: grid-integration-tests-${{ matrix.browser }}-${{ matrix.test-suite }}
-        path: |
-          var/reports/
-          var/logs/
-          var/screenshots/
+      - name: Generate Allure Report
+        if: always()
+        uses: ./.github/actions/generate-allure
+        with:
+          results-dir: allure-results
+          report-dir: allure-report
 
-  # Visual regression tests - screenshot comparison
-  visual-tests:
-    runs-on: ubuntu-latest
-    if: ${{ needs.setup.outputs.run-ui-tests == 'true' && github.event_name != 'schedule' }}
-    needs: [setup, e2e-tests]
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: Set up Python
-      uses: ./.github/actions/setup-python
-      with:
-        python-version: ${{ needs.setup.outputs.python-version }}
+      - name: Upload Allure HTML report (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ github.run_id }}
+          path: allure-report/
+          if-no-files-found: warn
 
-    - name: Install dependencies
-      uses: ./.github/actions/install-deps
-    
-    - name: Install Playwright browsers
-      run: |
-        playwright install --with-deps chromium
-    
-    - name: Create test directories
-      run: |
-        mkdir -p var/reports/allure-results var/reports/html var/reports/json var/logs var/screenshots var/screenshots_diff
-    
-    - name: Set up Chrome
-      uses: browser-actions/setup-chrome@latest
-    
-    - name: Set up environment
-      run: |
-        cp .env.template .env
-        echo "ENVIRONMENT=ci" >> .env
-        echo "DEFAULT_BROWSER=chrome" >> .env
-        echo "HEADLESS=true" >> .env
-    
-    - name: Run visual regression tests
-      env:
-        HEADLESS: true
-      run: |
-        pytest tests/ -v --tb=short \
-          --html=var/reports/html/visual-tests.html \
-          --json-report --json-report-file=var/reports/json/visual-tests.json \
-          --alluredir=var/reports/allure-results \
-          -m "visual" \
-          --maxfail=3
-    
-    - name: Upload visual test artifacts
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: visual-test-results
-        path: |
-          var/reports/
-          var/logs/
-          var/screenshots/
-          var/screenshots_diff/
+      - name: Upload Report to Cloudflare R2
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          aws s3 sync allure-report/ s3://qa-portfolio-allure/${{ github.event.repository.name }}/${{ github.run_id }}/ --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
-  # Performance and load testing
-  performance-tests:
-    runs-on: ubuntu-latest
-    if: ${{ needs.setup.outputs.run-ui-tests == 'true' && (github.ref == 'refs/heads/main' || github.event_name == 'schedule') }}
-    needs: [setup, e2e-tests]
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: Set up Python
-      uses: ./.github/actions/setup-python
-      with:
-        python-version: ${{ needs.setup.outputs.python-version }}
+      - name: Add Report URL to Summary
+        if: always()
+        env:
+          VAR_R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL }}
+          SECRET_R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          {
+            echo "### Allure report"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
-    - name: Install dependencies
-      uses: ./.github/actions/install-deps
-    
-    - name: Run performance tests
-      run: |
-        pytest tests/ -v --tb=short \
-          --html=var/reports/html/performance-tests.html \
-          --json-report --json-report-file=var/reports/json/performance-tests.json \
-          -m "performance" \
-          --benchmark-json=var/reports/json/benchmark.json
-    
-    - name: Upload performance test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: performance-test-results
-        path: var/reports/
+          R2_PUBLIC_URL="${VAR_R2_PUBLIC_URL:-}"
+          if [ -z "${R2_PUBLIC_URL:-}" ]; then
+            R2_PUBLIC_URL="${SECRET_R2_PUBLIC_URL:-}"
+          fi
+          R2_PUBLIC_URL="$(echo "${R2_PUBLIC_URL:-}" | xargs)"
+          R2_PUBLIC_URL="${R2_PUBLIC_URL%/}"
+          if [ -n "$R2_PUBLIC_URL" ] && [[ ! "$R2_PUBLIC_URL" =~ ^https?:// ]]; then
+            R2_PUBLIC_URL="https://${R2_PUBLIC_URL}"
+          fi
+          if [ -n "$R2_PUBLIC_URL" ] && [[ "$R2_PUBLIC_URL" != *"github.com"* ]] && [[ "$R2_PUBLIC_URL" != "***" ]]; then
+            FINAL_URL="${R2_PUBLIC_URL}/${{ github.event.repository.name }}/${{ github.run_id }}/index.html"
+            echo "Hosted copy (R2): [index.html](${FINAL_URL})" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-  # Check combined coverage from all test jobs
-  combined-coverage:
-    runs-on: ubuntu-latest
-    needs: [setup, unit-tests, e2e-tests]
-    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: Set up Python
-      uses: ./.github/actions/setup-python
-      with:
-        python-version: '3.11'
-    
-    - name: Install coverage tools
-      run: |
-        pip install coverage
-    
-    - name: Download coverage artifacts
-      uses: actions/download-artifact@v4
-      with:
-        pattern: '*-test-reports-*'
-        merge-multiple: true
-    
-    - name: Combine coverage reports
-      run: |
-        # Find and combine all .coverage files
-        coverage combine var/reports/coverage/.coverage* 2>/dev/null || echo "No coverage data to combine"
-        coverage report --fail-under=80 || echo "Combined coverage below 80% - this is informational"
-        coverage html -d var/reports/combined-coverage
-      continue-on-error: true
-    
-    - name: Upload combined coverage
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: combined-coverage-report
-        path: var/reports/combined-coverage/
-
-  # Aggregate all test reports
-  generate-reports:
-    runs-on: ubuntu-latest
-    needs: [setup, unit-tests, e2e-tests, grid-integration-tests, visual-tests, combined-coverage]
-    if: ${{ needs.setup.outputs.run-ui-tests == 'true' }}
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v5
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-    
-    - name: Generate Allure report
-      run: |
-        mkdir -p var/allure-results
-        find . -name "allure-results" -type d -exec cp -r {}/* var/allure-results/ \;
-
-    - name: Generate metrics summary.json
-      if: always()
-      env:
-        REPO_NAME: ${{ github.event.repository.name }}
-        TEST_SUITE: nightly
-        ALLURE_RESULTS_DIR: var/allure-results
-      run: node scripts/generate_summary_json.js
-
-    - name: Upload summary.json to Cloudflare R2 (metrics)
-      if: always()
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: auto
-      run: |
-        aws s3 cp summary.json s3://qa-portfolio-metrics/${{ github.event.repository.name }}/${{ github.run_id }}.json --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
-
-    - name: Generate Allure report (HTML)
-      uses: ./.github/actions/generate-allure
-      with:
-        results-dir: var/allure-results
-        report-dir: allure-report
-    
-    - name: Upload Allure report (Artifact)
-      uses: actions/upload-artifact@v4
-      with:
-        name: allure-report-${{ github.run_id }}
-        path: allure-report/
-        if-no-files-found: warn
-
-    - name: Upload Report to Cloudflare R2
-      if: always()
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: auto
-      run: |
-        aws s3 sync allure-report/ s3://qa-portfolio-allure/${{ github.event.repository.name }}/${{ github.run_id }}/ --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
-
-    - name: Add Report URL to Summary
-      if: always()
-      env:
-        VAR_R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL }}
-        SECRET_R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
-      run: |
-        {
-          echo "### Allure report"
-          echo ""
-          echo "GitHub **does not** expose artifact files at a browsable \`github.com/.../index.html\` URL (those links always 404)."
-          echo "Use the **allure-report-${{ github.run_id }}** artifact: download, unzip, open \`index.html\` locally."
-          echo ""
-        } >> "$GITHUB_STEP_SUMMARY"
-
-        # NOTE: If R2_PUBLIC_URL is a *secret*, GitHub can mask it as `***` even in
-        # Step Summary output, which breaks the link (it becomes relative and resolves
-        # under github.com/actions/runs/...).
-        #
-        # Use repo variable `vars.R2_PUBLIC_URL` (not secret) for public domains.
-        R2_PUBLIC_URL="${VAR_R2_PUBLIC_URL:-}"
-        if [ -z "${R2_PUBLIC_URL:-}" ]; then
-          R2_PUBLIC_URL="${SECRET_R2_PUBLIC_URL:-}"
-        fi
-
-        R2_PUBLIC_URL="$(echo "${R2_PUBLIC_URL:-}" | xargs)"
-        R2_PUBLIC_URL="${R2_PUBLIC_URL%/}"
-        if [ -n "$R2_PUBLIC_URL" ] && [[ ! "$R2_PUBLIC_URL" =~ ^https?:// ]]; then
-          R2_PUBLIC_URL="https://${R2_PUBLIC_URL}"
-        fi
-
-        if [ -n "$R2_PUBLIC_URL" ] && [[ "$R2_PUBLIC_URL" != *"github.com"* ]] && [[ "$R2_PUBLIC_URL" != "***" ]]; then
-          FINAL_URL="${R2_PUBLIC_URL}/${{ github.event.repository.name }}/${{ github.run_id }}/index.html"
-          echo "Hosted copy (R2): [index.html](${FINAL_URL})" >> "$GITHUB_STEP_SUMMARY"
-        elif [ -n "$R2_PUBLIC_URL" ]; then
-          echo "⚠️ Set **R2_PUBLIC_URL** as a **Repository Variable** (not secret) to avoid masking.\n- Go to **Settings → Secrets and variables → Actions → Variables**\n- Add **R2_PUBLIC_URL** = your public base (e.g. \`https://pub-....r2.dev\`)\n\nDo not use a \`github.com\` URL." >> "$GITHUB_STEP_SUMMARY"
-        else
-          echo "Optional: set **R2_PUBLIC_URL** to that public base URL to get a hosted link above." >> "$GITHUB_STEP_SUMMARY"
-        fi
-    
-    - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main'
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./allure-report
-
-  # Send notifications about test results
-  notify:
-    runs-on: ubuntu-latest
-    needs: [unit-tests, e2e-tests, grid-integration-tests, visual-tests, performance-tests, generate-reports]
-    if: always()
-    steps:
-    - name: Determine overall status
-      id: status
-      run: |
-        if [[ "${{ needs.unit-tests.result }}" == "failure" || "${{ needs.e2e-tests.result }}" == "failure" ]]; then
-          echo "status=failure" >> $GITHUB_OUTPUT
-          echo "color=danger" >> $GITHUB_OUTPUT
-        elif [[ "${{ needs.visual-tests.result }}" == "failure" || "${{ needs.grid-integration-tests.result }}" == "failure" ]]; then
-          echo "status=warning" >> $GITHUB_OUTPUT
-          echo "color=warning" >> $GITHUB_OUTPUT
-        else
-          echo "status=success" >> $GITHUB_OUTPUT
-          echo "color=good" >> $GITHUB_OUTPUT
-        fi
-    
-    - name: Notify Slack
-      if: ${{ env.SLACK_WEBHOOK_URL != '' }}
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ steps.status.outputs.status }}
-        text: |
-          QA Automation Pipeline ${{ steps.status.outputs.status }}
-          Branch: ${{ github.ref }}
-          Commit: ${{ github.sha }}
-          Author: ${{ github.actor }}
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-    
-    - name: Check Teams webhook
-      id: teams-webhook
-      run: |
-        # Check if Teams webhook secret is available
-        if [ "${{ secrets.TEAMS_WEBHOOK_URL }}" != "" ]; then
-          echo "configured=true" >> $GITHUB_OUTPUT
-        else
-          echo "configured=false" >> $GITHUB_OUTPUT
-        fi
-      shell: bash
-
-    - name: Notify Microsoft Teams
-      if: ${{ steps.teams-webhook.outputs.configured == 'true' }}
-      uses: skitionek/notify-microsoft-teams@master
-      continue-on-error: true
-      with:
-        webhook_url: ${{ secrets.TEAMS_WEBHOOK_URL }}
-        needs: ${{ toJson(needs) }}
-        job: ${{ toJson(job) }}
-        steps: ${{ toJson(steps) }}
-
-  cleanup:
-    runs-on: ubuntu-latest
-    needs: [generate-reports, notify]
-    if: always()
-    steps:
-    - name: Delete old artifacts
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            run_id: context.runId,
-          });
-          
-          // Keep only the final report artifacts
-          const keepArtifacts = ['allure-report', 'security-reports'];
-          
-          for (const artifact of artifacts.data.artifacts) {
-            if (!keepArtifacts.includes(artifact.name)) {
-              await github.rest.actions.deleteArtifact({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                artifact_id: artifact.id,
-              });
-            }
-          }

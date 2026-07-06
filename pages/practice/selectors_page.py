@@ -86,10 +86,10 @@ class SelectorsPage(BasePage):
 
     # ── Section 6 ─────────────────────────────────────────────────────────
     def get_product_items_count(self) -> int:
-        return len(self.find_elements(SelectorsLocators.PRODUCT_ITEM))
+        return len(self.get_elements(SelectorsLocators.PRODUCT_ITEM))
 
     def get_electronics_items_count(self) -> int:
-        return len(self.find_elements(SelectorsLocators.PRODUCT_ELECTRONICS))
+        return len(self.get_elements(SelectorsLocators.PRODUCT_ELECTRONICS))
 
     # ── Section 7 ─────────────────────────────────────────────────────────
     def get_logo_attribute(self, attr: str) -> str:
@@ -107,17 +107,17 @@ class SelectorsPage(BasePage):
 
     # ── Section 9 ─────────────────────────────────────────────────────────
     def get_table_rows_count(self) -> int:
-        return len(self.find_elements(SelectorsLocators.TABLE_ROW))
+        return len(self.get_elements(SelectorsLocators.TABLE_ROW))
 
     def get_table_row_name_cell_text(self, row_id: Union[int, str]) -> str:
         return self.get_text(SelectorsLocators.table_row_name_cell(row_id))
 
     # ── Section 10 ────────────────────────────────────────────────────────
     def get_fruit_items_count(self) -> int:
-        return len(self.find_elements(SelectorsLocators.FRUIT_ITEM))
+        return len(self.get_elements(SelectorsLocators.FRUIT_ITEM))
 
     def get_fruit_item_text(self, index: int) -> str:
-        items = self.find_elements(SelectorsLocators.FRUIT_ITEM)
+        items = self.get_elements(SelectorsLocators.FRUIT_ITEM)
         return items[index].text if index < len(items) else ""
 
     def get_xpath_text(self) -> str:
