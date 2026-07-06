@@ -89,6 +89,54 @@ def selenium_driver(
         cleanup_driver_and_database(drv, db)
 
 
+# ── Shared (class-scoped) Selenium driver fixture ─────────────────────────────
+
+
+def _reset_driver_state(drv) -> None:
+    """Best-effort reset of cookies + local/session storage on a shared driver.
+
+    Mirrors the Java ``WebDriverExtension.resetDriverState()`` between-test
+    cleanup so each test in a class that shares one browser starts clean.
+    """
+    with contextlib.suppress(Exception):
+        drv.delete_all_cookies()
+    with contextlib.suppress(Exception):
+        drv.execute_script(
+            "try{localStorage.clear();sessionStorage.clear();}catch(e){}",
+        )
+
+
+@pytest.fixture(scope="class")
+def shared_driver(test_config) -> Generator[webdriver.Chrome]:
+    """Class-scoped Selenium WebDriver shared by every test in a class.
+
+    Mirrors the Java ``@SharedDriver`` extension and C# ``SharedDriverFixture``:
+    one browser is created per test class to cut Chrome process churn. State is
+    reset between tests by the autouse ``_reset_shared_driver_state`` fixture so
+    each test still starts from a clean slate.
+    """
+    drv, db = get_driver(
+        browser=test_config["browser"],
+        headless=test_config["headless"],
+    )
+    try:
+        yield drv
+    finally:
+        cleanup_driver_and_database(drv, db)
+
+
+@pytest.fixture(autouse=True)
+def _reset_shared_driver_state(request) -> None:
+    """Reset shared-driver cookies/storage before each test (best effort).
+
+    Active only for tests that use the class-scoped ``shared_driver`` fixture;
+    a no-op for per-test ``selenium_driver`` tests. Runs before the test's own
+    page-setup fixture so navigation happens against clean state.
+    """
+    if "shared_driver" in request.fixturenames:
+        _reset_driver_state(request.getfixturevalue("shared_driver"))
+
+
 # ── Session-scoped authenticated driver (ADR-009 — auth state reuse) ─────────
 
 

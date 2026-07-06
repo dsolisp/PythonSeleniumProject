@@ -1,0 +1,65 @@
+name: Update Visual Baselines
+
+# Manually trigger this to regenerate Python Selenium visual baselines after intentional UI changes.
+# Deletes existing baselines/ and re-runs visual tests so _assert_visual_snapshot auto-creates fresh ones,
+# then commits them back to the branch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to update baselines on'
+        required: false
+        default: 'main'
+
+permissions:
+  contents: write
+
+jobs:
+  update-baselines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python 3.11
+        uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-deps
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Delete existing visual baselines
+        run: |
+          rm -rf baselines/
+          echo "Deleted old baselines — visual tests will create fresh ones."
+
+      - name: Create required directories
+        run: mkdir -p var/screenshots/actual var/screenshots/diff
+
+      - name: Run visual tests (writes new baselines)
+        run: |
+          pytest tests/ui/visual/ -v --tb=short --headless \
+            --override-ini="addopts=--tb=short --durations=5 --strict-markers --strict-config --disable-warnings" \
+            || true
+
+      - name: Commit updated baselines
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add baselines/
+          if git diff --staged --quiet; then
+            echo "No baseline changes to commit."
+          else
+            git commit -m "chore: update Python visual baselines (linux) [skip ci]"
+            git push
+          fi

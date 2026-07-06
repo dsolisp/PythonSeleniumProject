@@ -220,6 +220,10 @@ def get_driver(
     Factory function that creates WebDriver and Database instances.
     Returns tuple of (driver, database).
     """
+    # Default to a fixed size so screenshots are deterministic on CI (Linux) and locally (macOS).
+    if window_size is None:
+        window_size = (1280, 720)
+
     browser_lower = browser.lower()
 
     # Create driver based on browser type

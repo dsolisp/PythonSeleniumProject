@@ -28,20 +28,20 @@ class InventoryPage(BasePage):
     def get_items(self) -> list:
         """Return list of inventory item WebElements."""
         self.wait_for_element(InventoryLocators.INVENTORY_ITEM)
-        return self.find_elements(InventoryLocators.INVENTORY_ITEM)
+        return self.get_elements(InventoryLocators.INVENTORY_ITEM)
 
     def get_item_names(self) -> list[str]:
         """Return list of visible product name strings."""
         self.wait_for_element(InventoryLocators.INVENTORY_ITEM)
         return [
-            el.text for el in self.find_elements(InventoryLocators.INVENTORY_ITEM_NAME)
+            el.text for el in self.get_elements(InventoryLocators.INVENTORY_ITEM_NAME)
         ]
 
     def get_item_prices(self) -> list[str]:
         """Return list of visible price strings (e.g. '$29.99')."""
         self.wait_for_element(InventoryLocators.INVENTORY_ITEM_PRICE)
         return [
-            el.text for el in self.find_elements(InventoryLocators.INVENTORY_ITEM_PRICE)
+            el.text for el in self.get_elements(InventoryLocators.INVENTORY_ITEM_PRICE)
         ]
 
     def sort_by(self, value: str) -> None:

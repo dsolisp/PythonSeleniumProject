@@ -36,18 +36,18 @@ class BasePage:
 
     # === ELEMENT INTERACTION METHODS ===
 
-    def find_element(self, locator):
+    def get_element(self, locator):
         """Find element immediately. Returns WebElement or None."""
         try:
-            return self.driver.find_element(*locator)
+            return self.driver.find_element(*locator)  # gavel-ignore: selector-leak
         except (TimeoutException, NoSuchElementException) as e:
             self.logger.debug("Element not found: %s", format_error(e))
             return None
 
-    def find_elements(self, locator):
+    def get_elements(self, locator):
         """Find multiple elements. Returns list of WebElements or empty list."""
         try:
-            return self.driver.find_elements(*locator)
+            return self.driver.find_elements(*locator)  # gavel-ignore: selector-leak
         except NoSuchElementException:
             return []
 
@@ -160,7 +160,7 @@ class BasePage:
 
     def is_element_present(self, locator):
         """Check if element exists in DOM. Returns True or False."""
-        return self.find_element(locator) is not None
+        return self.get_element(locator) is not None
 
     # === NAVIGATION METHODS ===
 

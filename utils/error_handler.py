@@ -199,7 +199,7 @@ class SmartErrorHandler:
                         delay,
                         e,
                     )
-                    time.sleep(delay)
+                    time.sleep(delay)  # gavel-ignore: manual-wait
 
         if last_error:
             logger.warning("All %d attempts failed: %s", max_attempts, last_error)

@@ -10,45 +10,51 @@ Strategy (Selenium):
 import pytest
 
 from pages.practice.windows_page import WindowsPage
+from tests.helpers import soft_assert
 
 
 @pytest.mark.practice
 @pytest.mark.smoke
+@pytest.mark.usefixtures("shared_driver")
 class TestWindows:
     """ADV-E5, ADV-E6 — New window / tab interactions."""
 
     @pytest.fixture(autouse=True)
-    def open_page(self, selenium_driver):
-        self.page = WindowsPage(selenium_driver)
+    def open_page(self, shared_driver):
+        self.page = WindowsPage(shared_driver)
         self.page.open()
 
     # ── ADV-E5: target="_blank" link ──────────────────────────────────────
 
-    def test_tab_link_has_correct_href(self):
-        """ADV-E5: the new-tab link href points to /windows/new."""
+    def test_tab_link_opens_new_window(self):
+        """ADV-E5: link href and clicking it opens a new window with correct content."""
         href = self.page.get_tab_link_href()
-        assert "/windows/new" in href
 
-    def test_tab_link_opens_new_window_with_correct_content(self):
-        """ADV-E5: clicking the link opens a new window with the expected heading."""
         original = self.page.click_tab_link()
         self.page.switch_to_new_window(original)
-        assert self.page.get_new_window_heading() == "New Window"
-        assert "opened in a new tab" in self.page.get_new_window_body()
+
+        with soft_assert() as s:
+            s.contains(href, "/windows/new", "link href should point to /windows/new")
+            s.equal(self.page.get_new_window_heading(), "New Window")
+            s.contains(self.page.get_new_window_body(), "opened in a new tab")
+
         self.page.close_current_window()
         self.page.switch_to_window(original)
 
     # ── ADV-E6: window.open() ─────────────────────────────────────────────
 
-    def test_tab_button_is_visible(self):
-        """ADV-E6: the JS open button is visible with correct text."""
-        assert self.page.is_tab_button_visible()
-        assert "Open a New Window" in self.page.get_tab_button_text()
-
     def test_tab_button_opens_new_window(self):
-        """ADV-E6: clicking the JS button opens a new window."""
+        """ADV-E6: JS button visibility and clicking it opens a new window."""
+        is_visible = self.page.is_tab_button_visible()
+        button_text = self.page.get_tab_button_text()
+
         original = self.page.click_tab_button()
         self.page.switch_to_new_window(original)
-        assert self.page.get_new_window_heading() == "New Window"
+
+        with soft_assert() as s:
+            s.check(is_visible, "JS open button should be visible")
+            s.contains(button_text, "Open a New Window")
+            s.equal(self.page.get_new_window_heading(), "New Window")
+
         self.page.close_current_window()
         self.page.switch_to_window(original)
