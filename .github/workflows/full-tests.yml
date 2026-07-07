@@ -166,3 +166,26 @@ jobs:
           else
             echo "Optional: set **R2_PUBLIC_URL** to that public base URL to get a hosted link above." >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Enforce 95% pass rate threshold
+        if: always()
+        run: |
+          PASS_RATE=$(node -e "
+            const fs = require('fs');
+            try {
+              const s = JSON.parse(fs.readFileSync('summary.json', 'utf8'));
+              const total = Number(s.total) || 0;
+              const passed = Number(s.passed) || 0;
+              const rate = total > 0 ? Math.round((passed / total) * 100) : 0;
+              process.stdout.write(String(rate));
+            } catch (e) {
+              process.stdout.write('0');
+            }
+          ")
+          echo "Pass rate: ${PASS_RATE}%"
+          if [ "${PASS_RATE}" -lt 95 ]; then
+            echo "❌ Pass rate ${PASS_RATE}% is below the 95% threshold — build FAILED."
+            exit 1
+          else
+            echo "✅ Pass rate ${PASS_RATE}% meets the 95% threshold — build PASSED."
+          fi
